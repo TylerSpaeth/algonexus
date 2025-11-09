@@ -8,6 +8,7 @@ version = '1.0-SNAPSHOT'
 
 application {
     mainClass = 'com.github.tylerspaeth.Main'
+    applicationDefaultJvmArgs= ["--sun-misc-unsafe-memory-access=allow"]
 }
 
 repositories {
@@ -15,6 +16,9 @@ repositories {
 }
 
 dependencies {
+
+    // Include all jars in libs folder
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
 
     // Junit
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
