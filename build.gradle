@@ -32,6 +32,13 @@ dependencies {
     // Include all jars in libs folder
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
+    // Logging
+    implementation 'ch.qos.logback:logback-classic:1.5.20'
+
+    // Database connection
+    implementation 'com.zaxxer:HikariCP:7.0.2'
+    implementation 'com.mysql:mysql-connector-j:9.5.0'
+
     // Junit
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
