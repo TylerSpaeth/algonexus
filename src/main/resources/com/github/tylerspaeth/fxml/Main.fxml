@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.layout.BorderPane?>
+
+<BorderPane xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.github.tylerspaeth.ui.controllers.MainController">
+    <top>
+        <TabPane tabClosingPolicy="UNAVAILABLE" BorderPane.alignment="CENTER">
+            <tabs>
+                <Tab text="Account Manager">
+                    <content>
+                        <fx:include source="AccountManager.fxml" />
+                    </content>
+                </Tab>
+                <Tab text="Algorithm Manager">
+                    <content>
+                        <fx:include source="AlgorithmManager.fxml" />
+                    </content>
+                </Tab>
+            </tabs>
+        </TabPane>
+    </top>
+   <bottom>
+   </bottom>
+
+</BorderPane>

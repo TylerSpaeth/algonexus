@@ -1,14 +1,26 @@
 plugins {
     id 'java'
     id 'application'
+    id 'org.openjfx.javafxplugin' version '0.1.0'
 }
 
 group = 'com.github.tylerspaeth'
 version = '1.0-SNAPSHOT'
 
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25) // Or your desired Java version
+    }
+}
+
 application {
     mainClass = 'com.github.tylerspaeth.Main'
-    applicationDefaultJvmArgs= ["--sun-misc-unsafe-memory-access=allow"]
+    applicationDefaultJvmArgs = ['--enable-native-access=javafx.graphics']
+}
+
+javafx {
+    version = '25'
+    modules = [ 'javafx.controls', 'javafx.fxml' ]
 }
 
 repositories {
