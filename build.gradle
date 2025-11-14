@@ -15,7 +15,7 @@ java {
 
 application {
     mainClass = 'com.github.tylerspaeth.Main'
-    applicationDefaultJvmArgs = ['--enable-native-access=javafx.graphics']
+    applicationDefaultJvmArgs = ['--enable-native-access=javafx.graphics', "--sun-misc-unsafe-memory-access=allow"]
 }
 
 javafx {
