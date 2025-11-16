@@ -1,169 +1,48 @@
-package com.github.tylerspaeth.config;
+package com.github.tylerspaeth.ib;
 
 import com.ib.client.*;
 import com.ib.client.protobuf.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
-public class IBConfig implements EWrapper {
+public class IBWrapper implements EWrapper, IIBConnectionListener {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(IBConfig.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(IBWrapper.class);
 
-    private final EJavaSignal signal = new EJavaSignal();
-    private final EClientSocket client = new EClientSocket(this, signal);
+    private final IBConnection ibConnection = new IBConnection(this, this);
 
-    // Synchronization
-    private final AtomicBoolean readerStarted = new AtomicBoolean(false);
-    private final AtomicBoolean manualDisconnect = new AtomicBoolean(false);
-    private final AtomicBoolean connecting = new AtomicBoolean(false);
-    private volatile CountDownLatch handshakeLatch;
-
-    private static final int RECONNECT_DELAY_MS = 5000;
-    private static final int MAX_TCP_CONNECTION_WAIT_TIME_MS = 1000;
-    private static final int MAX_HANDSHAKE_TIMEOUT_DURATION_MS = 1000;
-
-    /**
-     * Used for scheduled TWS Connections.
-     */
-    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
-        Thread t = new Thread(r, "TWS-Connector");
-        t.setDaemon(true);
-        return t;
-    });
-
-    /**
-     * Initialized a TCP connection via TWS.
-     */
     public void connect() {
-        manualDisconnect.set(false);
-        scheduleConnection(0);
+        ibConnection.connect();
     }
 
-    /**
-     * Disconnects from the IB TWS connection.
-     */
     public void disconnect() {
-        manualDisconnect.set(true);
-        scheduler.shutdownNow();
-        synchronizedDisconnect();
+        ibConnection.disconnect();
     }
 
-    /**
-     * Schedules a connection to be attempted.
-     * @param delayMS How long to wait before attempting the connection.
-     */
-    private void scheduleConnection(int delayMS) {
-        scheduler.schedule(this::connectIfNeeded, delayMS, TimeUnit.MILLISECONDS);
+    @Override
+    public void onConnect() {
+        LOGGER.info("IB Connected");
     }
 
-    /**
-     * Attempts the TWS connection if it is needed.
-     */
-    private void connectIfNeeded() {
-        if(manualDisconnect.get()) {
+    @Override
+    public void onDisconnect() {
+        LOGGER.info("IB Disconnected");
+        if(ibConnection.getManualDisconnect().get()) {
             return;
         }
-
-        if(!connecting.compareAndSet(false, true)) {
-            LOGGER.warn("Already connecting, skipping.");
-            return;
-        }
-
-        try {
-            if(client.isConnected()) {
-                LOGGER.warn("Already connected, skipping.");
-                return;
-            }
-
-            handshakeLatch = new CountDownLatch(1);
-            client.eConnect("127.0.0.1", 4002, 1);
-
-            int waited = 0;
-            while(!client.isConnected() && waited < MAX_TCP_CONNECTION_WAIT_TIME_MS) {
-                Thread.sleep(100);
-                waited += 100;
-            }
-
-            if(!client.isConnected()) {
-                LOGGER.warn("TCP connection not initialized in time, retrying in {} seconds", (float) RECONNECT_DELAY_MS / 1000);
-                scheduleConnection(RECONNECT_DELAY_MS);
-                return;
-            }
-
-            synchronizedStartReader();
-
-            boolean handshakeGood = false;
-            try {
-                handshakeGood = handshakeLatch.await(MAX_HANDSHAKE_TIMEOUT_DURATION_MS, TimeUnit.MILLISECONDS);
-            } catch(InterruptedException _) {}
-
-            if(!handshakeGood) {
-                LOGGER.warn("Handshake failed, disconnecting and retrying in {} seconds.", (float) RECONNECT_DELAY_MS / 1000);
-                synchronizedDisconnect();
-                scheduleConnection(RECONNECT_DELAY_MS);
-            }
-        } catch (Exception e) {
-            LOGGER.warn("Connection failed, retrying connection in {} seconds:", (float) RECONNECT_DELAY_MS / 1000, e);
-            synchronizedDisconnect();
-            scheduleConnection(RECONNECT_DELAY_MS);
-        } finally {
-            connecting.set(false);
-        }
+        ibConnection.scheduleConnection(IBConnection.RECONNECT_DELAY_MS);
     }
 
-    /**
-     * Starts the TWS-Reader thread if it is not already started.
-     */
-    private synchronized void synchronizedStartReader() {
-        if(readerStarted.get()) {
-            LOGGER.warn("Reader already started, skipping.");
-            return;
-        }
-
-        EReader reader = new EReader(client, signal);
-        reader.start();
-
-        Thread readerThread = new Thread(() -> {
-            try {
-                while (client.isConnected()) {
-                    signal.waitForSignal();
-                    try {
-                        reader.processMsgs();
-                    } catch (IOException e) {
-                        LOGGER.error("processMsgs failed: ", e);
-                    }
-                }
-            } finally {
-                readerStarted.set(false);
-                LOGGER.info("Closing TWS-Reader.");
-            }
-        }, "TWS-Reader");
-        readerThread.setDaemon(true);
-        readerThread.start();
-        readerStarted.set(true);
-        LOGGER.info("TWS-Reader Started");
-    }
-
-    /**
-     * Thread safe disconnection from TWS.
-     */
-    private synchronized void synchronizedDisconnect() {
-        try {
-            if(client.isConnected()) {
-                client.eDisconnect();
-            }
-        } catch (Exception e) {
-            LOGGER.error("Error disconnecting: ", e);
+    @Override
+    public void onNextValidId(int i) {
+        CountDownLatch latch = ibConnection.getHandshakeLatch();
+        if (latch != null && latch.getCount() > 0) {
+            latch.countDown();
         }
     }
 
@@ -234,9 +113,7 @@ public class IBConfig implements EWrapper {
 
     @Override
     public void nextValidId(int i) {
-        if(handshakeLatch != null) {
-            handshakeLatch.countDown();
-        }
+        onNextValidId(i);
     }
 
     @Override
@@ -356,6 +233,7 @@ public class IBConfig implements EWrapper {
 
     @Override
     public void accountSummary(int i, String s, String s1, String s2, String s3) {
+
     }
 
     @Override
@@ -410,16 +288,12 @@ public class IBConfig implements EWrapper {
 
     @Override
     public void connectionClosed() {
-        LOGGER.info("TWS Disconnected");
-        if(manualDisconnect.get()) {
-            return;
-        }
-        scheduleConnection(RECONNECT_DELAY_MS);
+        onDisconnect();
     }
 
     @Override
     public void connectAck() {
-        LOGGER.info("TWS Connected");
+        onConnect();
     }
 
     @Override
