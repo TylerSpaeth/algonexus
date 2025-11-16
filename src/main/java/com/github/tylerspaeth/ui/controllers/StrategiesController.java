@@ -1,4 +1,4 @@
 package com.github.tylerspaeth.ui.controllers;
 
-public class AccountManagerController {
+public class StrategiesController {
 }
