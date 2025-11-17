@@ -1,6 +1,9 @@
 package com.github.tylerspaeth.ib;
 
-import com.ib.client.*;
+import com.ib.client.EClientSocket;
+import com.ib.client.EJavaSignal;
+import com.ib.client.EReader;
+import com.ib.client.EWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,7 +54,6 @@ public class IBConnection {
      */
     public void connect() {
         manualDisconnect.set(false);
-        restartScheduler();
         scheduleConnection(0);
     }
 
@@ -69,6 +71,7 @@ public class IBConnection {
      * @param delayMS How long to wait before attempting the connection.
      */
     public void scheduleConnection(int delayMS) {
+        restartScheduler();
         scheduler.schedule(this::connectIfNeeded, delayMS, TimeUnit.MILLISECONDS);
     }
 
@@ -130,7 +133,7 @@ public class IBConnection {
     /**
      * Starts the TWS-Reader thread if it is not already started.
      */
-    private synchronized void synchronizedStartReader() {
+    synchronized void synchronizedStartReader() {
         if(readerStarted.get()) {
             LOGGER.warn("Reader already started, skipping.");
             return;
