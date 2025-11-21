@@ -99,8 +99,10 @@ public class IBConnection {
 
             int waited = 0;
             while(!client.isConnected() && waited < MAX_TCP_CONNECTION_WAIT_TIME_MS) {
-                Thread.sleep(100);
-                waited += 100;
+                try {
+                    Thread.sleep(100);
+                    waited += 100;
+                } catch(InterruptedException _) {}
             }
 
             if(!client.isConnected()) {

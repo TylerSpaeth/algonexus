@@ -20,15 +20,19 @@ public class MainController {
 
     @FXML
     public Button accountButton;
-    private static final String accountFXML = "/com/github/tylerspaeth/fxml/Account.fxml";
+    private static final String ACCOUNT_FXML = "/com/github/tylerspaeth/fxml/Account.fxml";
 
     @FXML
     public Button strategiesButton;
-    private static final String strategiesFXML = "/com/github/tylerspaeth/fxml/Strategies.fxml";
+    private static final String STRATEGIES_FXML = "/com/github/tylerspaeth/fxml/Strategies.fxml";
 
     @FXML
     public Button homeButton;
-    private static final String homeFXML = "/com/github/tylerspaeth/fxml/Home.fxml";
+    private static final String HOME_FXML = "/com/github/tylerspaeth/fxml/Home.fxml";
+
+    @FXML
+    public Button dataManagerButton;
+    private static final String DATA_MANAGER_FXML = "/com/github/tylerspaeth/fxml/datamanager/DataManager.fxml";
 
     /**
      * Switches what is in the center of the border pane to the provided FXML path.
@@ -51,7 +55,7 @@ public class MainController {
      */
     @FXML
     public void homeButtonClicked() {
-        switchContext(homeFXML);
+        switchContext(HOME_FXML);
     }
 
     /**
@@ -59,7 +63,7 @@ public class MainController {
      */
     @FXML
     public void accountButtonClicked() {
-        switchContext(accountFXML);
+        switchContext(ACCOUNT_FXML);
     }
 
     /**
@@ -67,7 +71,15 @@ public class MainController {
      */
     @FXML
     public void strategiesButtonClicked() {
-        switchContext(strategiesFXML);
+        switchContext(STRATEGIES_FXML);
+    }
+
+    /**
+     * Switches to the data manager screen
+     */
+    @FXML
+    public void dataManagerButtonClicked() {
+        switchContext(DATA_MANAGER_FXML);
     }
 
 }
