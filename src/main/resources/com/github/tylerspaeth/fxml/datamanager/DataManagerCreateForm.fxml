@@ -25,8 +25,8 @@
       <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
       <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
   </rowConstraints>
-      <TextField fx:id="intervalTextField" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-      <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Interval*" GridPane.rowIndex="3" />
+      <TextField fx:id="timeIntervalTextField" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+      <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Time Interval*" GridPane.rowIndex="3" />
       <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Ticker*" GridPane.rowIndex="2" />
       <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Interval Unit*" GridPane.rowIndex="4" />
       <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Dataset Source" GridPane.rowIndex="1" />
@@ -44,9 +44,11 @@
             <Button fx:id="fileSelectButton" mnemonicParsing="false" onAction="#selectDataFile" text="Select File" BorderPane.alignment="CENTER" />
          </right>
       </BorderPane>
-      <Text strokeType="OUTSIDE" strokeWidth="0.0" text="File Format* (Enter OHCLV the same as the file, X for junk)" GridPane.rowIndex="6" />
-      <TextField fx:id="fileFormatTextField" text="OHCLV" GridPane.columnIndex="1" GridPane.rowIndex="6" />
-      <Button fx:id="submitButton" mnemonicParsing="false" onAction="#submitForm" text="Submit" GridPane.columnIndex="1" GridPane.rowIndex="8" />
+      <Text strokeType="OUTSIDE" strokeWidth="0.0" text="File Format* (Enter DOHCLV the same as the file, X for junk)" GridPane.rowIndex="6" />
+      <TextField fx:id="fileFormatTextField" text="DOHCLV" GridPane.columnIndex="1" GridPane.rowIndex="6" />
+      <Button fx:id="submitButton" mnemonicParsing="false" onAction="#submitForm" text="Submit" GridPane.columnIndex="1" GridPane.rowIndex="9" />
       <Text strokeType="OUTSIDE" strokeWidth="0.0" text="# of Metadata Rows* " GridPane.rowIndex="7" />
-      <TextField fx:id="metadataRowCountTextField" text="1" GridPane.columnIndex="1" GridPane.rowIndex="7" />
+      <TextField fx:id="metadataRowCountTextField" GridPane.columnIndex="1" GridPane.rowIndex="7" />
+    <Text strokeType="OUTSIDE" strokeWidth="0.0" text="DateFormat* " GridPane.rowIndex="8" />
+    <TextField fx:id="dateFormatTextField" text="yyyy-MM-dd" GridPane.columnIndex="1" GridPane.rowIndex="8" />
 </GridPane>

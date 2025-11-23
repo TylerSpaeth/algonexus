@@ -23,17 +23,17 @@
                </top>
                <center>
                    <VBox BorderPane.alignment="CENTER" >
-                       <Text text="Dataset Name:" />
-                       <Text text="Dataset Source" />
-                       <Text text="Ticker:" />
-                       <Text text="Asset Type:" />
-                       <Text text="Exchange:" />
-                       <Text text="Interval:" />
-                       <Text text="Interval Unit:" />
-                       <Text text="Dataset Start:" />
-                       <Text text="Dataset End:" />
-                       <Text text="Last Updated:" />
-                       <Text text="Row Count:" />
+                       <Text fx:id="datasetNameText" />
+                       <Text fx:id="datasetSourceText" />
+                       <Text fx:id="tickerText" />
+                       <Text fx:id="assetTypeText" />
+                       <Text fx:id="exchangeText" />
+                       <Text fx:id="timeIntervalText" />
+                       <Text fx:id="intervalUnitText" />
+                       <Text fx:id="datasetStartText" />
+                       <Text fx:id="datasetEndText" />
+                       <Text fx:id="lastUpdatedText" />
+                       <Text fx:id="rowCountText" />
                    </VBox>
                </center>
             </BorderPane>
