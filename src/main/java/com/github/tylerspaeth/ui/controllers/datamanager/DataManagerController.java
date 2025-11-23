@@ -2,6 +2,7 @@ package com.github.tylerspaeth.ui.controllers.datamanager;
 
 import com.github.tylerspaeth.data.dao.HistoricalDatasetDAO;
 import com.github.tylerspaeth.data.entity.HistoricalDataset;
+import com.github.tylerspaeth.service.DataManagerService;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -29,6 +30,8 @@ import java.util.ResourceBundle;
 public class DataManagerController implements Initializable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DataManagerController.class);
+
+    private DataManagerService dataManagerService;
 
     @FXML
     public ListView<HistoricalDataset> datasetListView;
@@ -81,6 +84,7 @@ public class DataManagerController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         historicalDatasetDAO = new HistoricalDatasetDAO();
+        dataManagerService = new DataManagerService();
 
         datasets.addAll(historicalDatasetDAO.getAllHistoricalDatasets());
         datasetListView.setItems(datasets);
@@ -167,9 +171,11 @@ public class DataManagerController implements Initializable {
         File selectedFile = fileChooser.showSaveDialog(stage);
 
         if(selectedFile == null) {
-            LOGGER.info("No file selected, exiting export.");
+            LOGGER.info("No file selected for export.");
+            return;
         }
 
-        // TODO export the dataset to csv
+        dataManagerService.exportDatasetToCSV(selectedDataset, selectedFile);
+
     }
 }

@@ -3,6 +3,8 @@ package com.github.tylerspaeth.data.entity;
 import jakarta.persistence.*;
 
 import java.sql.Timestamp;
+import java.text.MessageFormat;
+import java.text.SimpleDateFormat;
 
 @Entity
 @Table(name = "candlesticks")
@@ -93,5 +95,10 @@ public class Candlestick {
 
     public void setHistoricalDataset(HistoricalDataset historicalDataset) {
         this.historicalDataset = historicalDataset;
+    }
+
+    public String getCSVString() {
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+        return MessageFormat.format("{0},{1},{2},{3},{4},{5}", formatter.format(timestamp), open, close, high, low, volume);
     }
 }

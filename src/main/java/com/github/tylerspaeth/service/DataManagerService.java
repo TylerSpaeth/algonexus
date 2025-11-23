@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.sql.Timestamp;
+import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -20,6 +21,21 @@ public class DataManagerService {
 
     private static final String CSV_DELIMITER = ",";
     private static final int MIN_COLUMN_COUNT = 6;
+
+    private static final String EXPORT_METADATA =
+            "Dataset Name: {0} - " +
+            "Dataset Source: {1} - " +
+            "Ticker: {2} - " +
+            "Asset Type: {3} - " +
+            "Exchange: {4} - " +
+            "Time Interval: {5} - " +
+            "Interval Unit: {6} - " +
+            "Dataset Start: {7} - " +
+            "Dataset End: {8} - " +
+            "Last Updated: {9} - " +
+            "Row Count: {10}\n";
+
+    private static final String EXPORT_FORMAT = "Date,Open,Close,High,Low,Volume\n";
 
     public DataManagerService() {
         this.historicalDatasetDAO = new HistoricalDatasetDAO();
@@ -106,6 +122,40 @@ public class DataManagerService {
 
         return true;
 
+    }
+
+    /**
+     * Exports the given HistoricalDataset into the provided csvFile
+     * @param historicalDataset HistoricalDataset
+     * @param csvFile File
+     */
+    public void exportDatasetToCSV(HistoricalDataset historicalDataset, File csvFile) {
+        try(BufferedWriter writer = new BufferedWriter(new FileWriter(csvFile))) {
+
+            writer.write(MessageFormat.format(EXPORT_METADATA,
+                    historicalDataset.getDatasetName(),
+                    historicalDataset.getDatasetSource(),
+                    historicalDataset.getSymbol().getTicker(),
+                    historicalDataset.getSymbol().getAssetType().name,
+                    historicalDataset.getSymbol().getExchange().getName(),
+                    historicalDataset.getTimeInterval(),
+                    historicalDataset.getIntervalUnit(),
+                    historicalDataset.getDatasetStart(),
+                    historicalDataset.getDatasetEnd(),
+                    historicalDataset.getLastUpdated(),
+                    historicalDataset.getCandlesticks().size()));
+
+            writer.write(EXPORT_FORMAT);
+
+            historicalDataset.getCandlesticks().forEach(candlestick -> {
+                try {
+                    writer.write(candlestick.getCSVString() + "\n");
+                } catch (IOException _) {}
+            });
+
+        } catch (Exception e) {
+            LOGGER.error("Loading from export to file: {}", csvFile.getName());
+        }
     }
 
 }
