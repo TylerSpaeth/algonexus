@@ -12,6 +12,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class IBConnection {
 
@@ -19,9 +20,12 @@ public class IBConnection {
 
     private final IBWrapper wrapper = new IBWrapper(this);
     private final EJavaSignal signal = new EJavaSignal();
-    private final EClientSocket client = new EClientSocket(wrapper, signal);
+    public final EClientSocket client = new EClientSocket(wrapper, signal);
 
     private ScheduledExecutorService scheduler;
+
+    public IBRequestRepository ibRequestRepository = new IBRequestRepository();
+    private AtomicInteger nextValidId = new AtomicInteger();
 
     // Synchronization
     private final AtomicBoolean readerStarted = new AtomicBoolean(false);
@@ -205,6 +209,7 @@ public class IBConnection {
         if (handshakeLatch != null && handshakeLatch.getCount() > 0) {
             handshakeLatch.countDown();
         }
+        nextValidId.set(i);
     }
 
 
