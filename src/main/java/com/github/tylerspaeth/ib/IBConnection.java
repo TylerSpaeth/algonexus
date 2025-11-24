@@ -3,7 +3,6 @@ package com.github.tylerspaeth.ib;
 import com.ib.client.EClientSocket;
 import com.ib.client.EJavaSignal;
 import com.ib.client.EReader;
-import com.ib.client.EWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,10 +17,9 @@ public class IBConnection {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(IBConnection.class);
 
+    private final IBWrapper wrapper = new IBWrapper(this);
     private final EJavaSignal signal = new EJavaSignal();
-    private final EClientSocket client;
-
-    public final IIBConnectionListener connectionListener;
+    private final EClientSocket client = new EClientSocket(wrapper, signal);
 
     private ScheduledExecutorService scheduler;
 
@@ -34,20 +32,6 @@ public class IBConnection {
     public static final int RECONNECT_DELAY_MS = 5000;
     private static final int MAX_TCP_CONNECTION_WAIT_TIME_MS = 1000;
     private static final int MAX_HANDSHAKE_TIMEOUT_DURATION_MS = 1000;
-
-
-    public IBConnection(EWrapper wrapper, IIBConnectionListener connectionListener) {
-        client = new EClientSocket(wrapper, signal);
-        this.connectionListener = connectionListener;
-    }
-
-    public AtomicBoolean getManualDisconnect() {
-        return manualDisconnect;
-    }
-
-    public CountDownLatch getHandshakeLatch() {
-        return handshakeLatch;
-    }
 
     /**
      * Initialized a TCP connection via TWS.
@@ -62,7 +46,9 @@ public class IBConnection {
      */
     public void disconnect() {
         manualDisconnect.set(true);
-        scheduler.shutdownNow();
+        if(scheduler != null) {
+            scheduler.shutdownNow();
+        }
         synchronizedDisconnect();
     }
 
@@ -190,6 +176,34 @@ public class IBConnection {
                 t.setDaemon(true);
                 return t;
             });
+        }
+    }
+
+    /**
+     * To be called by the EWrapper connectAck callback.
+     */
+    public void onConnectAck() {
+        LOGGER.info("IB Connected");
+    }
+
+    /**
+     * To be called by the EWrapper connectionClosed callback.
+     */
+    public void onConnectionClosed() {
+        LOGGER.info("IB Disconnected");
+        if(manualDisconnect.get()) {
+            return;
+        }
+        scheduleConnection(IBConnection.RECONNECT_DELAY_MS);
+    }
+
+    /**
+     * To be called by the nextValidId callback
+     * @param i The next valid id
+     */
+    public void onNextValidId(int i) {
+        if (handshakeLatch != null && handshakeLatch.getCount() > 0) {
+            handshakeLatch.countDown();
         }
     }
 

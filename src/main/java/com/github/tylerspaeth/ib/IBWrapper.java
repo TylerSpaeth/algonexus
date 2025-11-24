@@ -8,42 +8,15 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
 
-public class IBWrapper implements EWrapper, IIBConnectionListener {
+public class IBWrapper implements EWrapper {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(IBWrapper.class);
 
-    private final IBConnection ibConnection = new IBConnection(this, this);
+    private final IBConnection ibConnection;
 
-    public void connect() {
-        ibConnection.connect();
-    }
-
-    public void disconnect() {
-        ibConnection.disconnect();
-    }
-
-    @Override
-    public void onConnect() {
-        LOGGER.info("IB Connected");
-    }
-
-    @Override
-    public void onDisconnect() {
-        LOGGER.info("IB Disconnected");
-        if(ibConnection.getManualDisconnect().get()) {
-            return;
-        }
-        ibConnection.scheduleConnection(IBConnection.RECONNECT_DELAY_MS);
-    }
-
-    @Override
-    public void onNextValidId(int i) {
-        CountDownLatch latch = ibConnection.getHandshakeLatch();
-        if (latch != null && latch.getCount() > 0) {
-            latch.countDown();
-        }
+    public IBWrapper(IBConnection ibConnection) {
+        this.ibConnection = ibConnection;
     }
 
     @Override
@@ -113,7 +86,7 @@ public class IBWrapper implements EWrapper, IIBConnectionListener {
 
     @Override
     public void nextValidId(int i) {
-        onNextValidId(i);
+        ibConnection.onNextValidId(i);
     }
 
     @Override
@@ -288,12 +261,12 @@ public class IBWrapper implements EWrapper, IIBConnectionListener {
 
     @Override
     public void connectionClosed() {
-        onDisconnect();
+        ibConnection.onConnectionClosed();
     }
 
     @Override
     public void connectAck() {
-        onConnect();
+        ibConnection.onConnectAck();
     }
 
     @Override
