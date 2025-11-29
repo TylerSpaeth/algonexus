@@ -1,10 +1,14 @@
-package com.github.tylerspaeth.ib;
+package com.github.tylerspaeth.broker.ib;
 
+import com.github.tylerspaeth.common.MultiReaderQueue;
+import com.github.tylerspaeth.broker.response.*;
 import com.ib.client.*;
 import com.ib.client.protobuf.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -90,18 +94,28 @@ public class IBWrapper implements EWrapper {
     }
 
     @Override
-    public void contractDetails(int i, ContractDetails contractDetails) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
+    public void contractDetails(int reqId, ContractDetails contractDetails) {
+        ContractDetailsResponse existingValue = ibConnection.ibRequestRepository.getFutureValue(String.valueOf(reqId));
+        if(existingValue == null) {
+            existingValue = new ContractDetailsResponse();
+        }
+        existingValue.contractDetails.add(contractDetails);
+        ibConnection.ibRequestRepository.setFutureValue(String.valueOf(reqId), existingValue);
     }
 
     @Override
-    public void bondContractDetails(int i, ContractDetails contractDetails) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
+    public void bondContractDetails(int reqId, ContractDetails contractDetails) {
+        ContractDetailsResponse existingValue = ibConnection.ibRequestRepository.getFutureValue(String.valueOf(reqId));
+        if(existingValue == null) {
+            existingValue = new ContractDetailsResponse();
+        }
+        existingValue.contractDetails.add(contractDetails);
+        ibConnection.ibRequestRepository.setFutureValue(String.valueOf(reqId), existingValue);
     }
 
     @Override
-    public void contractDetailsEnd(int i) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
+    public void contractDetailsEnd(int reqId) {
+        ibConnection.ibRequestRepository.removePendingRequest(String.valueOf(reqId));
     }
 
     @Override
@@ -130,7 +144,7 @@ public class IBWrapper implements EWrapper {
     }
 
     @Override
-    public void managedAccounts(String s) {
+    public void managedAccounts(String accounts) {
         LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
     }
 
@@ -160,8 +174,9 @@ public class IBWrapper implements EWrapper {
     }
 
     @Override
-    public void realtimeBar(int i, long l, double v, double v1, double v2, double v3, Decimal decimal, Decimal decimal1, int i1) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
+    public void realtimeBar(int reqId, long date, double open, double high, double low, double close, Decimal volume, Decimal vwap, int count) {
+        MultiReaderQueue<OHLCV> queue = ibConnection.datafeedReqIdMap.get(reqId);
+        queue.write(new OHLCV(Timestamp.from(Instant.ofEpochSecond(date)), open, high, low, close, volume.longValue()));
     }
 
     @Override
@@ -195,23 +210,34 @@ public class IBWrapper implements EWrapper {
     }
 
     @Override
-    public void position(String s, Contract contract, Decimal decimal, double v) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
+    public void position(String accountId, Contract contract, Decimal position, double avgCost) {
+        PositionResponse existingValue = ibConnection.ibRequestRepository.getFutureValue(IBRequestRepository.POSITION_REQ_MAP_KEY);
+        if(existingValue == null) {
+            existingValue = new PositionResponse();
+            existingValue.accountId = accountId;
+        }
+        existingValue.positions.add(new Position(contract, position, avgCost));
+        ibConnection.ibRequestRepository.setFutureValue(IBRequestRepository.POSITION_REQ_MAP_KEY, existingValue);
     }
 
     @Override
     public void positionEnd() {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
+        ibConnection.ibRequestRepository.removePendingRequest(IBRequestRepository.POSITION_REQ_MAP_KEY);
     }
 
     @Override
-    public void accountSummary(int i, String s, String s1, String s2, String s3) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
+    public void accountSummary(int reqId, String accountId, String tag, String value, String currency) {
+        AccountSummaryResponse existingValue = ibConnection.ibRequestRepository.getFutureValue(String.valueOf(reqId));
+        if(existingValue == null) {
+            existingValue = new AccountSummaryResponse();
+        }
+        existingValue.accountSummaries.add(new AccountSummary(accountId,tag,value,currency));
+        ibConnection.ibRequestRepository.setFutureValue(String.valueOf(reqId), existingValue);
     }
 
     @Override
-    public void accountSummaryEnd(int i) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
+    public void accountSummaryEnd(int reqId) {
+        ibConnection.ibRequestRepository.removePendingRequest(String.valueOf(reqId));
     }
 
     @Override
@@ -246,12 +272,12 @@ public class IBWrapper implements EWrapper {
 
     @Override
     public void error(Exception e) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
+        LOGGER.error("IB Error", e);
     }
 
     @Override
     public void error(String s) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
+        LOGGER.error(s);
     }
 
     @Override
@@ -270,12 +296,12 @@ public class IBWrapper implements EWrapper {
     }
 
     @Override
-    public void positionMulti(int i, String s, String s1, Contract contract, Decimal decimal, double v) {
+    public void positionMulti(int reqId, String account, String modelCode, Contract contract, Decimal pos, double avgCost) {
         LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
     }
 
     @Override
-    public void positionMultiEnd(int i) {
+    public void positionMultiEnd(int reqId) {
         LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
     }
 
@@ -310,8 +336,9 @@ public class IBWrapper implements EWrapper {
     }
 
     @Override
-    public void symbolSamples(int i, ContractDescription[] contractDescriptions) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
+    public void symbolSamples(int reqId, ContractDescription[] contractDescriptions) {
+        ibConnection.ibRequestRepository.setFutureValue(String.valueOf(reqId), contractDescriptions);
+        ibConnection.ibRequestRepository.removePendingRequest(String.valueOf(reqId));
     }
 
     @Override
@@ -390,13 +417,15 @@ public class IBWrapper implements EWrapper {
     }
 
     @Override
-    public void pnl(int i, double v, double v1, double v2) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
+    public void pnl(int reqId, double dailyPnL, double unrealizedPnL, double realizedPnL) {
+        ibConnection.ibRequestRepository.setFutureValue(String.valueOf(reqId), new AccountPnLResponse(dailyPnL, unrealizedPnL, realizedPnL));
+        ibConnection.ibRequestRepository.removePendingRequest(String.valueOf(reqId));
     }
 
     @Override
-    public void pnlSingle(int i, Decimal decimal, double v, double v1, double v2, double v3) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
+    public void pnlSingle(int reqId, Decimal position, double dailyPnL, double unrealizedPnL, double realizedPnL, double value) {
+        ibConnection.ibRequestRepository.setFutureValue(String.valueOf(reqId), new PositionPnLResponse(position, dailyPnL, unrealizedPnL, realizedPnL, value));
+        ibConnection.ibRequestRepository.removePendingRequest(String.valueOf(reqId));
     }
 
     @Override

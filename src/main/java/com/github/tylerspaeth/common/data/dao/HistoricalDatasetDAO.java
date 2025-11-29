@@ -1,7 +1,7 @@
-package com.github.tylerspaeth.data.dao;
+package com.github.tylerspaeth.common.data.dao;
 
 import com.github.tylerspaeth.config.DatasourceConfig;
-import com.github.tylerspaeth.data.entity.HistoricalDataset;
+import com.github.tylerspaeth.common.data.entity.HistoricalDataset;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;

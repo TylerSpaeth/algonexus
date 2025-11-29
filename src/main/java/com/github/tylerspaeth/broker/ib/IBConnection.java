@@ -1,5 +1,8 @@
-package com.github.tylerspaeth.ib;
+package com.github.tylerspaeth.broker.ib;
 
+import com.github.tylerspaeth.broker.datastream.DataFeedKey;
+import com.github.tylerspaeth.common.MultiReaderQueue;
+import com.github.tylerspaeth.broker.response.OHLCV;
 import com.ib.client.EClientSocket;
 import com.ib.client.EJavaSignal;
 import com.ib.client.EReader;
@@ -7,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -25,7 +29,9 @@ public class IBConnection {
     private ScheduledExecutorService scheduler;
 
     public IBRequestRepository ibRequestRepository = new IBRequestRepository();
-    private AtomicInteger nextValidId = new AtomicInteger();
+    public AtomicInteger nextValidId = new AtomicInteger();
+    public final ConcurrentHashMap<DataFeedKey, MultiReaderQueue<OHLCV>> datafeeds = new ConcurrentHashMap<>();
+    public final ConcurrentHashMap<Integer, MultiReaderQueue<OHLCV>> datafeedReqIdMap = new ConcurrentHashMap<>();
 
     // Synchronization
     private final AtomicBoolean readerStarted = new AtomicBoolean(false);
@@ -211,6 +217,5 @@ public class IBConnection {
         }
         nextValidId.set(i);
     }
-
 
 }

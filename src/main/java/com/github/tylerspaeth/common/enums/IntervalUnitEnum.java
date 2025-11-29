@@ -1,4 +1,4 @@
-package com.github.tylerspaeth.enums;
+package com.github.tylerspaeth.common.enums;
 
 /**
  * Enums for the various valid interval units.

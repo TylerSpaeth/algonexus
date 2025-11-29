@@ -1,8 +1,8 @@
-package com.github.tylerspaeth.service;
+package com.github.tylerspaeth.datamanager;
 
-import com.github.tylerspaeth.data.dao.HistoricalDatasetDAO;
-import com.github.tylerspaeth.data.entity.Candlestick;
-import com.github.tylerspaeth.data.entity.HistoricalDataset;
+import com.github.tylerspaeth.common.data.dao.HistoricalDatasetDAO;
+import com.github.tylerspaeth.common.data.entity.Candlestick;
+import com.github.tylerspaeth.common.data.entity.HistoricalDataset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

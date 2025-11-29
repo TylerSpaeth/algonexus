@@ -1,6 +1,6 @@
-package com.github.tylerspaeth.data.entity;
+package com.github.tylerspaeth.common.data.entity;
 
-import com.github.tylerspaeth.enums.AssetTypeEnum;
+import com.github.tylerspaeth.common.enums.AssetTypeEnum;
 import jakarta.persistence.*;
 
 @Entity

@@ -1,8 +1,8 @@
 package com.github.tylerspaeth.ui.controllers.datamanager;
 
-import com.github.tylerspaeth.data.dao.HistoricalDatasetDAO;
-import com.github.tylerspaeth.data.entity.HistoricalDataset;
-import com.github.tylerspaeth.service.DataManagerService;
+import com.github.tylerspaeth.common.data.dao.HistoricalDatasetDAO;
+import com.github.tylerspaeth.common.data.entity.HistoricalDataset;
+import com.github.tylerspaeth.datamanager.DataManagerService;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;

@@ -1,4 +1,4 @@
-package com.github.tylerspaeth.data.entity;
+package com.github.tylerspaeth.common.data.entity;
 
 import jakarta.persistence.*;
 

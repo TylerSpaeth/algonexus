@@ -1,6 +1,6 @@
-package com.github.tylerspaeth.data.entity;
+package com.github.tylerspaeth.common.data.entity;
 
-import com.github.tylerspaeth.enums.IntervalUnitEnum;
+import com.github.tylerspaeth.common.enums.IntervalUnitEnum;
 import jakarta.persistence.*;
 
 import java.sql.Timestamp;

@@ -1,4 +1,4 @@
-package com.github.tylerspaeth.data.dao;
+package com.github.tylerspaeth.common.data.dao;
 
 import com.github.tylerspaeth.config.DatasourceConfig;
 import jakarta.persistence.EntityManager;
