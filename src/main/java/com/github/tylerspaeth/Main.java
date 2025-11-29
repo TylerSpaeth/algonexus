@@ -2,6 +2,7 @@ package com.github.tylerspaeth;
 
 import com.github.tylerspaeth.broker.datastream.DataFeedKey;
 import com.github.tylerspaeth.broker.ib.IBService;
+import com.github.tylerspaeth.common.enums.MarketDataType;
 import com.github.tylerspaeth.ui.GUI;
 import com.ib.client.Contract;
 import com.ib.client.Types;
@@ -18,6 +19,9 @@ public class Main {
         while(!ibService.isConnected()) {}
 
         try {
+
+            ibService.setDataType(MarketDataType.FROZEN_DELAYED);
+
             var symbols = ibService.getMatchingSymbols("USD");
             System.out.println(symbols);
 

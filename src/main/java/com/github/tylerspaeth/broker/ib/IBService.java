@@ -9,6 +9,7 @@ import com.github.tylerspaeth.broker.request.AccountSummaryRequest;
 import com.github.tylerspaeth.broker.request.PositionPnLRequest;
 import com.github.tylerspaeth.broker.response.*;
 import com.github.tylerspaeth.common.BuildableFuture;
+import com.github.tylerspaeth.common.enums.MarketDataType;
 import com.ib.client.Contract;
 import com.ib.client.ContractDescription;
 
@@ -32,6 +33,10 @@ public class IBService implements IAccountService, IDataFeedService, IOrderServi
 
     public boolean isConnected() {
         return ibConnection.client.isConnected();
+    }
+
+    public void setDataType(MarketDataType marketDataType) {
+        ibConnection.client.reqMarketDataType(marketDataType.code);
     }
 
     // ACCOUNT
@@ -133,7 +138,7 @@ public class IBService implements IAccountService, IDataFeedService, IOrderServi
     public UUID subscribeToDataFeed(DataFeedKey dataFeedKey) {
         MultiReaderQueue<OHLCV> queue = ibConnection.datafeeds.get(dataFeedKey);
 
-        ibConnection.client .reqMarketDataType(4);
+        ibConnection.client.reqMarketDataType(4);
 
         if (queue == null) {
 
