@@ -1,4 +1,4 @@
-package com.github.tylerspaeth.broker;
+package com.github.tylerspaeth.broker.response;
 
 import com.ib.client.*;
 
@@ -6,25 +6,25 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class OrderState {
+public class OrderResponse {
 
     public final int orderID;
     public final Contract contract;
     public final Order order;
-    public volatile OrderStatus status = OrderStatus.PendingSubmit;
+    public volatile com.ib.client.OrderStatus status = com.ib.client.OrderStatus.PendingSubmit;
     public volatile int cumulativeFilled = 0;
     public volatile boolean execDetailsEnded = false;
 
     public final List<Execution> executions = Collections.synchronizedList(new ArrayList<>());
     public final List<CommissionAndFeesReport> commissions = Collections.synchronizedList(new ArrayList<>());
 
-    public OrderState(int orderID, Contract contract, Order order) {
+    public OrderResponse(int orderID, Contract contract, Order order) {
         this.orderID = orderID;
         this.contract = contract;
         this.order = order;
     }
 
-    public synchronized void updateFromOrderStatus(int filled, int remaining, double lastFillPrice, OrderStatus newStatus) {
+    public synchronized void updateFromOrderStatus(int filled, int remaining, double lastFillPrice, com.ib.client.OrderStatus newStatus) {
         status = newStatus;
         cumulativeFilled = filled;
     }

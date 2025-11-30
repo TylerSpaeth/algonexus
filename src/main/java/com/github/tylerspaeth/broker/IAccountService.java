@@ -1,21 +1,22 @@
 package com.github.tylerspaeth.broker;
 
-import com.github.tylerspaeth.broker.request.AccountSummaryRequest;
-import com.github.tylerspaeth.broker.request.PositionPnLRequest;
 import com.github.tylerspaeth.broker.response.AccountPnLResponse;
 import com.github.tylerspaeth.broker.response.AccountSummaryResponse;
 import com.github.tylerspaeth.broker.response.PositionPnLResponse;
 import com.github.tylerspaeth.broker.response.PositionResponse;
+import com.ib.controller.AccountSummaryTag;
+
+import java.util.List;
 
 public interface IAccountService {
 
     /**
      * Get account information.
-     * @param accountSummaryRequest A request for the information to receive
+     * @param accountSummaryTags The tags for the information to receive
      * @return AccountSummaryResponse object with account info
      * @throws Exception if something fails while making the request
      */
-    AccountSummaryResponse getAccountSummary(AccountSummaryRequest accountSummaryRequest) throws Exception;
+    AccountSummaryResponse getAccountSummary(List<AccountSummaryTag> accountSummaryTags) throws Exception;
 
     /**
      * Gets all the positions for the active account
@@ -34,10 +35,11 @@ public interface IAccountService {
 
     /**
      * Get PnL information for a specific position.
-     * @param positionPnLRequest Request object defining the position to search for
+     * @param accountId the accountID
+     * @param conId the contractID
      * @return PnL information for the position
      * @throws Exception if something fails while making the request
      */
-    PositionPnLResponse getPositionPnL(PositionPnLRequest positionPnLRequest) throws Exception;
+    PositionPnLResponse getPositionPnL(String accountId, int conId) throws Exception;
 
 }

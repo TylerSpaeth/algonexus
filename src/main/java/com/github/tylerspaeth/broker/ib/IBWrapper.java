@@ -59,7 +59,7 @@ public class IBWrapper implements EWrapper {
                             double lastFillPrice, int clientId,
                             String whyHeld, double mktCapPrice) {
 
-        com.github.tylerspaeth.broker.OrderState state = ibConnection.orderStateMap.get(orderId);
+        OrderResponse state = ibConnection.orderStateMap.get(orderId);
         if (state == null) return;
 
         int filledInt = filled != null ? filled.value().intValue() : 0;
@@ -134,7 +134,7 @@ public class IBWrapper implements EWrapper {
 
     @Override
     public void execDetails(int reqId, Contract contract, Execution execution) {
-        com.github.tylerspaeth.broker.OrderState state = ibConnection.orderStateMap.get(execution.orderId());
+        OrderResponse state = ibConnection.orderStateMap.get(execution.orderId());
         if(state != null) {
             state.addExecution(execution);
         }
@@ -143,7 +143,7 @@ public class IBWrapper implements EWrapper {
     @Override
     public void execDetailsEnd(int reqId) {
         // execDetailsEnd oddly uses reqId, but the orderId equals reqId for orders
-        com.github.tylerspaeth.broker.OrderState state = ibConnection.orderStateMap.get(reqId);
+        OrderResponse state = ibConnection.orderStateMap.get(reqId);
         if (state != null) {
             state.execDetailsEnded = true;
         }
@@ -227,7 +227,7 @@ public class IBWrapper implements EWrapper {
 
     @Override
     public void commissionAndFeesReport(CommissionAndFeesReport commissionAndFeesReport) {
-        for(com.github.tylerspaeth.broker.OrderState state : ibConnection.orderStateMap.values()) {
+        for(OrderResponse state : ibConnection.orderStateMap.values()) {
             if(state.executions.stream().anyMatch(exec -> exec.execId().equals(commissionAndFeesReport.execId()))) {
                 state.addCommission(commissionAndFeesReport);
                 break;

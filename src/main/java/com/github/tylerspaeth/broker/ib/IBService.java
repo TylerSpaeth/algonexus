@@ -3,11 +3,9 @@ package com.github.tylerspaeth.broker.ib;
 import com.github.tylerspaeth.broker.IAccountService;
 import com.github.tylerspaeth.broker.IDataFeedService;
 import com.github.tylerspaeth.broker.IOrderService;
-import com.github.tylerspaeth.broker.OrderState;
+import com.github.tylerspaeth.broker.response.OrderResponse;
 import com.github.tylerspaeth.broker.datastream.DataFeedKey;
 import com.github.tylerspaeth.common.MultiReaderQueue;
-import com.github.tylerspaeth.broker.request.AccountSummaryRequest;
-import com.github.tylerspaeth.broker.request.PositionPnLRequest;
 import com.github.tylerspaeth.broker.response.*;
 import com.github.tylerspaeth.common.BuildableFuture;
 import com.github.tylerspaeth.common.enums.MarketDataType;
@@ -15,8 +13,10 @@ import com.ib.client.Contract;
 import com.ib.client.ContractDescription;
 import com.ib.client.Order;
 import com.ib.client.OrderCancel;
+import com.ib.controller.AccountSummaryTag;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -45,13 +45,13 @@ public class IBService implements IAccountService, IDataFeedService, IOrderServi
     // ACCOUNT
 
     @Override
-    public AccountSummaryResponse getAccountSummary(AccountSummaryRequest accountSummaryRequest) throws Exception {
+    public AccountSummaryResponse getAccountSummary(List<AccountSummaryTag> accountSummaryTags) throws Exception {
         int reqId = ibConnection.nextValidId.getAndIncrement();
         BuildableFuture<AccountSummaryResponse> future = ibConnection.ibRequestRepository.registerPendingRequest(String.valueOf(reqId));
         if(future == null) {
             return null;
         }
-        List<String> tags = accountSummaryRequest.accountSummaryTags().stream().map(Enum::name).toList();
+        List<String> tags = accountSummaryTags.stream().map(Enum::name).toList();
         ibConnection.client.reqAccountSummary(reqId, "All", String.join(",", tags));
         AccountSummaryResponse response;
         try {
@@ -97,13 +97,13 @@ public class IBService implements IAccountService, IDataFeedService, IOrderServi
     }
 
     @Override
-    public PositionPnLResponse getPositionPnL(PositionPnLRequest positionPnLRequest) throws Exception {
+    public PositionPnLResponse getPositionPnL(String accountId, int conId) throws Exception {
         int reqId = ibConnection.nextValidId.getAndIncrement();
         BuildableFuture<PositionPnLResponse> future = ibConnection.ibRequestRepository.registerPendingRequest(String.valueOf(reqId));
         if(future == null) {
             return null;
         }
-        ibConnection.client.reqPnLSingle(reqId, positionPnLRequest.accountId(), "", positionPnLRequest.conId());
+        ibConnection.client.reqPnLSingle(reqId, accountId, "", conId);
         PositionPnLResponse response;
         try {
             response = future.get(REQ_TIMEOUT_MS, TimeUnit.MILLISECONDS);
@@ -192,7 +192,7 @@ public class IBService implements IAccountService, IDataFeedService, IOrderServi
                         storedKey = pairs.getKey();
                     }
                 }
-                ibConnection.client.cancelRealTimeBars(storedKey.reqId());
+                ibConnection.client.cancelRealTimeBars(Objects.requireNonNull(storedKey).reqId());
                 ibConnection.datafeeds.remove(dataFeedKey);
                 ibConnection.datafeedReqIdMap.remove(storedKey.getReqId());
             }
@@ -202,9 +202,9 @@ public class IBService implements IAccountService, IDataFeedService, IOrderServi
     // ORDER
 
     @Override
-    public OrderState placeOrder(Contract contract, Order order) {
+    public OrderResponse placeOrder(Contract contract, Order order) {
         int reqId = ibConnection.nextValidId.getAndIncrement();
-        OrderState state = new OrderState(reqId, contract, order);
+        OrderResponse state = new OrderResponse(reqId, contract, order);
         ibConnection.orderStateMap.put(reqId, state);
         ibConnection.client.placeOrder(reqId, contract, order);
         return state;
@@ -216,7 +216,5 @@ public class IBService implements IAccountService, IDataFeedService, IOrderServi
         ibConnection.client.cancelOrder(orderID, orderCancel);
         return orderCancel;
     }
-
-
 
 }

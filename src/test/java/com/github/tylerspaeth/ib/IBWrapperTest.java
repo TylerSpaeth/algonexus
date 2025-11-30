@@ -1,6 +1,6 @@
 package com.github.tylerspaeth.ib;
 
-import com.github.tylerspaeth.broker.OrderState;
+import com.github.tylerspaeth.broker.response.OrderResponse;
 import com.github.tylerspaeth.broker.ib.IBConnection;
 import com.github.tylerspaeth.broker.ib.IBRequestRepository;
 import com.github.tylerspaeth.broker.ib.IBWrapper;
@@ -38,7 +38,7 @@ class IBWrapperTest {
     @Test
     void orderStatus_updatesOrderStateCorrectly() {
         int orderId = 1;
-        OrderState state = new OrderState(1, null, null);
+        OrderResponse state = new OrderResponse(1, null, null);
         ibConnection.orderStateMap.put(orderId, state);
 
         wrapper.orderStatus(orderId, "Filled", Decimal.get(5), Decimal.get(0), 123.45, 0L, 0, 123.45, 0, "", 0);
@@ -49,7 +49,7 @@ class IBWrapperTest {
     @Test
     void execDetails_addsExecutionToOrderState() {
         int orderId = 2;
-        OrderState state = spy(new OrderState(1, null, null));
+        OrderResponse state = spy(new OrderResponse(1, null, null));
         ibConnection.orderStateMap.put(orderId, state);
 
         Contract contract = new Contract();
@@ -64,7 +64,7 @@ class IBWrapperTest {
     @Test
     void execDetailsEnd_setsExecDetailsEnded() {
         int reqId = 3;
-        OrderState state = new OrderState(1, null, null);
+        OrderResponse state = new OrderResponse(1, null, null);
         ibConnection.orderStateMap.put(reqId, state);
 
         wrapper.execDetailsEnd(reqId);
