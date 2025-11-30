@@ -3,6 +3,7 @@ package com.github.tylerspaeth.broker.ib;
 import com.github.tylerspaeth.broker.IAccountService;
 import com.github.tylerspaeth.broker.IDataFeedService;
 import com.github.tylerspaeth.broker.IOrderService;
+import com.github.tylerspaeth.broker.OrderState;
 import com.github.tylerspaeth.broker.datastream.DataFeedKey;
 import com.github.tylerspaeth.common.MultiReaderQueue;
 import com.github.tylerspaeth.broker.request.AccountSummaryRequest;
@@ -12,6 +13,8 @@ import com.github.tylerspaeth.common.BuildableFuture;
 import com.github.tylerspaeth.common.enums.MarketDataType;
 import com.ib.client.Contract;
 import com.ib.client.ContractDescription;
+import com.ib.client.Order;
+import com.ib.client.OrderCancel;
 
 import java.util.List;
 import java.util.UUID;
@@ -195,5 +198,25 @@ public class IBService implements IAccountService, IDataFeedService, IOrderServi
             }
         }
     }
+
+    // ORDER
+
+    @Override
+    public OrderState placeOrder(Contract contract, Order order) {
+        int reqId = ibConnection.nextValidId.getAndIncrement();
+        OrderState state = new OrderState(reqId, contract, order);
+        ibConnection.orderStateMap.put(reqId, state);
+        ibConnection.client.placeOrder(reqId, contract, order);
+        return state;
+    }
+
+    @Override
+    public OrderCancel cancelOrder(int orderID) {
+        OrderCancel orderCancel = new OrderCancel();
+        ibConnection.client.cancelOrder(orderID, orderCancel);
+        return orderCancel;
+    }
+
+
 
 }

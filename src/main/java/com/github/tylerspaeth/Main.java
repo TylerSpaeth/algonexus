@@ -26,10 +26,10 @@ public class Main {
             System.out.println(symbols);
 
             Contract contract = new Contract();
-            contract.symbol("GBP");
+            contract.symbol("BTC");
             contract.currency("USD");
-            contract.secType(Types.SecType.CASH);
-            contract.exchange("IDEALPRO");
+            contract.secType(Types.SecType.CRYPTO);
+            contract.exchange("PAXOS");
 
             var contractDetails = ibService.getContractDetails(contract);
 
@@ -39,21 +39,28 @@ public class Main {
             var eurusdkey = new DataFeedKey(null, "EUR", "CASH", "IDEALPRO", "USD");
             var eurusduuid = ibService.subscribeToDataFeed(eurusdkey);
 
-            for(int i = 0; i < 5; i++) {
+            var btckey = new DataFeedKey(null, "BTC", "CRYPTO", "PAXOS", "USD");
+            var btcuuid = ibService.subscribeToDataFeed(btckey);
+
+            for(int i = 0; i < 100; i++) {
                 var val1 = ibService.readFromDataFeed(eurusdkey, eurusduuid);
                 var val2 = ibService.readFromDataFeed(gbpusdkey, gbpusduuid);
+                var val3 = ibService.readFromDataFeed(btckey, btcuuid);
                 if(val1.size() > 0) {
                     System.out.println("val1 " + val1.getFirst());
                 }
                 if(val2.size() > 0) {
                     System.out.println("val2 " + val2.getFirst());
                 }
+                if(val3.size() > 0) {
+                    System.out.println("val3 " + val3.getFirst());
+                }
                 Thread.sleep(5000);
             }
 
             ibService.unsubscribeFromDataFeed(gbpusdkey, gbpusduuid);
             ibService.unsubscribeFromDataFeed(eurusdkey, eurusduuid);
-
+            ibService.unsubscribeFromDataFeed(btckey, btcuuid);
 
         } catch (Exception e) {
             throw new RuntimeException(e);

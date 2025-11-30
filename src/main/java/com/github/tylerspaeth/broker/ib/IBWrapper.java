@@ -54,12 +54,26 @@ public class IBWrapper implements EWrapper {
     }
 
     @Override
-    public void orderStatus(int i, String s, Decimal decimal, Decimal decimal1, double v, long l, int i1, double v1, int i2, String s1, double v2) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
+    public void orderStatus(int orderId, String status, Decimal filled, Decimal remaining,
+                            double avgFillPrice, long permId, int parentId,
+                            double lastFillPrice, int clientId,
+                            String whyHeld, double mktCapPrice) {
+
+        com.github.tylerspaeth.broker.OrderState state = ibConnection.orderStateMap.get(orderId);
+        if (state == null) return;
+
+        int filledInt = filled != null ? filled.value().intValue() : 0;
+        int remainingInt = remaining != null ? remaining.value().intValue() : 0;
+
+        state.updateFromOrderStatus(filledInt, remainingInt, lastFillPrice, OrderStatus.valueOf(status));
+
+        if (List.of(OrderStatus.Filled, OrderStatus.Cancelled, OrderStatus.ApiCancelled, OrderStatus.Inactive).contains(state.status) && state.execDetailsEnded) {
+            ibConnection.orderStateMap.remove(orderId);
+        }
     }
 
     @Override
-    public void openOrder(int i, Contract contract, Order order, OrderState orderState) {
+    public void openOrder(int orderID, Contract contract, Order order, OrderState orderState) {
         LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
     }
 
@@ -119,13 +133,20 @@ public class IBWrapper implements EWrapper {
     }
 
     @Override
-    public void execDetails(int i, Contract contract, Execution execution) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
+    public void execDetails(int reqId, Contract contract, Execution execution) {
+        com.github.tylerspaeth.broker.OrderState state = ibConnection.orderStateMap.get(execution.orderId());
+        if(state != null) {
+            state.addExecution(execution);
+        }
     }
 
     @Override
-    public void execDetailsEnd(int i) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
+    public void execDetailsEnd(int reqId) {
+        // execDetailsEnd oddly uses reqId, but the orderId equals reqId for orders
+        com.github.tylerspaeth.broker.OrderState state = ibConnection.orderStateMap.get(reqId);
+        if (state != null) {
+            state.execDetailsEnded = true;
+        }
     }
 
     @Override
@@ -206,7 +227,12 @@ public class IBWrapper implements EWrapper {
 
     @Override
     public void commissionAndFeesReport(CommissionAndFeesReport commissionAndFeesReport) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
+        for(com.github.tylerspaeth.broker.OrderState state : ibConnection.orderStateMap.values()) {
+            if(state.executions.stream().anyMatch(exec -> exec.execId().equals(commissionAndFeesReport.execId()))) {
+                state.addCommission(commissionAndFeesReport);
+                break;
+            }
+        }
     }
 
     @Override
@@ -281,8 +307,8 @@ public class IBWrapper implements EWrapper {
     }
 
     @Override
-    public void error(int i, long l, int i1, String s, String s1) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
+    public void error(int reqId, long errorTime, int errorCode, String errorMsg, String advancedOrderRejectionReason) {
+        LOGGER.error("IB Error. reqId: {}, errorCode: {}, errorMsg: {}, advancedOrderRejectionReason: {}.", reqId, errorCode, errorMsg, advancedOrderRejectionReason);
     }
 
     @Override
@@ -504,402 +530,242 @@ public class IBWrapper implements EWrapper {
     }
 
     @Override
-    public void orderStatusProtoBuf(OrderStatusProto.OrderStatus orderStatus) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void orderStatusProtoBuf(OrderStatusProto.OrderStatus orderStatus) {}
 
     @Override
-    public void openOrderProtoBuf(OpenOrderProto.OpenOrder openOrder) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void openOrderProtoBuf(OpenOrderProto.OpenOrder openOrder) {}
 
     @Override
-    public void openOrdersEndProtoBuf(OpenOrdersEndProto.OpenOrdersEnd openOrdersEnd) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void openOrdersEndProtoBuf(OpenOrdersEndProto.OpenOrdersEnd openOrdersEnd) {}
 
     @Override
-    public void errorProtoBuf(ErrorMessageProto.ErrorMessage errorMessage) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void errorProtoBuf(ErrorMessageProto.ErrorMessage errorMessage) {}
 
     @Override
-    public void execDetailsProtoBuf(ExecutionDetailsProto.ExecutionDetails executionDetails) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void execDetailsProtoBuf(ExecutionDetailsProto.ExecutionDetails executionDetails) {}
 
     @Override
-    public void execDetailsEndProtoBuf(ExecutionDetailsEndProto.ExecutionDetailsEnd executionDetailsEnd) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void execDetailsEndProtoBuf(ExecutionDetailsEndProto.ExecutionDetailsEnd executionDetailsEnd) {}
 
     @Override
-    public void completedOrderProtoBuf(CompletedOrderProto.CompletedOrder completedOrder) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void completedOrderProtoBuf(CompletedOrderProto.CompletedOrder completedOrder) {}
 
     @Override
-    public void completedOrdersEndProtoBuf(CompletedOrdersEndProto.CompletedOrdersEnd completedOrdersEnd) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void completedOrdersEndProtoBuf(CompletedOrdersEndProto.CompletedOrdersEnd completedOrdersEnd) {}
 
     @Override
-    public void orderBoundProtoBuf(OrderBoundProto.OrderBound orderBound) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void orderBoundProtoBuf(OrderBoundProto.OrderBound orderBound) {}
 
     @Override
-    public void contractDataProtoBuf(ContractDataProto.ContractData contractData) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void contractDataProtoBuf(ContractDataProto.ContractData contractData) {}
 
     @Override
-    public void bondContractDataProtoBuf(ContractDataProto.ContractData contractData) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void bondContractDataProtoBuf(ContractDataProto.ContractData contractData) {}
 
     @Override
-    public void contractDataEndProtoBuf(ContractDataEndProto.ContractDataEnd contractDataEnd) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void contractDataEndProtoBuf(ContractDataEndProto.ContractDataEnd contractDataEnd) {}
 
     @Override
-    public void tickPriceProtoBuf(TickPriceProto.TickPrice tickPrice) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void tickPriceProtoBuf(TickPriceProto.TickPrice tickPrice) {}
 
     @Override
-    public void tickSizeProtoBuf(TickSizeProto.TickSize tickSize) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void tickSizeProtoBuf(TickSizeProto.TickSize tickSize) {}
 
     @Override
-    public void tickOptionComputationProtoBuf(TickOptionComputationProto.TickOptionComputation tickOptionComputation) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void tickOptionComputationProtoBuf(TickOptionComputationProto.TickOptionComputation tickOptionComputation) {}
 
     @Override
-    public void tickGenericProtoBuf(TickGenericProto.TickGeneric tickGeneric) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void tickGenericProtoBuf(TickGenericProto.TickGeneric tickGeneric) {}
 
     @Override
-    public void tickStringProtoBuf(TickStringProto.TickString tickString) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void tickStringProtoBuf(TickStringProto.TickString tickString) {}
 
     @Override
-    public void tickSnapshotEndProtoBuf(TickSnapshotEndProto.TickSnapshotEnd tickSnapshotEnd) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void tickSnapshotEndProtoBuf(TickSnapshotEndProto.TickSnapshotEnd tickSnapshotEnd) {}
 
     @Override
-    public void updateMarketDepthProtoBuf(MarketDepthProto.MarketDepth marketDepth) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void updateMarketDepthProtoBuf(MarketDepthProto.MarketDepth marketDepth) {}
 
     @Override
-    public void updateMarketDepthL2ProtoBuf(MarketDepthL2Proto.MarketDepthL2 marketDepthL2) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void updateMarketDepthL2ProtoBuf(MarketDepthL2Proto.MarketDepthL2 marketDepthL2) {}
 
     @Override
-    public void marketDataTypeProtoBuf(MarketDataTypeProto.MarketDataType marketDataType) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void marketDataTypeProtoBuf(MarketDataTypeProto.MarketDataType marketDataType) {}
 
     @Override
-    public void tickReqParamsProtoBuf(TickReqParamsProto.TickReqParams tickReqParams) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void tickReqParamsProtoBuf(TickReqParamsProto.TickReqParams tickReqParams) {}
 
     @Override
-    public void updateAccountValueProtoBuf(AccountValueProto.AccountValue accountValue) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void updateAccountValueProtoBuf(AccountValueProto.AccountValue accountValue) {}
 
     @Override
-    public void updatePortfolioProtoBuf(PortfolioValueProto.PortfolioValue portfolioValue) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void updatePortfolioProtoBuf(PortfolioValueProto.PortfolioValue portfolioValue) {}
 
     @Override
-    public void updateAccountTimeProtoBuf(AccountUpdateTimeProto.AccountUpdateTime accountUpdateTime) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void updateAccountTimeProtoBuf(AccountUpdateTimeProto.AccountUpdateTime accountUpdateTime) {}
 
     @Override
-    public void accountDataEndProtoBuf(AccountDataEndProto.AccountDataEnd accountDataEnd) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void accountDataEndProtoBuf(AccountDataEndProto.AccountDataEnd accountDataEnd) {}
 
     @Override
-    public void managedAccountsProtoBuf(ManagedAccountsProto.ManagedAccounts managedAccounts) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void managedAccountsProtoBuf(ManagedAccountsProto.ManagedAccounts managedAccounts) {}
 
     @Override
-    public void positionProtoBuf(PositionProto.Position position) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void positionProtoBuf(PositionProto.Position position) {}
 
     @Override
-    public void positionEndProtoBuf(PositionEndProto.PositionEnd positionEnd) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void positionEndProtoBuf(PositionEndProto.PositionEnd positionEnd) {}
 
     @Override
-    public void accountSummaryProtoBuf(AccountSummaryProto.AccountSummary accountSummary) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void accountSummaryProtoBuf(AccountSummaryProto.AccountSummary accountSummary) {}
 
     @Override
-    public void accountSummaryEndProtoBuf(AccountSummaryEndProto.AccountSummaryEnd accountSummaryEnd) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void accountSummaryEndProtoBuf(AccountSummaryEndProto.AccountSummaryEnd accountSummaryEnd) {}
 
     @Override
-    public void positionMultiProtoBuf(PositionMultiProto.PositionMulti positionMulti) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void positionMultiProtoBuf(PositionMultiProto.PositionMulti positionMulti) {}
 
     @Override
-    public void positionMultiEndProtoBuf(PositionMultiEndProto.PositionMultiEnd positionMultiEnd) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void positionMultiEndProtoBuf(PositionMultiEndProto.PositionMultiEnd positionMultiEnd) {}
 
     @Override
-    public void accountUpdateMultiProtoBuf(AccountUpdateMultiProto.AccountUpdateMulti accountUpdateMulti) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void accountUpdateMultiProtoBuf(AccountUpdateMultiProto.AccountUpdateMulti accountUpdateMulti) {}
 
     @Override
-    public void accountUpdateMultiEndProtoBuf(AccountUpdateMultiEndProto.AccountUpdateMultiEnd accountUpdateMultiEnd) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void accountUpdateMultiEndProtoBuf(AccountUpdateMultiEndProto.AccountUpdateMultiEnd accountUpdateMultiEnd) {}
 
     @Override
-    public void historicalDataProtoBuf(HistoricalDataProto.HistoricalData historicalData) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void historicalDataProtoBuf(HistoricalDataProto.HistoricalData historicalData) {}
 
     @Override
-    public void historicalDataUpdateProtoBuf(HistoricalDataUpdateProto.HistoricalDataUpdate historicalDataUpdate) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void historicalDataUpdateProtoBuf(HistoricalDataUpdateProto.HistoricalDataUpdate historicalDataUpdate) {}
 
     @Override
-    public void historicalDataEndProtoBuf(HistoricalDataEndProto.HistoricalDataEnd historicalDataEnd) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void historicalDataEndProtoBuf(HistoricalDataEndProto.HistoricalDataEnd historicalDataEnd) {}
 
     @Override
-    public void realTimeBarTickProtoBuf(RealTimeBarTickProto.RealTimeBarTick realTimeBarTick) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void realTimeBarTickProtoBuf(RealTimeBarTickProto.RealTimeBarTick realTimeBarTick) {}
 
     @Override
-    public void headTimestampProtoBuf(HeadTimestampProto.HeadTimestamp headTimestamp) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void headTimestampProtoBuf(HeadTimestampProto.HeadTimestamp headTimestamp) {}
 
     @Override
-    public void histogramDataProtoBuf(HistogramDataProto.HistogramData histogramData) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void histogramDataProtoBuf(HistogramDataProto.HistogramData histogramData) {}
 
     @Override
-    public void historicalTicksProtoBuf(HistoricalTicksProto.HistoricalTicks historicalTicks) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void historicalTicksProtoBuf(HistoricalTicksProto.HistoricalTicks historicalTicks) {}
 
     @Override
-    public void historicalTicksBidAskProtoBuf(HistoricalTicksBidAskProto.HistoricalTicksBidAsk historicalTicksBidAsk) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void historicalTicksBidAskProtoBuf(HistoricalTicksBidAskProto.HistoricalTicksBidAsk historicalTicksBidAsk) {}
 
     @Override
-    public void historicalTicksLastProtoBuf(HistoricalTicksLastProto.HistoricalTicksLast historicalTicksLast) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void historicalTicksLastProtoBuf(HistoricalTicksLastProto.HistoricalTicksLast historicalTicksLast) {}
 
     @Override
-    public void tickByTickDataProtoBuf(TickByTickDataProto.TickByTickData tickByTickData) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void tickByTickDataProtoBuf(TickByTickDataProto.TickByTickData tickByTickData) {}
 
     @Override
-    public void updateNewsBulletinProtoBuf(NewsBulletinProto.NewsBulletin newsBulletin) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void updateNewsBulletinProtoBuf(NewsBulletinProto.NewsBulletin newsBulletin) {}
 
     @Override
-    public void newsArticleProtoBuf(NewsArticleProto.NewsArticle newsArticle) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void newsArticleProtoBuf(NewsArticleProto.NewsArticle newsArticle) {}
 
     @Override
-    public void newsProvidersProtoBuf(NewsProvidersProto.NewsProviders newsProviders) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void newsProvidersProtoBuf(NewsProvidersProto.NewsProviders newsProviders) {}
 
     @Override
-    public void historicalNewsProtoBuf(HistoricalNewsProto.HistoricalNews historicalNews) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void historicalNewsProtoBuf(HistoricalNewsProto.HistoricalNews historicalNews) {}
 
     @Override
-    public void historicalNewsEndProtoBuf(HistoricalNewsEndProto.HistoricalNewsEnd historicalNewsEnd) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void historicalNewsEndProtoBuf(HistoricalNewsEndProto.HistoricalNewsEnd historicalNewsEnd) {}
 
     @Override
-    public void wshMetaDataProtoBuf(WshMetaDataProto.WshMetaData wshMetaData) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void wshMetaDataProtoBuf(WshMetaDataProto.WshMetaData wshMetaData) {}
 
     @Override
-    public void wshEventDataProtoBuf(WshEventDataProto.WshEventData wshEventData) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void wshEventDataProtoBuf(WshEventDataProto.WshEventData wshEventData) {}
 
     @Override
-    public void tickNewsProtoBuf(TickNewsProto.TickNews tickNews) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void tickNewsProtoBuf(TickNewsProto.TickNews tickNews) {}
 
     @Override
-    public void scannerParametersProtoBuf(ScannerParametersProto.ScannerParameters scannerParameters) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void scannerParametersProtoBuf(ScannerParametersProto.ScannerParameters scannerParameters) {}
 
     @Override
-    public void scannerDataProtoBuf(ScannerDataProto.ScannerData scannerData) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void scannerDataProtoBuf(ScannerDataProto.ScannerData scannerData) {}
 
     @Override
-    public void fundamentalsDataProtoBuf(FundamentalsDataProto.FundamentalsData fundamentalsData) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void fundamentalsDataProtoBuf(FundamentalsDataProto.FundamentalsData fundamentalsData) {}
 
     @Override
-    public void pnlProtoBuf(PnLProto.PnL pnL) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void pnlProtoBuf(PnLProto.PnL pnL) {}
 
     @Override
-    public void pnlSingleProtoBuf(PnLSingleProto.PnLSingle pnLSingle) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void pnlSingleProtoBuf(PnLSingleProto.PnLSingle pnLSingle) {}
 
     @Override
-    public void receiveFAProtoBuf(ReceiveFAProto.ReceiveFA receiveFA) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void receiveFAProtoBuf(ReceiveFAProto.ReceiveFA receiveFA) {}
 
     @Override
-    public void replaceFAEndProtoBuf(ReplaceFAEndProto.ReplaceFAEnd replaceFAEnd) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void replaceFAEndProtoBuf(ReplaceFAEndProto.ReplaceFAEnd replaceFAEnd) {}
 
     @Override
-    public void commissionAndFeesReportProtoBuf(CommissionAndFeesReportProto.CommissionAndFeesReport commissionAndFeesReport) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void commissionAndFeesReportProtoBuf(CommissionAndFeesReportProto.CommissionAndFeesReport commissionAndFeesReport) {}
 
     @Override
-    public void historicalScheduleProtoBuf(HistoricalScheduleProto.HistoricalSchedule historicalSchedule) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void historicalScheduleProtoBuf(HistoricalScheduleProto.HistoricalSchedule historicalSchedule) {}
 
     @Override
-    public void rerouteMarketDataRequestProtoBuf(RerouteMarketDataRequestProto.RerouteMarketDataRequest rerouteMarketDataRequest) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void rerouteMarketDataRequestProtoBuf(RerouteMarketDataRequestProto.RerouteMarketDataRequest rerouteMarketDataRequest) {}
 
     @Override
-    public void rerouteMarketDepthRequestProtoBuf(RerouteMarketDepthRequestProto.RerouteMarketDepthRequest rerouteMarketDepthRequest) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void rerouteMarketDepthRequestProtoBuf(RerouteMarketDepthRequestProto.RerouteMarketDepthRequest rerouteMarketDepthRequest) {}
 
     @Override
-    public void secDefOptParameterProtoBuf(SecDefOptParameterProto.SecDefOptParameter secDefOptParameter) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void secDefOptParameterProtoBuf(SecDefOptParameterProto.SecDefOptParameter secDefOptParameter) {}
 
     @Override
-    public void secDefOptParameterEndProtoBuf(SecDefOptParameterEndProto.SecDefOptParameterEnd secDefOptParameterEnd) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void secDefOptParameterEndProtoBuf(SecDefOptParameterEndProto.SecDefOptParameterEnd secDefOptParameterEnd) {}
 
     @Override
-    public void softDollarTiersProtoBuf(SoftDollarTiersProto.SoftDollarTiers softDollarTiers) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void softDollarTiersProtoBuf(SoftDollarTiersProto.SoftDollarTiers softDollarTiers) {}
 
     @Override
-    public void familyCodesProtoBuf(FamilyCodesProto.FamilyCodes familyCodes) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void familyCodesProtoBuf(FamilyCodesProto.FamilyCodes familyCodes) {}
 
     @Override
-    public void symbolSamplesProtoBuf(SymbolSamplesProto.SymbolSamples symbolSamples) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void symbolSamplesProtoBuf(SymbolSamplesProto.SymbolSamples symbolSamples) {}
 
     @Override
-    public void smartComponentsProtoBuf(SmartComponentsProto.SmartComponents smartComponents) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void smartComponentsProtoBuf(SmartComponentsProto.SmartComponents smartComponents) {}
 
     @Override
-    public void marketRuleProtoBuf(MarketRuleProto.MarketRule marketRule) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void marketRuleProtoBuf(MarketRuleProto.MarketRule marketRule) {}
 
     @Override
-    public void userInfoProtoBuf(UserInfoProto.UserInfo userInfo) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void userInfoProtoBuf(UserInfoProto.UserInfo userInfo) {}
 
     @Override
-    public void nextValidIdProtoBuf(NextValidIdProto.NextValidId nextValidId) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void nextValidIdProtoBuf(NextValidIdProto.NextValidId nextValidId) {}
 
     @Override
-    public void currentTimeProtoBuf(CurrentTimeProto.CurrentTime currentTime) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void currentTimeProtoBuf(CurrentTimeProto.CurrentTime currentTime) {}
 
     @Override
-    public void currentTimeInMillisProtoBuf(CurrentTimeInMillisProto.CurrentTimeInMillis currentTimeInMillis) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void currentTimeInMillisProtoBuf(CurrentTimeInMillisProto.CurrentTimeInMillis currentTimeInMillis) {}
 
     @Override
-    public void verifyMessageApiProtoBuf(VerifyMessageApiProto.VerifyMessageApi verifyMessageApi) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void verifyMessageApiProtoBuf(VerifyMessageApiProto.VerifyMessageApi verifyMessageApi) {}
 
     @Override
-    public void verifyCompletedProtoBuf(VerifyCompletedProto.VerifyCompleted verifyCompleted) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void verifyCompletedProtoBuf(VerifyCompletedProto.VerifyCompleted verifyCompleted) {}
 
     @Override
-    public void displayGroupListProtoBuf(DisplayGroupListProto.DisplayGroupList displayGroupList) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void displayGroupListProtoBuf(DisplayGroupListProto.DisplayGroupList displayGroupList) {}
 
     @Override
-    public void displayGroupUpdatedProtoBuf(DisplayGroupUpdatedProto.DisplayGroupUpdated displayGroupUpdated) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void displayGroupUpdatedProtoBuf(DisplayGroupUpdatedProto.DisplayGroupUpdated displayGroupUpdated) {}
 
     @Override
-    public void marketDepthExchangesProtoBuf(MarketDepthExchangesProto.MarketDepthExchanges marketDepthExchanges) {
-        LOGGER.warn("{} has not been setup.", Thread.currentThread().getStackTrace()[1].getMethodName());
-    }
+    public void marketDepthExchangesProtoBuf(MarketDepthExchangesProto.MarketDepthExchanges marketDepthExchanges) {}
 }

@@ -1,5 +1,6 @@
 package com.github.tylerspaeth.broker.ib;
 
+import com.github.tylerspaeth.broker.OrderState;
 import com.github.tylerspaeth.broker.datastream.DataFeedKey;
 import com.github.tylerspaeth.common.MultiReaderQueue;
 import com.github.tylerspaeth.broker.response.OHLCV;
@@ -24,7 +25,7 @@ public class IBConnection {
 
     private final IBWrapper wrapper = new IBWrapper(this);
     private final EJavaSignal signal = new EJavaSignal();
-    public final EClientSocket client = new EClientSocket(wrapper, signal);
+    public EClientSocket client = new EClientSocket(wrapper, signal);
 
     private ScheduledExecutorService scheduler;
 
@@ -32,6 +33,7 @@ public class IBConnection {
     public AtomicInteger nextValidId = new AtomicInteger();
     public final ConcurrentHashMap<DataFeedKey, MultiReaderQueue<OHLCV>> datafeeds = new ConcurrentHashMap<>();
     public final ConcurrentHashMap<Integer, MultiReaderQueue<OHLCV>> datafeedReqIdMap = new ConcurrentHashMap<>();
+    public ConcurrentHashMap<Integer, OrderState> orderStateMap = new ConcurrentHashMap<>();
 
     // Synchronization
     private final AtomicBoolean readerStarted = new AtomicBoolean(false);
