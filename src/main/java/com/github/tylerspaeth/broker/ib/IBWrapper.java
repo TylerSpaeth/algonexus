@@ -113,9 +113,9 @@ public class IBWrapper implements EWrapper {
         ContractDetailsResponse existingValue = ibConnection.ibRequestRepository.getFutureValue(String.valueOf(reqId));
         if(existingValue == null) {
             existingValue = new ContractDetailsResponse();
+            ibConnection.ibRequestRepository.setFutureValue(String.valueOf(reqId), existingValue);
         }
         existingValue.contractDetails.add(contractDetails);
-        ibConnection.ibRequestRepository.setFutureValue(String.valueOf(reqId), existingValue);
     }
 
     @Override
@@ -123,9 +123,9 @@ public class IBWrapper implements EWrapper {
         ContractDetailsResponse existingValue = ibConnection.ibRequestRepository.getFutureValue(String.valueOf(reqId));
         if(existingValue == null) {
             existingValue = new ContractDetailsResponse();
+            ibConnection.ibRequestRepository.setFutureValue(String.valueOf(reqId), existingValue);
         }
         existingValue.contractDetails.add(contractDetails);
-        ibConnection.ibRequestRepository.setFutureValue(String.valueOf(reqId), existingValue);
     }
 
     @Override
@@ -241,9 +241,9 @@ public class IBWrapper implements EWrapper {
         List<Position> existingValue = ibConnection.ibRequestRepository.getFutureValue(IBRequestRepository.POSITION_REQ_MAP_KEY);
         if(existingValue == null) {
             existingValue = new ArrayList<>();
+            ibConnection.ibRequestRepository.setFutureValue(IBRequestRepository.POSITION_REQ_MAP_KEY, existingValue);
         }
         existingValue.add(new Position(contract, position, avgCost));
-        ibConnection.ibRequestRepository.setFutureValue(IBRequestRepository.POSITION_REQ_MAP_KEY, existingValue);
     }
 
     @Override
@@ -256,9 +256,9 @@ public class IBWrapper implements EWrapper {
         AccountSummaryResponse existingValue = ibConnection.ibRequestRepository.getFutureValue(String.valueOf(reqId));
         if(existingValue == null) {
             existingValue = new AccountSummaryResponse();
+            ibConnection.ibRequestRepository.setFutureValue(String.valueOf(reqId), existingValue);
         }
         existingValue.accountSummaries.add(new AccountSummary(accountId,tag,value,currency));
-        ibConnection.ibRequestRepository.setFutureValue(String.valueOf(reqId), existingValue);
     }
 
     @Override
