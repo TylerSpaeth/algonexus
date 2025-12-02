@@ -9,10 +9,7 @@ import com.github.tylerspaeth.common.MultiReaderQueue;
 import com.github.tylerspaeth.broker.response.*;
 import com.github.tylerspaeth.common.BuildableFuture;
 import com.github.tylerspaeth.common.enums.MarketDataType;
-import com.ib.client.Contract;
-import com.ib.client.ContractDescription;
-import com.ib.client.Order;
-import com.ib.client.OrderCancel;
+import com.ib.client.*;
 import com.ib.controller.AccountSummaryTag;
 
 import java.util.List;
@@ -22,9 +19,33 @@ import java.util.concurrent.TimeUnit;
 
 public class IBService implements IAccountService, IDataFeedService, IOrderService {
 
+    private static IBService instance;
+
     private final IBConnection ibConnection = new IBConnection();
 
     private static final int REQ_TIMEOUT_MS = 5000;
+
+    private IBService() {}
+
+    /**
+     * For getting the singleton instance of this class. This is the only way that an IBService instance should be
+     * acquired in normal applications.
+     * @return Singleton instance of this class
+     */
+    public static IBService getInstance() {
+        if(instance == null) {
+            instance = new IBService();
+        }
+        return instance;
+    }
+
+    /**
+     * For getting a new IBService instance to use for testing. This should NOT be used for anything other than testing.
+     * @return IBService
+     */
+    public static IBService getInstanceTest() {
+        return new IBService();
+    }
 
     public void connect() {
         ibConnection.connect();
@@ -63,14 +84,14 @@ public class IBService implements IAccountService, IDataFeedService, IOrderServi
     }
 
     @Override
-    public PositionResponse getPositions() throws Exception {
+    public List<Position> getPositions() throws Exception {
         String reqId = IBRequestRepository.POSITION_REQ_MAP_KEY;
-        BuildableFuture<PositionResponse> future = ibConnection.ibRequestRepository.registerPendingRequest(reqId);
+        BuildableFuture<List<Position>> future = ibConnection.ibRequestRepository.registerPendingRequest(reqId);
         if(future == null) {
             return null;
         }
         ibConnection.client.reqPositions();
-        PositionResponse response;
+        List<Position> response;
         try {
             response = future.get(REQ_TIMEOUT_MS, TimeUnit.MILLISECONDS);
         } finally {

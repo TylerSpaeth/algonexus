@@ -34,7 +34,7 @@ public class DataManagerController implements Initializable {
     private DataManagerService dataManagerService;
 
     @FXML
-    public ListView<HistoricalDataset> datasetListView;
+    private ListView<HistoricalDataset> datasetListView;
     private ObservableList<HistoricalDataset> datasets = FXCollections.observableArrayList();
     private HistoricalDataset selectedDataset;
 

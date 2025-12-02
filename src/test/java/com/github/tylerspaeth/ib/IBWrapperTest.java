@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -131,11 +132,10 @@ class IBWrapperTest {
         Contract contract = new Contract();
         wrapper.position(accountId, contract, Decimal.get(5), 100);
 
-        PositionResponse response = ibConnection.ibRequestRepository.getFutureValue(IBRequestRepository.POSITION_REQ_MAP_KEY);
+        List<Position> response = ibConnection.ibRequestRepository.getFutureValue(IBRequestRepository.POSITION_REQ_MAP_KEY);
         assertNotNull(response);
-        assertEquals(accountId, response.accountId);
-        assertEquals(1, response.positions.size());
-        assertEquals(5, response.positions.getFirst().position().value().intValue());
+        assertEquals(1, response.size());
+        assertEquals(5, response.getFirst().position().value().intValue());
     }
 
     @Test
@@ -248,7 +248,7 @@ class IBWrapperTest {
         String accountId = "ACC1";
         Contract contract = new Contract();
         assertDoesNotThrow(() -> wrapper.position(accountId, contract, Decimal.get(5), 100));
-        PositionResponse response = ibConnection.ibRequestRepository.getFutureValue(IBRequestRepository.POSITION_REQ_MAP_KEY);
+        List<Position> response = ibConnection.ibRequestRepository.getFutureValue(IBRequestRepository.POSITION_REQ_MAP_KEY);
         assertNull(response, "If request not registered, future should be null");
     }
 

@@ -1,9 +1,6 @@
 package com.github.tylerspaeth.broker;
 
-import com.github.tylerspaeth.broker.response.AccountPnLResponse;
-import com.github.tylerspaeth.broker.response.AccountSummaryResponse;
-import com.github.tylerspaeth.broker.response.PositionPnLResponse;
-import com.github.tylerspaeth.broker.response.PositionResponse;
+import com.github.tylerspaeth.broker.response.*;
 import com.ib.controller.AccountSummaryTag;
 
 import java.util.List;
@@ -20,10 +17,10 @@ public interface IAccountService {
 
     /**
      * Gets all the positions for the active account
-     * @return PositionResponse with list of Positions
+     * @return list of Positions
      * @throws Exception if something fails while making the request
      */
-    PositionResponse getPositions() throws Exception;
+    List<Position> getPositions() throws Exception;
 
     /**
      * Get PnL information across the entire account

@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -237,12 +238,11 @@ public class IBWrapper implements EWrapper {
 
     @Override
     public void position(String accountId, Contract contract, Decimal position, double avgCost) {
-        PositionResponse existingValue = ibConnection.ibRequestRepository.getFutureValue(IBRequestRepository.POSITION_REQ_MAP_KEY);
+        List<Position> existingValue = ibConnection.ibRequestRepository.getFutureValue(IBRequestRepository.POSITION_REQ_MAP_KEY);
         if(existingValue == null) {
-            existingValue = new PositionResponse();
-            existingValue.accountId = accountId;
+            existingValue = new ArrayList<>();
         }
-        existingValue.positions.add(new Position(contract, position, avgCost));
+        existingValue.add(new Position(contract, position, avgCost));
         ibConnection.ibRequestRepository.setFutureValue(IBRequestRepository.POSITION_REQ_MAP_KEY, existingValue);
     }
 
