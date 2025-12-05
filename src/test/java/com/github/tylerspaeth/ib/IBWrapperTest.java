@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -199,7 +200,7 @@ class IBWrapperTest {
     @Test
     void dumpWithUnknownUUID_returnsNull() {
         MultiReaderQueue<String> queue = new MultiReaderQueue<>();
-        assertNull(queue.dump(UUID.randomUUID()), "Dumping with an unknown UUID should return null");
+        assertEquals(new ArrayList<>(), queue.dump(UUID.randomUUID()));
     }
 
     @Test
