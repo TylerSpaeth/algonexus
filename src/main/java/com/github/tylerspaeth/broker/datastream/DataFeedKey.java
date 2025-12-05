@@ -1,10 +1,8 @@
 package com.github.tylerspaeth.broker.datastream;
 
-import java.util.Objects;
-
 public final class DataFeedKey {
 
-    private Integer reqId;
+    private Integer reqId; // Set when the request is processed. Should not be set by the user.
     private final String ticker;
     private final String secType;
     private final String exchange;
@@ -16,14 +14,6 @@ public final class DataFeedKey {
         this.secType = secType;
         this.exchange = exchange;
         this.currency = currency;
-    }
-
-    public void setReqId(Integer reqId) {
-        this.reqId = reqId;
-    }
-
-    public Integer getReqId() {
-        return reqId;
     }
 
     @Override
@@ -39,31 +29,6 @@ public final class DataFeedKey {
                 cast.currency.equals(currency);
     }
 
-    public Integer reqId() {
-        return reqId;
-    }
-
-    public String ticker() {
-        return ticker;
-    }
-
-    public String secType() {
-        return secType;
-    }
-
-    public String exchange() {
-        return exchange;
-    }
-
-    public String currency() {
-        return currency;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(reqId, ticker, secType, exchange, currency);
-    }
-
     @Override
     public String toString() {
         return "DataFeedKey[" +
@@ -74,5 +39,28 @@ public final class DataFeedKey {
                 "currency=" + currency + ']';
     }
 
+    public void setReqId(Integer reqId) {
+        this.reqId = reqId;
+    }
+
+    public Integer getReqId() {
+        return reqId;
+    }
+
+    public String getTicker() {
+        return ticker;
+    }
+
+    public String getSecType() {
+        return secType;
+    }
+
+    public String getExchange() {
+        return exchange;
+    }
+
+    public String getCurrency() {
+        return currency;
+    }
 
 }

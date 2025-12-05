@@ -2,6 +2,7 @@ package com.github.tylerspaeth;
 
 import com.github.tylerspaeth.broker.datastream.DataFeedKey;
 import com.github.tylerspaeth.broker.ib.IBService;
+import com.github.tylerspaeth.common.enums.IntervalUnitEnum;
 import com.github.tylerspaeth.common.enums.MarketDataType;
 import com.github.tylerspaeth.ui.GUI;
 import com.ib.client.Contract;
@@ -13,7 +14,7 @@ public class Main {
 
 //        String accountId;
 //
-//        IBService ibService = new IBService();
+//        IBService ibService = IBService.getInstance();
 //        ibService.connect();
 //
 //        while(!ibService.isConnected()) {}
@@ -42,10 +43,10 @@ public class Main {
 //            var btckey = new DataFeedKey(null, "BTC", "CRYPTO", "PAXOS", "USD");
 //            var btcuuid = ibService.subscribeToDataFeed(btckey);
 //
-//            for(int i = 0; i < 1; i++) {
-//                var val1 = ibService.readFromDataFeed(eurusdkey, eurusduuid);
-//                var val2 = ibService.readFromDataFeed(gbpusdkey, gbpusduuid);
-//                var val3 = ibService.readFromDataFeed(btckey, btcuuid);
+//            for(int i = 0; i < 100; i++) {
+//                var val1 = ibService.readFromDataFeed(eurusdkey, eurusduuid, 1, IntervalUnitEnum.MINUTE);
+//                var val2 = ibService.readFromDataFeed(gbpusdkey, gbpusduuid, 1, IntervalUnitEnum.MINUTE);
+//                var val3 = ibService.readFromDataFeed(btckey, btcuuid, 1, IntervalUnitEnum.MINUTE);
 //                if(val1.size() > 0) {
 //                    System.out.println("val1 " + val1.getFirst());
 //                }

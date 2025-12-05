@@ -8,16 +8,23 @@ import com.github.tylerspaeth.broker.datastream.DataFeedKey;
 import com.github.tylerspaeth.common.MultiReaderQueue;
 import com.github.tylerspaeth.broker.response.*;
 import com.github.tylerspaeth.common.BuildableFuture;
+import com.github.tylerspaeth.common.enums.IntervalUnitEnum;
 import com.github.tylerspaeth.common.enums.MarketDataType;
 import com.ib.client.*;
 import com.ib.controller.AccountSummaryTag;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 public class IBService implements IAccountService, IDataFeedService, IOrderService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(IBService.class);
 
     private static IBService instance;
 
@@ -176,10 +183,10 @@ public class IBService implements IAccountService, IDataFeedService, IOrderServi
 
             // Make IB request
             Contract contract = new Contract();
-            contract.symbol(dataFeedKey.ticker());
-            contract.secType(dataFeedKey.secType());
-            contract.exchange(dataFeedKey.exchange());
-            contract.currency(dataFeedKey.currency());
+            contract.symbol(dataFeedKey.getTicker());
+            contract.secType(dataFeedKey.getSecType());
+            contract.exchange(dataFeedKey.getExchange());
+            contract.currency(dataFeedKey.getCurrency());
             ibConnection.client.reqRealTimeBars(reqId, contract, 5, "MIDPOINT", false, null);
         }
 
@@ -187,14 +194,44 @@ public class IBService implements IAccountService, IDataFeedService, IOrderServi
     }
 
     @Override
-    public List<OHLCV> readFromDataFeed(DataFeedKey dataFeedKey, UUID uuid) {
+    public List<OHLCV> readFromDataFeed(DataFeedKey dataFeedKey, UUID uuid, int intervalDuration, IntervalUnitEnum intervalUnit) {
         MultiReaderQueue<OHLCV> queue = ibConnection.datafeeds.get(dataFeedKey);
 
         if(queue == null) {
-            return null;
+            LOGGER.warn("Unable to find queue for {}", dataFeedKey);
+            return new ArrayList<>();
         }
 
-        return queue.dump(uuid);
+        if((intervalDuration * intervalUnit.secondsPer) % 5 != 0) {
+            LOGGER.error("Invalid intervalDuration and intervalUnit provided.");
+            return new ArrayList<>();
+        }
+
+        // Build the list of candles to return, combining existing candles if need be
+        int numToCondense = intervalDuration * intervalUnit.secondsPer / 5;
+        List<OHLCV> itemsToReturn = new ArrayList<>();
+        List<OHLCV> itemsToCondense;
+        do {
+            itemsToCondense = queue.read(uuid, numToCondense);
+            if(!itemsToCondense.isEmpty()) {
+                // Aggregate data from all the OHLCV candles that are being combined into one
+                Timestamp time = itemsToCondense.getFirst().time();
+                double open = itemsToCondense.getLast().open();
+                double high = itemsToCondense.getFirst().high();
+                double low = itemsToCondense.getFirst().low();
+                double close = itemsToCondense.getLast().close();
+                double volume = itemsToCondense.getFirst().volume();
+                for(int i = 1; i < itemsToCondense.size(); i++) {
+                    OHLCV item = itemsToCondense.get(i);
+                    high = Math.max(high, item.high());
+                    low = Math.min(low, item.low());
+                    volume += item.volume();
+                }
+                itemsToReturn.add(new OHLCV(time, open, high, low, close, volume));
+            }
+        } while(!itemsToCondense.isEmpty());
+
+        return itemsToReturn;
     }
 
     @Override
@@ -213,7 +250,7 @@ public class IBService implements IAccountService, IDataFeedService, IOrderServi
                         storedKey = pairs.getKey();
                     }
                 }
-                ibConnection.client.cancelRealTimeBars(Objects.requireNonNull(storedKey).reqId());
+                ibConnection.client.cancelRealTimeBars(Objects.requireNonNull(storedKey).getReqId());
                 ibConnection.datafeeds.remove(dataFeedKey);
                 ibConnection.datafeedReqIdMap.remove(storedKey.getReqId());
             }

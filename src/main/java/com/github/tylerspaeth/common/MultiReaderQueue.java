@@ -34,7 +34,7 @@ public class MultiReaderQueue<T> {
     /**
      * Reads from the queue.
      * @param uuid The uuid of the reader.
-     * @return The next object in the queue that the reader has yet to  read.
+     * @return The next object in the queue that the reader has yet to read.
      */
     public T read(UUID uuid) {
         ConcurrentLinkedQueue<T> queue = queues.get(uuid);
@@ -45,6 +45,25 @@ public class MultiReaderQueue<T> {
     }
 
     /**
+     * Reads a fixed number of items from the queue.
+     * @param uuid The uuid of the reader.
+     * @param desiredCount The number of objects to be read from the queue.
+     * @return List with desiredCount objects if there are at least that many objects in the queue.
+     * If there are not enough, then an empty list will be returned.
+     */
+    public List<T> read(UUID uuid, int desiredCount) {
+        ConcurrentLinkedQueue<T> queue = queues.get(uuid);
+        if(queue == null || queue.size() < desiredCount) {
+            return new ArrayList<>();
+        }
+        List<T> items = new ArrayList<>();
+        while(items.size() < desiredCount) {
+            items.add(queue.poll());
+        }
+        return items;
+    }
+
+    /**
      * Gets all the unread objects in the queue for this reader.
      * @param uuid The uuid of the reader.
      * @return List of all unread objects.
@@ -52,7 +71,7 @@ public class MultiReaderQueue<T> {
     public List<T> dump(UUID uuid) {
         ConcurrentLinkedQueue<T> queue = queues.get(uuid);
         if(queue == null) {
-            return null;
+            return new ArrayList<>();
         }
 
         List<T> list = new ArrayList<>();

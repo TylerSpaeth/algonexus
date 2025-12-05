@@ -23,7 +23,7 @@ public class AccountController implements Initializable {
 
     @FXML
     private ListView<Position> positionsListView;
-    private ObservableList<Position> positions = FXCollections.observableArrayList();
+    private final ObservableList<Position> positions = FXCollections.observableArrayList();
 
     @FXML
     private Text accountIDText;

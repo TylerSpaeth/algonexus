@@ -3,6 +3,7 @@ package com.github.tylerspaeth.broker;
 import com.github.tylerspaeth.broker.datastream.DataFeedKey;
 import com.github.tylerspaeth.broker.response.ContractDetailsResponse;
 import com.github.tylerspaeth.broker.response.OHLCV;
+import com.github.tylerspaeth.common.enums.IntervalUnitEnum;
 import com.ib.client.Contract;
 import com.ib.client.ContractDescription;
 
@@ -38,9 +39,11 @@ public interface IDataFeedService {
      * Gathers all the data from the feed since it was last accessed.
      * @param dataFeedKey Defines the datafeed subscription
      * @param uuid the subscription's key for accessing the datafeed
+     * @param intervalDuration used in determining the granularity of the data to retrieve
+     * @param intervalUnit used in determining the granularity of the data to retrieve
      * @return List of all OHLCV data that has not been read yet.
      */
-    List<OHLCV> readFromDataFeed(DataFeedKey dataFeedKey, UUID uuid);
+    List<OHLCV> readFromDataFeed(DataFeedKey dataFeedKey, UUID uuid, int intervalDuration, IntervalUnitEnum intervalUnit);
 
     /**
      * Unsubscribes this subscriber from the data feed.
