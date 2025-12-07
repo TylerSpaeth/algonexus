@@ -1,9 +1,9 @@
 package com.github.tylerspaeth;
 
-import com.github.tylerspaeth.broker.datastream.DataFeedKey;
-import com.github.tylerspaeth.broker.ib.IBService;
+import com.github.tylerspaeth.broker.DataFeedKey;
+import com.github.tylerspaeth.broker.ib.IBSyncWrapper;
 import com.github.tylerspaeth.common.enums.IntervalUnitEnum;
-import com.github.tylerspaeth.common.enums.MarketDataType;
+import com.github.tylerspaeth.common.enums.MarketDataTypeEnum;
 import com.github.tylerspaeth.ui.GUI;
 import com.ib.client.Contract;
 import com.ib.client.Types;
@@ -14,14 +14,14 @@ public class Main {
 
 //        String accountId;
 //
-//        IBService ibService = IBService.getInstance();
+//        IBSyncWrapper ibService = IBSyncWrapper.getInstance().getInstance();
 //        ibService.connect();
 //
 //        while(!ibService.isConnected()) {}
 //
 //        try {
 //
-//            ibService.setDataType(MarketDataType.FROZEN_DELAYED);
+//            ibService.setDataType(MarketDataTypeEnum.FROZEN_DELAYED.code);
 //
 //            var symbols = ibService.getMatchingSymbols("USD");
 //            System.out.println(symbols);

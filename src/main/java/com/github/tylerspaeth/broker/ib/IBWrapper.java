@@ -1,5 +1,9 @@
 package com.github.tylerspaeth.broker.ib;
 
+import com.github.tylerspaeth.broker.response.AccountPnLResponse;
+import com.github.tylerspaeth.broker.response.AccountSummary;
+import com.github.tylerspaeth.broker.response.AccountSummaryResponse;
+import com.github.tylerspaeth.broker.response.OrderResponse;
 import com.github.tylerspaeth.common.MultiReaderQueue;
 import com.github.tylerspaeth.broker.response.*;
 import com.ib.client.*;
@@ -7,8 +11,6 @@ import com.ib.client.protobuf.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -196,9 +198,9 @@ public class IBWrapper implements EWrapper {
     }
 
     @Override
-    public void realtimeBar(int reqId, long date, double open, double high, double low, double close, Decimal volume, Decimal vwap, int count) {
-        MultiReaderQueue<OHLCV> queue = ibConnection.datafeedReqIdMap.get(reqId);
-        queue.write(new OHLCV(Timestamp.from(Instant.ofEpochSecond(date)), open, high, low, close, volume.longValue()));
+    public void realtimeBar(int reqId, long date, double open, double high, double low, double close, Decimal volume, Decimal _vwap, int _count) {
+        MultiReaderQueue<RealtimeBar> queue = ibConnection.datafeedReqIdMap.get(reqId);
+        queue.write(new RealtimeBar(date, open, high, low, close, volume));
     }
 
     @Override

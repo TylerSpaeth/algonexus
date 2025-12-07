@@ -1,47 +1,47 @@
 package com.github.tylerspaeth.broker.ib;
 
-import com.github.tylerspaeth.broker.IAccountService;
-import com.github.tylerspaeth.broker.IDataFeedService;
-import com.github.tylerspaeth.broker.IOrderService;
 import com.github.tylerspaeth.broker.response.OrderResponse;
-import com.github.tylerspaeth.broker.datastream.DataFeedKey;
+import com.github.tylerspaeth.broker.DataFeedKey;
+import com.github.tylerspaeth.broker.response.AccountPnLResponse;
+import com.github.tylerspaeth.broker.response.AccountSummaryResponse;
 import com.github.tylerspaeth.common.MultiReaderQueue;
 import com.github.tylerspaeth.broker.response.*;
 import com.github.tylerspaeth.common.BuildableFuture;
 import com.github.tylerspaeth.common.enums.IntervalUnitEnum;
-import com.github.tylerspaeth.common.enums.MarketDataType;
 import com.ib.client.*;
 import com.ib.controller.AccountSummaryTag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-public class IBService implements IAccountService, IDataFeedService, IOrderService {
+/**
+ * A synchronous wrapper around the IB TWS-API functionality.
+ */
+public class IBSyncWrapper {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(IBService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(IBSyncWrapper.class);
 
-    private static IBService instance;
+    private static IBSyncWrapper instance;
 
     private final IBConnection ibConnection = new IBConnection();
 
     private static final int REQ_TIMEOUT_MS = 5000;
 
-    private IBService() {}
+    private IBSyncWrapper() {}
 
     /**
      * For getting the singleton instance of this class. This is the only way that an IBService instance should be
      * acquired in normal applications.
      * @return Singleton instance of this class
      */
-    public static IBService getInstance() {
+    public static IBSyncWrapper getInstance() {
         if(instance == null) {
-            instance = new IBService();
+            instance = new IBSyncWrapper();
         }
         return instance;
     }
@@ -50,8 +50,8 @@ public class IBService implements IAccountService, IDataFeedService, IOrderServi
      * For getting a new IBService instance to use for testing. This should NOT be used for anything other than testing.
      * @return IBService
      */
-    public static IBService getInstanceTest() {
-        return new IBService();
+    public static IBSyncWrapper getInstanceTest() {
+        return new IBSyncWrapper();
     }
 
     public void connect() {
@@ -66,21 +66,29 @@ public class IBService implements IAccountService, IDataFeedService, IOrderServi
         return ibConnection.client.isConnected();
     }
 
-    public void setDataType(MarketDataType marketDataType) {
-        ibConnection.client.reqMarketDataType(marketDataType.code);
+    /**
+     * Sets the type of market data we will receive
+     * @param marketDataType The code for the type of market data
+     */
+    public void setDataType(int marketDataType) {
+        ibConnection.client.reqMarketDataType(marketDataType);
     }
 
-    // ACCOUNT
-
-    @Override
-    public AccountSummaryResponse getAccountSummary(List<AccountSummaryTag> accountSummaryTags) throws Exception {
+    /**
+     * Get account information.
+     * @param group The group of accounts to search for
+     * @param accountSummaryTags The tags for the information to receive
+     * @return AccountSummaryResponse object with account info
+     * @throws Exception if something fails while making the request
+     */
+    public AccountSummaryResponse getAccountSummary(String group, List<AccountSummaryTag> accountSummaryTags) throws Exception {
         int reqId = ibConnection.nextValidId.getAndIncrement();
         BuildableFuture<AccountSummaryResponse> future = ibConnection.ibRequestRepository.registerPendingRequest(String.valueOf(reqId));
         if(future == null) {
             return null;
         }
         List<String> tags = accountSummaryTags.stream().map(Enum::name).toList();
-        ibConnection.client.reqAccountSummary(reqId, "All", String.join(",", tags));
+        ibConnection.client.reqAccountSummary(reqId, group, String.join(",", tags));
         AccountSummaryResponse response;
         try {
             response = future.get(REQ_TIMEOUT_MS, TimeUnit.MILLISECONDS);
@@ -90,7 +98,11 @@ public class IBService implements IAccountService, IDataFeedService, IOrderServi
         return response;
     }
 
-    @Override
+    /**
+     * Gets all the positions for the active account
+     * @return list of Positions
+     * @throws Exception if something fails while making the request
+     */
     public List<Position> getPositions() throws Exception {
         String reqId = IBRequestRepository.POSITION_REQ_MAP_KEY;
         BuildableFuture<List<Position>> future = ibConnection.ibRequestRepository.registerPendingRequest(reqId);
@@ -107,14 +119,19 @@ public class IBService implements IAccountService, IDataFeedService, IOrderServi
         return response;
     }
 
-    @Override
-    public AccountPnLResponse getAccountPnL(String accountId) throws Exception {
+    /**
+     * Get PnL information across the entire account
+     * @param accountId ID of the account
+     * @return PnL information for the account
+     * @throws Exception if something fails while making the request
+     */
+    public AccountPnLResponse getAccountPnL(String accountId, String modelCode) throws Exception {
         int reqId = ibConnection.nextValidId.getAndIncrement();
         BuildableFuture<AccountPnLResponse> future = ibConnection.ibRequestRepository.registerPendingRequest(String.valueOf(reqId));
         if(future == null) {
             return null;
         }
-        ibConnection.client.reqPnL(reqId, accountId, "");
+        ibConnection.client.reqPnL(reqId, accountId, modelCode);
         AccountPnLResponse response;
         try {
             response = future.get(REQ_TIMEOUT_MS, TimeUnit.MILLISECONDS);
@@ -124,14 +141,20 @@ public class IBService implements IAccountService, IDataFeedService, IOrderServi
         return response;
     }
 
-    @Override
-    public PositionPnLResponse getPositionPnL(String accountId, int conId) throws Exception {
+    /**
+     * Get PnL information for a specific position.
+     * @param accountId the accountID
+     * @param conId the contractID
+     * @return PnL information for the position
+     * @throws Exception if something fails while making the request
+     */
+    public PositionPnLResponse getPositionPnL(String accountId, String modelCode, int conId) throws Exception {
         int reqId = ibConnection.nextValidId.getAndIncrement();
         BuildableFuture<PositionPnLResponse> future = ibConnection.ibRequestRepository.registerPendingRequest(String.valueOf(reqId));
         if(future == null) {
             return null;
         }
-        ibConnection.client.reqPnLSingle(reqId, accountId, "", conId);
+        ibConnection.client.reqPnLSingle(reqId, accountId, modelCode, conId);
         PositionPnLResponse response;
         try {
             response = future.get(REQ_TIMEOUT_MS, TimeUnit.MILLISECONDS);
@@ -141,9 +164,12 @@ public class IBService implements IAccountService, IDataFeedService, IOrderServi
         return response;
     }
 
-    // DATAFEED
-
-    @Override
+    /**
+     * Search for symbols that the match the provided lookup values.
+     * @param lookupValue String to match to ticker or security name
+     * @return ContractDescriptions that match the given lookup value
+     * @throws Exception if something fails while making the request
+     */
     public ContractDescription[] getMatchingSymbols(String lookupValue) throws Exception {
         int reqId = ibConnection.nextValidId.getAndIncrement();
         BuildableFuture<ContractDescription[]> future = ibConnection.ibRequestRepository.registerPendingRequest(String.valueOf(reqId));
@@ -154,7 +180,12 @@ public class IBService implements IAccountService, IDataFeedService, IOrderServi
         return future.get(REQ_TIMEOUT_MS, TimeUnit.MILLISECONDS);
     }
 
-    @Override
+    /**
+     * Gets complete details for a contract in the IB database.
+     * @param contract Base contract to search for additional details for.
+     * @return ContractDetailsResponse that will have a ContractDetails for each match found.
+     * @throws Exception if something fails while making the request
+     */
     public ContractDetailsResponse getContractDetails(Contract contract) throws Exception {
         int reqId = ibConnection.nextValidId.getAndIncrement();
         BuildableFuture<ContractDetailsResponse> future = ibConnection.ibRequestRepository.registerPendingRequest(String.valueOf(reqId));
@@ -165,9 +196,13 @@ public class IBService implements IAccountService, IDataFeedService, IOrderServi
         return future.get(REQ_TIMEOUT_MS, TimeUnit.MILLISECONDS);
     }
 
-    @Override
+    /**
+     * Creates a new subscription that matches the given datafeed.
+     * @param dataFeedKey Key defining the subscription.
+     * @return UUID that is this subscription's unique key to the datafeed
+     */
     public UUID subscribeToDataFeed(DataFeedKey dataFeedKey) {
-        MultiReaderQueue<OHLCV> queue = ibConnection.datafeeds.get(dataFeedKey);
+        MultiReaderQueue<RealtimeBar> queue = ibConnection.datafeeds.get(dataFeedKey);
 
         ibConnection.client.reqMarketDataType(4);
 
@@ -176,7 +211,7 @@ public class IBService implements IAccountService, IDataFeedService, IOrderServi
             // Create the new queue
             int reqId = ibConnection.nextValidId.getAndIncrement();
             dataFeedKey.setReqId(reqId);
-            MultiReaderQueue<OHLCV> newQueue = new MultiReaderQueue<>();
+            MultiReaderQueue<RealtimeBar> newQueue = new MultiReaderQueue<>();
             ibConnection.datafeeds.put(dataFeedKey, newQueue);
             ibConnection.datafeedReqIdMap.put(reqId, newQueue);
             queue = newQueue;
@@ -193,9 +228,16 @@ public class IBService implements IAccountService, IDataFeedService, IOrderServi
         return queue.subscribe();
     }
 
-    @Override
-    public List<OHLCV> readFromDataFeed(DataFeedKey dataFeedKey, UUID uuid, int intervalDuration, IntervalUnitEnum intervalUnit) {
-        MultiReaderQueue<OHLCV> queue = ibConnection.datafeeds.get(dataFeedKey);
+    /**
+     * Gathers all the data from the feed since it was last accessed.
+     * @param dataFeedKey Defines the datafeed subscription
+     * @param uuid the subscription's key for accessing the datafeed
+     * @param intervalDuration used in determining the granularity of the data to retrieve
+     * @param intervalUnit used in determining the granularity of the data to retrieve
+     * @return List of all OHLCV data that has not been read yet.
+     */
+    public List<RealtimeBar> readFromDataFeed(DataFeedKey dataFeedKey, UUID uuid, int intervalDuration, IntervalUnitEnum intervalUnit) {
+        MultiReaderQueue<RealtimeBar> queue = ibConnection.datafeeds.get(dataFeedKey);
 
         if(queue == null) {
             LOGGER.warn("Unable to find queue for {}", dataFeedKey);
@@ -209,34 +251,38 @@ public class IBService implements IAccountService, IDataFeedService, IOrderServi
 
         // Build the list of candles to return, combining existing candles if need be
         int numToCondense = intervalDuration * intervalUnit.secondsPer / 5;
-        List<OHLCV> itemsToReturn = new ArrayList<>();
-        List<OHLCV> itemsToCondense;
+        List<RealtimeBar> itemsToReturn = new ArrayList<>();
+        List<RealtimeBar> itemsToCondense;
         do {
             itemsToCondense = queue.read(uuid, numToCondense);
             if(!itemsToCondense.isEmpty()) {
-                // Aggregate data from all the OHLCV candles that are being combined into one
-                Timestamp time = itemsToCondense.getFirst().time();
+                // Aggregate data from all the bars that are being combined into one
+                long date = itemsToCondense.getFirst().date();
                 double open = itemsToCondense.getLast().open();
                 double high = itemsToCondense.getFirst().high();
                 double low = itemsToCondense.getFirst().low();
                 double close = itemsToCondense.getLast().close();
-                double volume = itemsToCondense.getFirst().volume();
+                Decimal volume = itemsToCondense.getFirst().volume();
                 for(int i = 1; i < itemsToCondense.size(); i++) {
-                    OHLCV item = itemsToCondense.get(i);
+                    RealtimeBar item = itemsToCondense.get(i);
                     high = Math.max(high, item.high());
                     low = Math.min(low, item.low());
-                    volume += item.volume();
+                    volume.add(item.volume());
                 }
-                itemsToReturn.add(new OHLCV(time, open, high, low, close, volume));
+                itemsToReturn.add(new RealtimeBar(date, open, high, low, close, volume));
             }
         } while(!itemsToCondense.isEmpty());
 
         return itemsToReturn;
     }
 
-    @Override
+    /**
+     * Unsubscribes this subscriber from the data feed.
+     * @param dataFeedKey Defines the datafeed subscription
+     * @param uuid the subscription's key for accessing the datafeed
+     */
     public void unsubscribeFromDataFeed(DataFeedKey dataFeedKey, UUID uuid) {
-        MultiReaderQueue<OHLCV> queue = ibConnection.datafeeds.get(dataFeedKey);
+        MultiReaderQueue<RealtimeBar> queue = ibConnection.datafeeds.get(dataFeedKey);
 
         if(queue != null) {
             queue.unsubscribe(uuid);
@@ -257,9 +303,12 @@ public class IBService implements IAccountService, IDataFeedService, IOrderServi
         }
     }
 
-    // ORDER
-
-    @Override
+    /**
+     * Places an order and returns an object to monitor the state of the order.
+     * @param contract The contract to open the order on
+     * @param order The actual details of the order to open
+     * @return OrderResponse object with details of the order's current state
+     */
     public OrderResponse placeOrder(Contract contract, Order order) {
         int reqId = ibConnection.nextValidId.getAndIncrement();
         OrderResponse state = new OrderResponse(reqId, contract, order);
@@ -268,7 +317,11 @@ public class IBService implements IAccountService, IDataFeedService, IOrderServi
         return state;
     }
 
-    @Override
+    /**
+     * Cancels an order.
+     * @param orderID The id of the order to cancel.
+     * @return OrderCancel object with details of order's cancellation
+     */
     public OrderCancel cancelOrder(int orderID) {
         OrderCancel orderCancel = new OrderCancel();
         ibConnection.client.cancelOrder(orderID, orderCancel);

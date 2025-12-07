@@ -1,6 +1,6 @@
 package com.github.tylerspaeth.ui.controllers;
 
-import com.github.tylerspaeth.broker.ib.IBService;
+import com.github.tylerspaeth.broker.ib.IBSyncWrapper;
 import com.github.tylerspaeth.broker.response.Position;
 import com.ib.controller.AccountSummaryTag;
 import javafx.collections.FXCollections;
@@ -47,9 +47,9 @@ public class AccountController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        IBService ibService = IBService.getInstance();
+        IBSyncWrapper ibSyncWrapper = IBSyncWrapper.getInstance();
         try {
-            List<Position> temp = ibService.getPositions();
+            List<Position> temp = ibSyncWrapper.getPositions();
             if(temp != null) {
                 positions.addAll(temp);
             }
@@ -62,10 +62,10 @@ public class AccountController implements Initializable {
 
     private void setTextFields() {
 
-        IBService ibService = IBService.getInstance();
+        IBSyncWrapper ibSyncWrapper = IBSyncWrapper.getInstance();
 
         try {
-            var accountInfo = ibService.getAccountSummary(List.of(AccountSummaryTag.AccountType, AccountSummaryTag.AvailableFunds, AccountSummaryTag.TotalCashValue));
+            var accountInfo = ibSyncWrapper.getAccountSummary("ALL", List.of(AccountSummaryTag.AccountType, AccountSummaryTag.AvailableFunds, AccountSummaryTag.TotalCashValue));
             var accountID = accountInfo.accountSummaries.getFirst().accountID();
             var availableFunds = accountInfo.accountSummaries.get(1).value();
             var totalCashValue = accountInfo.accountSummaries.get(2).value();
@@ -73,7 +73,7 @@ public class AccountController implements Initializable {
             availableFundsText.setText(MessageFormat.format(AVAILABLE_FUNDS, availableFunds));
             totalCashValueText.setText(MessageFormat.format(TOTAL_CASH_VALUE, totalCashValue));
 
-            var pnl = ibService.getAccountPnL(accountID);
+            var pnl = ibSyncWrapper.getAccountPnL(accountID, "");
             dailyPnLText.setText(MessageFormat.format(DAILY_PNL, pnl.dailyPnL()));
             unrealizedPnLText.setText(MessageFormat.format(UNREALIZED_PNL, pnl.unrealizedPnL()));
             realizedPnLText.setText(MessageFormat.format(REALIZED_PNL, pnl.realizedPnL()));

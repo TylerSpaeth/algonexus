@@ -1,4 +1,4 @@
-package com.github.tylerspaeth.broker.datastream;
+package com.github.tylerspaeth.broker;
 
 public final class DataFeedKey {
 

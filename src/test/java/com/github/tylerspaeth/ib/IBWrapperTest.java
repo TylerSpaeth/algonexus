@@ -5,6 +5,8 @@ import com.github.tylerspaeth.broker.ib.IBConnection;
 import com.github.tylerspaeth.broker.ib.IBRequestRepository;
 import com.github.tylerspaeth.broker.ib.IBWrapper;
 import com.github.tylerspaeth.broker.response.*;
+import com.github.tylerspaeth.broker.response.AccountPnLResponse;
+import com.github.tylerspaeth.broker.response.AccountSummaryResponse;
 import com.github.tylerspaeth.common.MultiReaderQueue;
 import com.ib.client.Contract;
 import com.ib.client.Decimal;
@@ -12,8 +14,6 @@ import com.ib.client.Execution;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -82,7 +82,7 @@ class IBWrapperTest {
         IBConnection ibConnection = new IBConnection();
 
         // Subscribe a reader to get a UUID
-        MultiReaderQueue<OHLCV> queue = new MultiReaderQueue<>();
+        MultiReaderQueue<RealtimeBar> queue = new MultiReaderQueue<>();
         UUID readerId = queue.subscribe();
 
         // Put the queue in the connection's map as it would be in real usage
@@ -96,15 +96,15 @@ class IBWrapperTest {
                 Decimal.get(1000), Decimal.get(102.5), 10);
 
         // Read from the queue
-        OHLCV ohlcv = queue.read(readerId);
+        RealtimeBar realtimeBar = queue.read(readerId);
 
-        assertNotNull(ohlcv);
-        assertEquals(100.0, ohlcv.open());
-        assertEquals(110.0, ohlcv.high());
-        assertEquals(90.0, ohlcv.low());
-        assertEquals(105.0, ohlcv.close());
-        assertEquals(1000L, ohlcv.volume());
-        assertEquals(Timestamp.from(Instant.ofEpochSecond(epochSeconds)), ohlcv.time());
+        assertNotNull(realtimeBar);
+        assertEquals(100.0, realtimeBar.open());
+        assertEquals(110.0, realtimeBar.high());
+        assertEquals(90.0, realtimeBar.low());
+        assertEquals(105.0, realtimeBar.close());
+        assertEquals(Decimal.get(1000), realtimeBar.volume());
+        assertEquals(epochSeconds, realtimeBar.date());
     }
 
 

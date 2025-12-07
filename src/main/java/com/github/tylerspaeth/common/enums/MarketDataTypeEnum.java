@@ -1,6 +1,6 @@
 package com.github.tylerspaeth.common.enums;
 
-public enum MarketDataType {
+public enum MarketDataTypeEnum {
 
     LIVE(1),
     FROZEN(2),
@@ -9,7 +9,7 @@ public enum MarketDataType {
 
     public final int code;
 
-    MarketDataType(int code) {
+    MarketDataTypeEnum(int code) {
         this.code = code;
     }
 
