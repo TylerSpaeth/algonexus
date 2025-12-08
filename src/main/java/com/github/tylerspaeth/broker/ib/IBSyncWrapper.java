@@ -1,11 +1,13 @@
 package com.github.tylerspaeth.broker.ib;
 
-import com.github.tylerspaeth.broker.response.OrderResponse;
 import com.github.tylerspaeth.broker.DataFeedKey;
-import com.github.tylerspaeth.broker.response.AccountPnLResponse;
-import com.github.tylerspaeth.broker.response.AccountSummaryResponse;
+import com.github.tylerspaeth.broker.ib.response.AccountPnL;
+import com.github.tylerspaeth.broker.ib.response.AccountSummary;
+import com.github.tylerspaeth.broker.ib.response.OrderResponse;
+import com.github.tylerspaeth.broker.ib.response.Position;
+import com.github.tylerspaeth.broker.ib.response.PositionPnL;
+import com.github.tylerspaeth.broker.ib.response.RealtimeBar;
 import com.github.tylerspaeth.common.MultiReaderQueue;
-import com.github.tylerspaeth.broker.response.*;
 import com.github.tylerspaeth.common.BuildableFuture;
 import com.github.tylerspaeth.common.enums.IntervalUnitEnum;
 import com.ib.client.*;
@@ -78,18 +80,18 @@ public class IBSyncWrapper {
      * Get account information.
      * @param group The group of accounts to search for
      * @param accountSummaryTags The tags for the information to receive
-     * @return AccountSummaryResponse object with account info
+     * @return List of AccountSummary objects
      * @throws Exception if something fails while making the request
      */
-    public AccountSummaryResponse getAccountSummary(String group, List<AccountSummaryTag> accountSummaryTags) throws Exception {
+    public List<AccountSummary> getAccountSummary(String group, List<AccountSummaryTag> accountSummaryTags) throws Exception {
         int reqId = ibConnection.nextValidId.getAndIncrement();
-        BuildableFuture<AccountSummaryResponse> future = ibConnection.ibRequestRepository.registerPendingRequest(String.valueOf(reqId));
+        BuildableFuture<List<AccountSummary>> future = ibConnection.ibRequestRepository.registerPendingRequest(String.valueOf(reqId));
         if(future == null) {
             return null;
         }
         List<String> tags = accountSummaryTags.stream().map(Enum::name).toList();
         ibConnection.client.reqAccountSummary(reqId, group, String.join(",", tags));
-        AccountSummaryResponse response;
+        List<AccountSummary> response;
         try {
             response = future.get(REQ_TIMEOUT_MS, TimeUnit.MILLISECONDS);
         } finally {
@@ -125,14 +127,14 @@ public class IBSyncWrapper {
      * @return PnL information for the account
      * @throws Exception if something fails while making the request
      */
-    public AccountPnLResponse getAccountPnL(String accountId, String modelCode) throws Exception {
+    public AccountPnL getAccountPnL(String accountId, String modelCode) throws Exception {
         int reqId = ibConnection.nextValidId.getAndIncrement();
-        BuildableFuture<AccountPnLResponse> future = ibConnection.ibRequestRepository.registerPendingRequest(String.valueOf(reqId));
+        BuildableFuture<AccountPnL> future = ibConnection.ibRequestRepository.registerPendingRequest(String.valueOf(reqId));
         if(future == null) {
             return null;
         }
         ibConnection.client.reqPnL(reqId, accountId, modelCode);
-        AccountPnLResponse response;
+        AccountPnL response;
         try {
             response = future.get(REQ_TIMEOUT_MS, TimeUnit.MILLISECONDS);
         } finally {
@@ -148,14 +150,14 @@ public class IBSyncWrapper {
      * @return PnL information for the position
      * @throws Exception if something fails while making the request
      */
-    public PositionPnLResponse getPositionPnL(String accountId, String modelCode, int conId) throws Exception {
+    public PositionPnL getPositionPnL(String accountId, String modelCode, int conId) throws Exception {
         int reqId = ibConnection.nextValidId.getAndIncrement();
-        BuildableFuture<PositionPnLResponse> future = ibConnection.ibRequestRepository.registerPendingRequest(String.valueOf(reqId));
+        BuildableFuture<PositionPnL> future = ibConnection.ibRequestRepository.registerPendingRequest(String.valueOf(reqId));
         if(future == null) {
             return null;
         }
         ibConnection.client.reqPnLSingle(reqId, accountId, modelCode, conId);
-        PositionPnLResponse response;
+        PositionPnL response;
         try {
             response = future.get(REQ_TIMEOUT_MS, TimeUnit.MILLISECONDS);
         } finally {
@@ -183,12 +185,12 @@ public class IBSyncWrapper {
     /**
      * Gets complete details for a contract in the IB database.
      * @param contract Base contract to search for additional details for.
-     * @return ContractDetailsResponse that will have a ContractDetails for each match found.
+     * @return List of ContractDetails that will have a ContractDetails for each match found.
      * @throws Exception if something fails while making the request
      */
-    public ContractDetailsResponse getContractDetails(Contract contract) throws Exception {
+    public List<ContractDetails> getContractDetails(Contract contract) throws Exception {
         int reqId = ibConnection.nextValidId.getAndIncrement();
-        BuildableFuture<ContractDetailsResponse> future = ibConnection.ibRequestRepository.registerPendingRequest(String.valueOf(reqId));
+        BuildableFuture<List<ContractDetails>> future = ibConnection.ibRequestRepository.registerPendingRequest(String.valueOf(reqId));
         if(future == null) {
             return null;
         }

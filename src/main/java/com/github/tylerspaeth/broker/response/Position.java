@@ -1,6 +1,5 @@
 package com.github.tylerspaeth.broker.response;
 
-import com.ib.client.Contract;
-import com.ib.client.Decimal;
+import com.github.tylerspaeth.common.data.entity.Symbol;
 
-public record Position(Contract contract, Decimal position, double avgCost) {}
+public record Position(Symbol symbol, double position, double avgCost) {}

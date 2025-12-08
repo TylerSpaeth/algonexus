@@ -1,14 +1,12 @@
 package com.github.tylerspaeth.ib;
 
-import com.github.tylerspaeth.broker.response.OrderResponse;
+import com.github.tylerspaeth.broker.ib.response.*;
 import com.github.tylerspaeth.broker.ib.IBConnection;
 import com.github.tylerspaeth.broker.ib.IBRequestRepository;
 import com.github.tylerspaeth.broker.ib.IBWrapper;
-import com.github.tylerspaeth.broker.response.*;
-import com.github.tylerspaeth.broker.response.AccountPnLResponse;
-import com.github.tylerspaeth.broker.response.AccountSummaryResponse;
 import com.github.tylerspaeth.common.MultiReaderQueue;
 import com.ib.client.Contract;
+import com.ib.client.ContractDetails;
 import com.ib.client.Decimal;
 import com.ib.client.Execution;
 import org.junit.jupiter.api.BeforeEach;
@@ -115,13 +113,13 @@ class IBWrapperTest {
     void contractDetails_addsContractDetailsToRepository() {
         int reqId = 5;
         ibConnection.ibRequestRepository.registerPendingRequest(String.valueOf(reqId));
-        ContractDetailsResponse existing = new ContractDetailsResponse();
+        List<ContractDetails> existing = new ArrayList<>();
         ibConnection.ibRequestRepository.setFutureValue(String.valueOf(reqId), existing);
 
         wrapper.contractDetails(reqId, new com.ib.client.ContractDetails());
 
-        ContractDetailsResponse result = ibConnection.ibRequestRepository.getFutureValue(String.valueOf(reqId));
-        assertEquals(1, result.contractDetails.size());
+        List<ContractDetails> result = ibConnection.ibRequestRepository.getFutureValue(String.valueOf(reqId));
+        assertEquals(1, result.size());
     }
 
     @Test
@@ -145,11 +143,11 @@ class IBWrapperTest {
         ibConnection.ibRequestRepository.registerPendingRequest(String.valueOf(reqId));
         wrapper.accountSummary(reqId, "ACC", "Tag", "Value", "USD");
 
-        AccountSummaryResponse response = ibConnection.ibRequestRepository.getFutureValue(String.valueOf(reqId));
+        List<AccountSummary> response = ibConnection.ibRequestRepository.getFutureValue(String.valueOf(reqId));
         assertNotNull(response);
-        assertEquals(1, response.accountSummaries.size());
-        assertEquals("ACC", response.accountSummaries.getFirst().accountID());
-        assertEquals("Tag", response.accountSummaries.getFirst().tag());
+        assertEquals(1, response.size());
+        assertEquals("ACC", response.getFirst().accountID());
+        assertEquals("Tag", response.getFirst().tag());
     }
 
     @Test
@@ -158,7 +156,7 @@ class IBWrapperTest {
         var future = ibConnection.ibRequestRepository.registerPendingRequest(String.valueOf(reqId));
         wrapper.pnl(reqId, 1.0, 2.0, 3.0);
 
-        AccountPnLResponse response = (AccountPnLResponse) future.get(5, TimeUnit.SECONDS);
+        AccountPnL response = (AccountPnL) future.get(5, TimeUnit.SECONDS);
         assertEquals(1.0, response.dailyPnL());
         assertEquals(2.0, response.unrealizedPnL());
         assertEquals(3.0, response.realizedPnL());
@@ -256,7 +254,7 @@ class IBWrapperTest {
     @Test
     void accountSummaryWithoutRegisteringRequest_returnsNullFuture() {
         wrapper.accountSummary(1, "ACC", "Tag", "Value", "USD");
-        AccountSummaryResponse response = ibConnection.ibRequestRepository.getFutureValue("1");
+        List<AccountSummary> response = ibConnection.ibRequestRepository.getFutureValue("1");
         assertNull(response, "If request not registered, future should be null");
     }
 

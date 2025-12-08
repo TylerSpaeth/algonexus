@@ -1,4 +1,4 @@
-package com.github.tylerspaeth.broker.response;
+package com.github.tylerspaeth.broker.ib.response;
 
 import com.ib.client.*;
 

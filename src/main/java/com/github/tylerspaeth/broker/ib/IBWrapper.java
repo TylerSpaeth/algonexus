@@ -1,11 +1,12 @@
 package com.github.tylerspaeth.broker.ib;
 
-import com.github.tylerspaeth.broker.response.AccountPnLResponse;
-import com.github.tylerspaeth.broker.response.AccountSummary;
-import com.github.tylerspaeth.broker.response.AccountSummaryResponse;
-import com.github.tylerspaeth.broker.response.OrderResponse;
+import com.github.tylerspaeth.broker.ib.response.AccountPnL;
+import com.github.tylerspaeth.broker.ib.response.AccountSummary;
+import com.github.tylerspaeth.broker.ib.response.OrderResponse;
+import com.github.tylerspaeth.broker.ib.response.Position;
+import com.github.tylerspaeth.broker.ib.response.PositionPnL;
+import com.github.tylerspaeth.broker.ib.response.RealtimeBar;
 import com.github.tylerspaeth.common.MultiReaderQueue;
-import com.github.tylerspaeth.broker.response.*;
 import com.ib.client.*;
 import com.ib.client.protobuf.*;
 import org.slf4j.Logger;
@@ -112,22 +113,22 @@ public class IBWrapper implements EWrapper {
 
     @Override
     public void contractDetails(int reqId, ContractDetails contractDetails) {
-        ContractDetailsResponse existingValue = ibConnection.ibRequestRepository.getFutureValue(String.valueOf(reqId));
+        List<ContractDetails> existingValue = ibConnection.ibRequestRepository.getFutureValue(String.valueOf(reqId));
         if(existingValue == null) {
-            existingValue = new ContractDetailsResponse();
+            existingValue = new ArrayList<>();
             ibConnection.ibRequestRepository.setFutureValue(String.valueOf(reqId), existingValue);
         }
-        existingValue.contractDetails.add(contractDetails);
+        existingValue.add(contractDetails);
     }
 
     @Override
     public void bondContractDetails(int reqId, ContractDetails contractDetails) {
-        ContractDetailsResponse existingValue = ibConnection.ibRequestRepository.getFutureValue(String.valueOf(reqId));
+        List<ContractDetails> existingValue = ibConnection.ibRequestRepository.getFutureValue(String.valueOf(reqId));
         if(existingValue == null) {
-            existingValue = new ContractDetailsResponse();
+            existingValue = new ArrayList<>();
             ibConnection.ibRequestRepository.setFutureValue(String.valueOf(reqId), existingValue);
         }
-        existingValue.contractDetails.add(contractDetails);
+        existingValue.add(contractDetails);
     }
 
     @Override
@@ -255,12 +256,12 @@ public class IBWrapper implements EWrapper {
 
     @Override
     public void accountSummary(int reqId, String accountId, String tag, String value, String currency) {
-        AccountSummaryResponse existingValue = ibConnection.ibRequestRepository.getFutureValue(String.valueOf(reqId));
+        List<AccountSummary> existingValue = ibConnection.ibRequestRepository.getFutureValue(String.valueOf(reqId));
         if(existingValue == null) {
-            existingValue = new AccountSummaryResponse();
+            existingValue = new ArrayList<>();
             ibConnection.ibRequestRepository.setFutureValue(String.valueOf(reqId), existingValue);
         }
-        existingValue.accountSummaries.add(new AccountSummary(accountId,tag,value,currency));
+        existingValue.add(new AccountSummary(accountId,tag,value,currency));
     }
 
     @Override
@@ -446,13 +447,13 @@ public class IBWrapper implements EWrapper {
 
     @Override
     public void pnl(int reqId, double dailyPnL, double unrealizedPnL, double realizedPnL) {
-        ibConnection.ibRequestRepository.setFutureValue(String.valueOf(reqId), new AccountPnLResponse(dailyPnL, unrealizedPnL, realizedPnL));
+        ibConnection.ibRequestRepository.setFutureValue(String.valueOf(reqId), new AccountPnL(dailyPnL, unrealizedPnL, realizedPnL));
         ibConnection.ibRequestRepository.removePendingRequest(String.valueOf(reqId));
     }
 
     @Override
     public void pnlSingle(int reqId, Decimal position, double dailyPnL, double unrealizedPnL, double realizedPnL, double value) {
-        ibConnection.ibRequestRepository.setFutureValue(String.valueOf(reqId), new PositionPnLResponse(position, dailyPnL, unrealizedPnL, realizedPnL, value));
+        ibConnection.ibRequestRepository.setFutureValue(String.valueOf(reqId), new PositionPnL(position, dailyPnL, unrealizedPnL, realizedPnL, value));
         ibConnection.ibRequestRepository.removePendingRequest(String.valueOf(reqId));
     }
 

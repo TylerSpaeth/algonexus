@@ -1,8 +1,8 @@
 package com.github.tylerspaeth.ui.controllers;
 
-import com.github.tylerspaeth.broker.ib.IBSyncWrapper;
+import com.github.tylerspaeth.broker.ib.IBAccountService;
+import com.github.tylerspaeth.broker.response.AccountSummary;
 import com.github.tylerspaeth.broker.response.Position;
-import com.ib.controller.AccountSummaryTag;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -20,6 +20,8 @@ import java.util.ResourceBundle;
 public class AccountController implements Initializable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AccountController.class);
+
+    private final IBAccountService accountService = new IBAccountService();
 
     @FXML
     private ListView<Position> positionsListView;
@@ -47,40 +49,24 @@ public class AccountController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        IBSyncWrapper ibSyncWrapper = IBSyncWrapper.getInstance();
-        try {
-            List<Position> temp = ibSyncWrapper.getPositions();
-            if(temp != null) {
-                positions.addAll(temp);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        List<Position> temp = accountService.getPositions();
+        if(temp != null) {
+            positions.addAll(temp);
         }
         positionsListView.setItems(positions);
         setTextFields();
     }
 
     private void setTextFields() {
+        AccountSummary accountSummary = accountService.getAccountSummary();
+        accountIDText.setText(MessageFormat.format(ACCOUNTID, accountSummary.accountID()));
+        availableFundsText.setText(MessageFormat.format(AVAILABLE_FUNDS, accountSummary.availableFunds()));
+        totalCashValueText.setText(MessageFormat.format(TOTAL_CASH_VALUE, accountSummary.totalCashValue()));
 
-        IBSyncWrapper ibSyncWrapper = IBSyncWrapper.getInstance();
-
-        try {
-            var accountInfo = ibSyncWrapper.getAccountSummary("ALL", List.of(AccountSummaryTag.AccountType, AccountSummaryTag.AvailableFunds, AccountSummaryTag.TotalCashValue));
-            var accountID = accountInfo.accountSummaries.getFirst().accountID();
-            var availableFunds = accountInfo.accountSummaries.get(1).value();
-            var totalCashValue = accountInfo.accountSummaries.get(2).value();
-            accountIDText.setText(MessageFormat.format(ACCOUNTID, accountID));
-            availableFundsText.setText(MessageFormat.format(AVAILABLE_FUNDS, availableFunds));
-            totalCashValueText.setText(MessageFormat.format(TOTAL_CASH_VALUE, totalCashValue));
-
-            var pnl = ibSyncWrapper.getAccountPnL(accountID, "");
-            dailyPnLText.setText(MessageFormat.format(DAILY_PNL, pnl.dailyPnL()));
-            unrealizedPnLText.setText(MessageFormat.format(UNREALIZED_PNL, pnl.unrealizedPnL()));
-            realizedPnLText.setText(MessageFormat.format(REALIZED_PNL, pnl.realizedPnL()));
-
-        } catch (Exception e) {
-            LOGGER.error("Failed to set account text fields.", e );
-        }
+        var pnl = accountService.getAccountPnL();
+        dailyPnLText.setText(MessageFormat.format(DAILY_PNL, pnl.dailyPnL()));
+        unrealizedPnLText.setText(MessageFormat.format(UNREALIZED_PNL, pnl.unrealizedPnL()));
+        realizedPnLText.setText(MessageFormat.format(REALIZED_PNL, pnl.realizedPnL()));
     }
 
 }

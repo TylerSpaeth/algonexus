@@ -1,9 +1,9 @@
 package com.github.tylerspaeth.broker.ib;
 
-import com.github.tylerspaeth.broker.response.OrderResponse;
+import com.github.tylerspaeth.broker.ib.response.OrderResponse;
 import com.github.tylerspaeth.broker.DataFeedKey;
 import com.github.tylerspaeth.common.MultiReaderQueue;
-import com.github.tylerspaeth.broker.response.RealtimeBar;
+import com.github.tylerspaeth.broker.ib.response.RealtimeBar;
 import com.ib.client.EClientSocket;
 import com.ib.client.EJavaSignal;
 import com.ib.client.EReader;
