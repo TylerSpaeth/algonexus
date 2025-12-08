@@ -6,19 +6,19 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
- * A queue that supports multiple readers and writers. Readers must be subscribed before they can start reading.
+ * A queue that supports multiple readers and writers. Readers must be subscribed before they can start reading. A thread
+ * can only have one active subscription to a queue.
  * @param <T> The object the queue is being used for
  */
 public class MultiReaderQueue<T> {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(MultiReaderQueue.class);
 
-    private final ConcurrentHashMap<UUID, ConcurrentLinkedQueue<T>> queues = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Long, ConcurrentLinkedQueue<T>> queues = new ConcurrentHashMap<>();
 
     /**
      * Writes to the queue for all readers to read.
@@ -33,11 +33,13 @@ public class MultiReaderQueue<T> {
 
     /**
      * Reads from the queue.
-     * @param uuid The uuid of the reader.
      * @return The next object in the queue that the reader has yet to read.
      */
-    public T read(UUID uuid) {
-        ConcurrentLinkedQueue<T> queue = queues.get(uuid);
+    public T read() {
+
+        long threadID = Thread.currentThread().threadId();
+
+        ConcurrentLinkedQueue<T> queue = queues.get(threadID);
         if(queue == null) {
             return null;
         }
@@ -46,13 +48,15 @@ public class MultiReaderQueue<T> {
 
     /**
      * Reads a fixed number of items from the queue.
-     * @param uuid The uuid of the reader.
      * @param desiredCount The number of objects to be read from the queue.
      * @return List with desiredCount objects if there are at least that many objects in the queue.
      * If there are not enough, then an empty list will be returned.
      */
-    public List<T> read(UUID uuid, int desiredCount) {
-        ConcurrentLinkedQueue<T> queue = queues.get(uuid);
+    public List<T> read(int desiredCount) {
+
+        long threadID = Thread.currentThread().threadId();
+
+        ConcurrentLinkedQueue<T> queue = queues.get(threadID);
         if(queue == null || queue.size() < desiredCount) {
             return new ArrayList<>();
         }
@@ -65,11 +69,13 @@ public class MultiReaderQueue<T> {
 
     /**
      * Gets all the unread objects in the queue for this reader.
-     * @param uuid The uuid of the reader.
      * @return List of all unread objects.
      */
-    public List<T> dump(UUID uuid) {
-        ConcurrentLinkedQueue<T> queue = queues.get(uuid);
+    public List<T> dump() {
+
+        long threadID = Thread.currentThread().threadId();
+
+        ConcurrentLinkedQueue<T> queue = queues.get(threadID);
         if(queue == null) {
             return new ArrayList<>();
         }
@@ -83,24 +89,29 @@ public class MultiReaderQueue<T> {
 
     /**
      * Subscribes a new reader to this queue.
-     * @return UUID used by the reader for subsequent reading
      */
-    public UUID subscribe() {
-        UUID newUUID = UUID.randomUUID();
-        queues.put(newUUID, new ConcurrentLinkedQueue<>());
-
-        LOGGER.info("New subscription: {}.", newUUID);
-
-        return newUUID;
+    public void subscribe() {
+        long threadID = Thread.currentThread().threadId();
+        if(queues.put(threadID, new ConcurrentLinkedQueue<>()) == null) {
+            LOGGER.info("New subscription: {}.", threadID);
+        }
+        else {
+            LOGGER.warn("Thread {} is already subscribed.", threadID);
+        }
     }
 
     /**
      * Unsubscribes a reader from this queue.
-     * @param uuid the key the reader used for reading
      */
-    public void unsubscribe(UUID uuid) {
-        queues.remove(uuid);
-        LOGGER.info("{} unsubscribed.", uuid);
+    public void unsubscribe() {
+        long threadID = Thread.currentThread().threadId();
+        if(queues.remove(threadID) != null) {
+            LOGGER.info("{} unsubscribed.", threadID);
+        }
+        else {
+            LOGGER.warn("Thread {} is not subscribed.", threadID);
+        }
+
     }
 
     /**

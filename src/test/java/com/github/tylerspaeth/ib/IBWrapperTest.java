@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -79,9 +78,9 @@ class IBWrapperTest {
     void realtimeBar_writesToQueue() {
         IBConnection ibConnection = new IBConnection();
 
-        // Subscribe a reader to get a UUID
+        // Subscribe a reader
         MultiReaderQueue<RealtimeBar> queue = new MultiReaderQueue<>();
-        UUID readerId = queue.subscribe();
+        queue.subscribe();
 
         // Put the queue in the connection's map as it would be in real usage
         int reqId = 42;
@@ -94,7 +93,7 @@ class IBWrapperTest {
                 Decimal.get(1000), Decimal.get(102.5), 10);
 
         // Read from the queue
-        RealtimeBar realtimeBar = queue.read(readerId);
+        RealtimeBar realtimeBar = queue.read();
 
         assertNotNull(realtimeBar);
         assertEquals(100.0, realtimeBar.open());
@@ -187,18 +186,18 @@ class IBWrapperTest {
         w.connectionClosed();
         verify(spyConn).onConnectionClosed();
     }
-    
+
     @Test
-    void readWithUnknownUUID_returnsNull() {
+    void readUnsubscribed_returnsNull() {
         MultiReaderQueue<String> queue = new MultiReaderQueue<>();
-        String result = queue.read(UUID.randomUUID());
-        assertNull(result, "Reading with an unknown UUID should return null");
+        String result = queue.read();
+        assertNull(result, "Reading without subscription should return null");
     }
 
     @Test
-    void dumpWithUnknownUUID_returnsNull() {
+    void dumpUnsubscribed_returnsNull() {
         MultiReaderQueue<String> queue = new MultiReaderQueue<>();
-        assertEquals(new ArrayList<>(), queue.dump(UUID.randomUUID()));
+        assertEquals(new ArrayList<>(), queue.dump());
     }
 
     @Test

@@ -18,7 +18,6 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -201,9 +200,8 @@ public class IBSyncWrapper {
     /**
      * Creates a new subscription that matches the given datafeed.
      * @param dataFeedKey Key defining the subscription.
-     * @return UUID that is this subscription's unique key to the datafeed
      */
-    public UUID subscribeToDataFeed(DataFeedKey dataFeedKey) {
+    public void subscribeToDataFeed(DataFeedKey dataFeedKey) {
         MultiReaderQueue<RealtimeBar> queue = ibConnection.datafeeds.get(dataFeedKey);
 
         ibConnection.client.reqMarketDataType(4);
@@ -227,18 +225,17 @@ public class IBSyncWrapper {
             ibConnection.client.reqRealTimeBars(reqId, contract, 5, "MIDPOINT", false, null);
         }
 
-        return queue.subscribe();
+        queue.subscribe();
     }
 
     /**
      * Gathers all the data from the feed since it was last accessed.
      * @param dataFeedKey Defines the datafeed subscription
-     * @param uuid the subscription's key for accessing the datafeed
      * @param intervalDuration used in determining the granularity of the data to retrieve
      * @param intervalUnit used in determining the granularity of the data to retrieve
      * @return List of all OHLCV data that has not been read yet.
      */
-    public List<RealtimeBar> readFromDataFeed(DataFeedKey dataFeedKey, UUID uuid, int intervalDuration, IntervalUnitEnum intervalUnit) {
+    public List<RealtimeBar> readFromDataFeed(DataFeedKey dataFeedKey, int intervalDuration, IntervalUnitEnum intervalUnit) {
         MultiReaderQueue<RealtimeBar> queue = ibConnection.datafeeds.get(dataFeedKey);
 
         if(queue == null) {
@@ -256,7 +253,7 @@ public class IBSyncWrapper {
         List<RealtimeBar> itemsToReturn = new ArrayList<>();
         List<RealtimeBar> itemsToCondense;
         do {
-            itemsToCondense = queue.read(uuid, numToCondense);
+            itemsToCondense = queue.read(numToCondense);
             if(!itemsToCondense.isEmpty()) {
                 // Aggregate data from all the bars that are being combined into one
                 long date = itemsToCondense.getFirst().date();
@@ -281,13 +278,12 @@ public class IBSyncWrapper {
     /**
      * Unsubscribes this subscriber from the data feed.
      * @param dataFeedKey Defines the datafeed subscription
-     * @param uuid the subscription's key for accessing the datafeed
      */
-    public void unsubscribeFromDataFeed(DataFeedKey dataFeedKey, UUID uuid) {
+    public void unsubscribeFromDataFeed(DataFeedKey dataFeedKey) {
         MultiReaderQueue<RealtimeBar> queue = ibConnection.datafeeds.get(dataFeedKey);
 
         if(queue != null) {
-            queue.unsubscribe(uuid);
+            queue.unsubscribe();
 
             // If there are no more reader reading from the queue, cancel the IB request and delete the data feed
             if(queue.readerCount() == 0) {
