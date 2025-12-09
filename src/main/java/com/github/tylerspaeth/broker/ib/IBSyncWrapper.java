@@ -166,6 +166,8 @@ public class IBSyncWrapper {
     }
 
     /**
+     * THIS IS CURRENTLY FOR DEBUG USE ONLY
+     * <p>
      * Search for symbols that the match the provided lookup values.
      * @param lookupValue String to match to ticker or security name
      * @return ContractDescriptions that match the given lookup value
@@ -182,6 +184,8 @@ public class IBSyncWrapper {
     }
 
     /**
+     * THIS IS CURRENTLY FOR DEBUG USE ONLY
+     * <p>
      * Gets complete details for a contract in the IB database.
      * @param contract Base contract to search for additional details for.
      * @return List of ContractDetails that will have a ContractDetails for each match found.
