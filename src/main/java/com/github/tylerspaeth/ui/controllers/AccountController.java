@@ -1,6 +1,6 @@
 package com.github.tylerspaeth.ui.controllers;
 
-import com.github.tylerspaeth.broker.ib.IBAccountService;
+import com.github.tylerspaeth.broker.ib.service.IBAccountService;
 import com.github.tylerspaeth.broker.response.AccountSummary;
 import com.github.tylerspaeth.broker.response.Position;
 import javafx.collections.FXCollections;

@@ -1,9 +1,14 @@
 package com.github.tylerspaeth.broker.ib;
 
+import com.github.tylerspaeth.broker.ib.response.RealtimeBar;
 import com.github.tylerspaeth.broker.response.AccountPnL;
 import com.github.tylerspaeth.broker.response.PositionPnL;
+import com.github.tylerspaeth.common.data.entity.Candlestick;
 import com.github.tylerspaeth.common.enums.AssetTypeEnum;
 import com.ib.client.Types;
+
+import java.sql.Timestamp;
+import java.time.Instant;
 
 /**
  * Maps IB specific objects / formats into the standard formats used in this application. Also, can do the same in reverse.
@@ -58,6 +63,22 @@ public class IBMapper {
      */
     public static PositionPnL mapPositionPnL(com.github.tylerspaeth.broker.ib.response.PositionPnL positionPnL) {
         return new PositionPnL(positionPnL.position().value().doubleValue(), positionPnL.dailyPnL(), positionPnL.unrealizedPnL(), positionPnL.realizedPnL(), positionPnL.value());
+    }
+
+    /**
+     * Maps an IB RealTimeBar to a Candlestick object.
+     * @param realtimeBar RealTimeBar from IB.
+     * @return Candlestick
+     */
+    public static Candlestick mapRealTimeBarToCandlestick(RealtimeBar realtimeBar) {
+        Candlestick candlestick = new Candlestick();
+        candlestick.setOpen((float)realtimeBar.open());
+        candlestick.setHigh((float)realtimeBar.high());
+        candlestick.setLow((float)realtimeBar.low());
+        candlestick.setClose((float)realtimeBar.close());
+        candlestick.setVolume((float)realtimeBar.volume().longValue());
+        candlestick.setTimestamp(Timestamp.from(Instant.ofEpochSecond(realtimeBar.date())));
+        return candlestick;
     }
 
 }
