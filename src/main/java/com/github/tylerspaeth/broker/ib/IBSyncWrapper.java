@@ -252,6 +252,11 @@ public class IBSyncWrapper {
             return new ArrayList<>();
         }
 
+        // Align the data with the start of a boundary
+        while(queue.peek() != null && queue.peek().date() % ((long) intervalDuration * intervalUnit.secondsPer) != 0) {
+            queue.read();
+        }
+
         // Build the list of candles to return, combining existing candles if need be
         int numToCondense = intervalDuration * intervalUnit.secondsPer / 5;
         List<RealtimeBar> itemsToReturn = new ArrayList<>();

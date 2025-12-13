@@ -88,6 +88,21 @@ public class MultiReaderQueue<T> {
     }
 
     /**
+     * Look at the first element in the queue without removing it.
+     * @return First element in the queue, null if the queue is empty.
+     */
+    public T peek() {
+        long threadID = Thread.currentThread().threadId();
+
+        ConcurrentLinkedQueue<T> queue = queues.get(threadID);
+        if(queue == null) {
+            return null;
+        }
+
+        return queue.peek();
+    }
+
+    /**
      * Subscribes a new reader to this queue.
      */
     public void subscribe() {

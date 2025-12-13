@@ -37,6 +37,17 @@ public class Candlestick {
     @JoinColumn(name = "HistoricalDatasetID", referencedColumnName = "HistoricalDatasetID", nullable = false)
     private HistoricalDataset historicalDataset;
 
+    public Candlestick() {}
+
+    public Candlestick(Float open, Float high, Float low, Float close, Float volume, Timestamp timestamp) {
+        this.open = open;
+        this.high = high;
+        this.low = low;
+        this.close = close;
+        this.volume = volume;
+        this.timestamp = timestamp;
+    }
+
     public Integer getCandlestickID() {
         return candlestickID;
     }
