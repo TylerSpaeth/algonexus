@@ -3,6 +3,8 @@ package com.github.tylerspaeth.common.data.entity;
 import com.github.tylerspaeth.common.enums.AssetTypeEnum;
 import jakarta.persistence.*;
 
+import java.util.List;
+
 @Entity
 @Table(name = "symbols")
 public class Symbol {
@@ -25,6 +27,9 @@ public class Symbol {
     @Column(name = "AssetType")
     @Enumerated(EnumType.STRING)
     private AssetTypeEnum assetType;
+
+    @OneToMany(mappedBy = "symbol", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    private List<HistoricalDataset> historicalDatasets;
 
     @Override
     public String toString() {
@@ -65,6 +70,10 @@ public class Symbol {
 
     public void setAssetType(AssetTypeEnum assetType) {
         this.assetType = assetType;
+    }
+
+    public List<HistoricalDataset> getHistoricalDatasets() {
+        return historicalDatasets;
     }
 
 }

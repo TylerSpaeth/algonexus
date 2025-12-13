@@ -1,0 +1,226 @@
+package com.github.tylerspaeth.broker.backtester;
+
+import com.github.tylerspaeth.broker.IDataFeedService;
+import com.github.tylerspaeth.common.data.dao.CandlestickDAO;
+import com.github.tylerspaeth.common.data.dao.SymbolDAO;
+import com.github.tylerspaeth.common.data.entity.Candlestick;
+import com.github.tylerspaeth.common.data.entity.HistoricalDataset;
+import com.github.tylerspaeth.common.data.entity.Symbol;
+import com.github.tylerspaeth.common.enums.IntervalUnitEnum;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+public class BacktesterDataFeedService implements IDataFeedService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(BacktesterDataFeedService.class);
+
+    private static final Integer MAX_CANDLESTICKS = 100_000;
+
+    private final SymbolDAO symbolDAO;
+    private final CandlestickDAO candlestickDAO;
+
+    private final Map<String, List<HistoricalDataset>> datafeeds = new ConcurrentHashMap<>();
+    private final Map<String, Timestamp> lastSeenOffsets = new ConcurrentHashMap<>();
+
+    public BacktesterDataFeedService(SymbolDAO symbolDAO, CandlestickDAO candlestickDAO) {
+        this.symbolDAO = symbolDAO;
+        this.candlestickDAO = candlestickDAO;
+    }
+
+    @Override
+    public void subscribeToDataFeed(Symbol symbol) {
+
+        Symbol persistedSymbol = symbolDAO.getPersistedVersionOfSymbol(symbol);
+        if(persistedSymbol == null) {
+            LOGGER.error("Symbol {} is not persisted, therefore no data feed can be subscribed to.", symbol);
+            return;
+        }
+
+        List<HistoricalDataset> historicalDatasets = persistedSymbol.getHistoricalDatasets();
+        if(historicalDatasets.isEmpty()) {
+            LOGGER.error("No HistoricalDatasets found for Symbol {}", symbol);
+        }
+
+        String mapKey = persistedSymbol.toString() + "-" + Thread.currentThread().threadId();
+
+        datafeeds.put(mapKey, historicalDatasets);
+        lastSeenOffsets.put(mapKey, Timestamp.from(Instant.EPOCH));
+    }
+
+    @Override
+    public List<Candlestick> readFromDataFeed(Symbol symbol, int intervalDuration, IntervalUnitEnum intervalUnit) {
+
+        // This implementation will use the feed that matches the desired interval duration and unit if possible. Otherwise,
+        // it will take the least granular.
+
+        Symbol persistedSymbol = symbolDAO.getPersistedVersionOfSymbol(symbol);
+        if(persistedSymbol == null) {
+            LOGGER.error("Symbol {} is not persisted, therefore no data feed can be read from.", symbol);
+            return List.of();
+        }
+
+        String mapKey = persistedSymbol.toString() + "-" + Thread.currentThread().threadId();
+
+        List<HistoricalDataset> datasets = datafeeds.get(mapKey);
+        if(datasets == null || datasets.isEmpty()) {
+            LOGGER.error("Symbol {} has no available data feeds.", symbol);
+            return List.of();
+        }
+        else if(datasets.size() > 1) {
+            // Find the best available dataset which will be used for this and any subsequent reads
+            datafeeds.put(mapKey, List.of(findBestHistoricalDataset(datasets, intervalDuration, intervalUnit)));
+        }
+
+        HistoricalDataset dataset = datafeeds.get(mapKey).getFirst();
+        Timestamp lastSeenTime = lastSeenOffsets.get(mapKey);
+
+        if(dataset == null) {
+            return List.of();
+        }
+
+        // Align the first Candlestick
+        Candlestick firstCandlestick = null;
+        while(true) {
+            List<Candlestick> candlesticks = candlestickDAO.getPaginatedCandlesticksFromHistoricalDataset(dataset, lastSeenTime, 1);
+            if(candlesticks.isEmpty()) {
+                break;
+            }
+            firstCandlestick = candlesticks.getFirst();
+            lastSeenTime = firstCandlestick.getTimestamp();
+            if(firstCandlestick.getTimestamp().toInstant().getEpochSecond() % ((long) intervalDuration * intervalUnit.secondsPer) == 0) {
+                break;
+            }
+        }
+
+        if(firstCandlestick == null) {
+            lastSeenOffsets.put(mapKey, lastSeenTime);
+            return List.of();
+        }
+
+        // Determine how many Candlesticks will be condensed into a single Candlestick
+        int numCandlesToCondense = (intervalDuration * intervalUnit.secondsPer) / (dataset.getTimeInterval() * dataset.getIntervalUnit().secondsPer);
+        List<Candlestick> dataFeedToReturn = new ArrayList<>();
+
+        // Determine how many Candlesticks we will pull in this run.
+        int numCandlestickToQuery = MAX_CANDLESTICKS;
+        while(numCandlestickToQuery % numCandlesToCondense != 0 && numCandlestickToQuery > 0) {
+            numCandlestickToQuery--;
+        }
+
+        List<Candlestick> candlesticksToCondense = candlestickDAO.getPaginatedCandlesticksFromHistoricalDataset(dataset, lastSeenTime, numCandlestickToQuery-1);
+        candlesticksToCondense.addFirst(firstCandlestick);
+        lastSeenTime = candlesticksToCondense.getLast().getTimestamp();
+
+        // Build Candlesticks of desired size
+        while(candlesticksToCondense.size() >= numCandlesToCondense) {
+            List<Candlestick> singleCandlestickList = new ArrayList<>();
+            for(int i = 0; i < numCandlesToCondense; i++) {
+                singleCandlestickList.add(candlesticksToCondense.removeFirst());
+            }
+            dataFeedToReturn.add(condenseCandlesticks(singleCandlestickList));
+        }
+
+        lastSeenOffsets.put(mapKey, lastSeenTime);
+        return dataFeedToReturn;
+    }
+
+    @Override
+    public void unsubscribeFromDataFeed(Symbol symbol) {
+        Symbol persistedSymbol = symbolDAO.getPersistedVersionOfSymbol(symbol);
+        if(persistedSymbol == null) {
+            LOGGER.error("Symbol {} is not persisted, therefore can not unsubscribe.", symbol);
+            return;
+        }
+
+        String mapKey = persistedSymbol.toString() + "-" + Thread.currentThread().threadId();
+
+        datafeeds.remove(mapKey);
+        lastSeenOffsets.remove(mapKey);
+    }
+
+    /**
+     * Takes a list of Candlesticks and combines them into one.
+     * @param candlesticks List of Candlesticks.
+     * @return Single Candlestick aggregating the list.
+     */
+    private Candlestick condenseCandlesticks(List<Candlestick> candlesticks) {
+        Float open = null;
+        float high = -Float.MAX_VALUE;
+        float low = Float.MAX_VALUE;
+        Float close = null;
+        float volume = 0;
+        Timestamp time = null;
+        for(int i = 0; i < candlesticks.size()  ; i++) {
+            Candlestick current = candlesticks.get(i);
+            if(i == 0) {
+                open = current.getOpen();
+                time = current.getTimestamp();
+            }
+            if(i == candlesticks.size() - 1) {
+                close = current.getClose();
+            }
+            volume += current.getVolume();
+            low = Math.min(low, current.getLow());
+            high = Math.max(high, current.getHigh());
+        }
+
+        return new Candlestick(open, high, low, close, volume, time);
+    }
+
+    /**
+     * Find the HistoricalDataset that will be best for creating Candlesticks of the given duration and unit.
+     * @param datasets List of HistoricalDatasets to choose from.
+     * @param intervalDuration How many of the interval unit should a Candlestick represent.
+     * @param intervalUnit What unit of time is the Candlestick time in.
+     * @return HistoricalDataset that is best for the use case, null if none can be used.
+     */
+    private HistoricalDataset findBestHistoricalDataset(List<HistoricalDataset> datasets, int intervalDuration, IntervalUnitEnum intervalUnit) {
+        HistoricalDataset bestFeed = null;
+        IntervalUnitEnum bestFeedIntervalUnit;
+        Integer bestFeedIntervalDuration;
+
+        for(HistoricalDataset dataset : datasets) {
+            IntervalUnitEnum feedIntervalUnit = dataset.getIntervalUnit();
+            Integer feedIntervalDuration = dataset.getTimeInterval();
+
+            // Do not consider feeds that are not granular enough
+            if(feedIntervalUnit.compareTo(intervalUnit) > 0 || (feedIntervalUnit.equals(intervalUnit) && feedIntervalDuration > intervalDuration)) {
+                continue;
+            }
+
+            // We need to be able to build the desired Candlestick size from this data
+            if((feedIntervalUnit.secondsPer * feedIntervalDuration) % (intervalDuration * intervalUnit.secondsPer) != 0) {
+                continue;
+            }
+
+            // If we have an exact match for that data we want to use, use it
+            if(feedIntervalDuration.equals(intervalDuration) && feedIntervalUnit.equals(intervalUnit)) {
+                bestFeed = dataset;
+                break;
+            }
+
+            if(bestFeed == null) {
+                bestFeed = dataset;
+                continue;
+            }
+
+            bestFeedIntervalUnit = bestFeed.getIntervalUnit();
+            bestFeedIntervalDuration = bestFeed.getTimeInterval();
+            // If we made it this far, then just take the one that covers a larger time period per candlestick since it will
+            // be more efficient to test with
+            if(bestFeedIntervalDuration * bestFeedIntervalUnit.secondsPer > feedIntervalDuration * feedIntervalUnit.secondsPer) {
+                bestFeed = dataset;
+            }
+        }
+
+        return bestFeed;
+    }
+
+}

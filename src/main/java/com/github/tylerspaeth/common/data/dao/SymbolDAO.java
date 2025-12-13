@@ -52,4 +52,31 @@ public class SymbolDAO {
         return entityManager.createQuery(cq).getSingleResultOrNull();
     }
 
+    /**
+     * Gets the matching persisted version of a non-persisted Symbol.
+     * @param symbol Symbol that is not persisted.
+     * @return Symbol that is persisted.
+     */
+    public Symbol getPersistedVersionOfSymbol(Symbol symbol) {
+        // If the symbolID is set then it must be persisted already
+        if(symbol.getSymbolID() != null) {
+            return symbol;
+        }
+
+        EntityManager entityManager = DatasourceConfig.entityManagerFactory.createEntityManager();
+
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Symbol> cq = cb.createQuery(Symbol.class);
+        Root<Symbol> root = cq.from(Symbol.class);
+
+        Predicate predicate = cb.equal(root.get("ticker"), symbol.getTicker());
+        predicate = cb.and(predicate, cb.equal(root.get("name"), symbol.getName()));
+        predicate = cb.and(predicate, cb.equal(root.get("exchange"), symbol.getExchange()));
+        predicate = cb.and(predicate, cb.equal(root.get("assetType"), symbol.getAssetType()));
+
+        cq.select(root).where(predicate);
+
+        return entityManager.createQuery(cq).getSingleResultOrNull();
+    }
+
 }
