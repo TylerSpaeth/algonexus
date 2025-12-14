@@ -4,6 +4,7 @@ import com.github.tylerspaeth.common.enums.IntervalUnitEnum;
 import jakarta.persistence.*;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -119,6 +120,9 @@ public class HistoricalDataset {
 
 
     public List<Candlestick> getCandlesticks() {
+        if(candlesticks == null) {
+            candlesticks = new ArrayList<>();
+        }
         return candlesticks;
     }
 

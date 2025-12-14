@@ -1,9 +1,6 @@
-package com.github.tylerspaeth.ib;
+package com.github.tylerspaeth.broker.ib;
 
 import com.github.tylerspaeth.broker.ib.response.*;
-import com.github.tylerspaeth.broker.ib.IBConnection;
-import com.github.tylerspaeth.broker.ib.IBRequestRepository;
-import com.github.tylerspaeth.broker.ib.IBWrapper;
 import com.github.tylerspaeth.common.MultiReaderQueue;
 import com.ib.client.Contract;
 import com.ib.client.ContractDetails;

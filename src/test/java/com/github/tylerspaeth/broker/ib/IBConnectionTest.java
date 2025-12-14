@@ -1,6 +1,5 @@
-package com.github.tylerspaeth.ib;
+package com.github.tylerspaeth.broker.ib;
 
-import com.github.tylerspaeth.broker.ib.IBConnection;
 import com.ib.client.EClientSocket;
 import com.ib.client.EJavaSignal;
 import org.junit.jupiter.api.BeforeEach;

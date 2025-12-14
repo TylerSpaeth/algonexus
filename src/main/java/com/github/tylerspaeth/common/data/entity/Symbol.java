@@ -3,6 +3,7 @@ package com.github.tylerspaeth.common.data.entity;
 import com.github.tylerspaeth.common.enums.AssetTypeEnum;
 import jakarta.persistence.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -73,6 +74,9 @@ public class Symbol {
     }
 
     public List<HistoricalDataset> getHistoricalDatasets() {
+        if(historicalDatasets == null) {
+            historicalDatasets = new ArrayList<>();
+        }
         return historicalDatasets;
     }
 

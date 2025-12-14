@@ -12,9 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class BacktesterDataFeedService implements IDataFeedService {
@@ -44,8 +42,9 @@ public class BacktesterDataFeedService implements IDataFeedService {
         }
 
         List<HistoricalDataset> historicalDatasets = persistedSymbol.getHistoricalDatasets();
-        if(historicalDatasets.isEmpty()) {
+        if(historicalDatasets == null || historicalDatasets.isEmpty()) {
             LOGGER.error("No HistoricalDatasets found for Symbol {}", symbol);
+            return;
         }
 
         String mapKey = persistedSymbol.toString() + "-" + Thread.currentThread().threadId();
@@ -75,7 +74,7 @@ public class BacktesterDataFeedService implements IDataFeedService {
         }
         else if(datasets.size() > 1) {
             // Find the best available dataset which will be used for this and any subsequent reads
-            datafeeds.put(mapKey, List.of(findBestHistoricalDataset(datasets, intervalDuration, intervalUnit)));
+            datafeeds.put(mapKey, new ArrayList<>(Collections.singletonList(findBestHistoricalDataset(datasets, intervalDuration, intervalUnit))));
         }
 
         HistoricalDataset dataset = datafeeds.get(mapKey).getFirst();
@@ -114,7 +113,7 @@ public class BacktesterDataFeedService implements IDataFeedService {
             numCandlestickToQuery--;
         }
 
-        List<Candlestick> candlesticksToCondense = candlestickDAO.getPaginatedCandlesticksFromHistoricalDataset(dataset, lastSeenTime, numCandlestickToQuery-1);
+        List<Candlestick> candlesticksToCondense = candlestickDAO.getPaginatedCandlesticksFromHistoricalDataset(dataset, lastSeenTime, numCandlestickToQuery - 1);
         candlesticksToCondense.addFirst(firstCandlestick);
         lastSeenTime = candlesticksToCondense.getLast().getTimestamp();
 
@@ -196,7 +195,7 @@ public class BacktesterDataFeedService implements IDataFeedService {
             }
 
             // We need to be able to build the desired Candlestick size from this data
-            if((feedIntervalUnit.secondsPer * feedIntervalDuration) % (intervalDuration * intervalUnit.secondsPer) != 0) {
+            if((intervalDuration * intervalUnit.secondsPer) % (feedIntervalUnit.secondsPer * feedIntervalDuration)  != 0) {
                 continue;
             }
 
@@ -215,7 +214,7 @@ public class BacktesterDataFeedService implements IDataFeedService {
             bestFeedIntervalDuration = bestFeed.getTimeInterval();
             // If we made it this far, then just take the one that covers a larger time period per candlestick since it will
             // be more efficient to test with
-            if(bestFeedIntervalDuration * bestFeedIntervalUnit.secondsPer > feedIntervalDuration * feedIntervalUnit.secondsPer) {
+            if(bestFeedIntervalDuration * bestFeedIntervalUnit.secondsPer < feedIntervalDuration * feedIntervalUnit.secondsPer) {
                 bestFeed = dataset;
             }
         }
