@@ -29,11 +29,13 @@ public class IBSyncWrapper {
 
     private static IBSyncWrapper instance;
 
-    private final IBConnection ibConnection = new IBConnection();
+    private final IBConnection ibConnection;
 
     private static final int REQ_TIMEOUT_MS = 5000;
 
-    private IBSyncWrapper() {}
+    private IBSyncWrapper(IBConnection ibConnection) {
+        this.ibConnection = ibConnection;
+    }
 
     /**
      * For getting the singleton instance of this class. This is the only way that an IBService instance should be
@@ -42,7 +44,7 @@ public class IBSyncWrapper {
      */
     public static IBSyncWrapper getInstance() {
         if(instance == null) {
-            instance = new IBSyncWrapper();
+            instance = new IBSyncWrapper(new IBConnection());
         }
         return instance;
     }
@@ -51,8 +53,8 @@ public class IBSyncWrapper {
      * For getting a new IBService instance to use for testing. This should NOT be used for anything other than testing.
      * @return IBService
      */
-    public static IBSyncWrapper getInstanceTest() {
-        return new IBSyncWrapper();
+    public static IBSyncWrapper getInstanceTest(IBConnection ibConnection) {
+        return new IBSyncWrapper(ibConnection);
     }
 
     public void connect() {
@@ -208,8 +210,6 @@ public class IBSyncWrapper {
     public void subscribeToDataFeed(DataFeedKey dataFeedKey) {
         MultiReaderQueue<RealtimeBar> queue = ibConnection.datafeeds.get(dataFeedKey);
 
-        ibConnection.client.reqMarketDataType(4);
-
         if (queue == null) {
 
             // Create the new queue
@@ -266,7 +266,7 @@ public class IBSyncWrapper {
             if(!itemsToCondense.isEmpty()) {
                 // Aggregate data from all the bars that are being combined into one
                 long date = itemsToCondense.getFirst().date();
-                double open = itemsToCondense.getLast().open();
+                double open = itemsToCondense.getFirst().open();
                 double high = itemsToCondense.getFirst().high();
                 double low = itemsToCondense.getFirst().low();
                 double close = itemsToCondense.getLast().close();
@@ -275,7 +275,7 @@ public class IBSyncWrapper {
                     RealtimeBar item = itemsToCondense.get(i);
                     high = Math.max(high, item.high());
                     low = Math.min(low, item.low());
-                    volume.add(item.volume());
+                    volume = volume.add(item.volume());
                 }
                 itemsToReturn.add(new RealtimeBar(date, open, high, low, close, volume));
             }

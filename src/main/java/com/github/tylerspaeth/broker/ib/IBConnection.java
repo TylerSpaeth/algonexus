@@ -25,7 +25,7 @@ public class IBConnection {
 
     private final IBWrapper wrapper;
     private final EJavaSignal signal;
-    public final EClientSocket client;
+    public EClientSocket client;
 
     private final ScheduledExecutorService scheduler;
 
@@ -62,6 +62,7 @@ public class IBConnection {
     void setHandshakeLatch(CountDownLatch handshakeLatch) {this.handshakeLatch = handshakeLatch;}
     void setManualDisconnect(boolean manualDisconnect) { this.manualDisconnect.set(manualDisconnect); }
     void setConnecting(boolean connecting) { this.connecting.set(connecting); }
+    IBWrapper getWrapper() { return wrapper; }
 
     /**
      * Initialized a TCP connection via TWS.
