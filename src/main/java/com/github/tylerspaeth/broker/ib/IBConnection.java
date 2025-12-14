@@ -23,17 +23,17 @@ public class IBConnection {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(IBConnection.class);
 
-    private final IBWrapper wrapper = new IBWrapper(this);
-    private final EJavaSignal signal = new EJavaSignal();
-    public EClientSocket client = new EClientSocket(wrapper, signal);
+    private final IBWrapper wrapper;
+    private final EJavaSignal signal;
+    public final EClientSocket client;
 
-    private ScheduledExecutorService scheduler;
+    private final ScheduledExecutorService scheduler;
 
-    public IBRequestRepository ibRequestRepository = new IBRequestRepository();
-    public AtomicInteger nextValidId = new AtomicInteger();
+    public final IBRequestRepository ibRequestRepository = new IBRequestRepository();
+    public final AtomicInteger nextValidId = new AtomicInteger();
     public final ConcurrentHashMap<DataFeedKey, MultiReaderQueue<RealtimeBar>> datafeeds = new ConcurrentHashMap<>();
     public final ConcurrentHashMap<Integer, MultiReaderQueue<RealtimeBar>> datafeedReqIdMap = new ConcurrentHashMap<>();
-    public ConcurrentHashMap<Integer, OrderResponse> orderStateMap = new ConcurrentHashMap<>();
+    public final ConcurrentHashMap<Integer, OrderResponse> orderStateMap = new ConcurrentHashMap<>();
 
     // Synchronization
     private final AtomicBoolean readerStarted = new AtomicBoolean(false);
@@ -42,8 +42,26 @@ public class IBConnection {
     private volatile CountDownLatch handshakeLatch;
 
     public static final int RECONNECT_DELAY_MS = 5000;
-    private static final int MAX_TCP_CONNECTION_WAIT_TIME_MS = 1000;
-    private static final int MAX_HANDSHAKE_TIMEOUT_DURATION_MS = 1000;
+    private static final int MAX_HANDSHAKE_TIMEOUT_DURATION_MS = 5000;
+
+    public IBConnection() {
+        this.scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
+            Thread t = new Thread(r, "ib-connection-scheduler");
+            t.setDaemon(true);
+            return t;
+        });
+        this.wrapper = new IBWrapper(this);
+        this.signal = new EJavaSignal();
+        this.client = new EClientSocket(wrapper, signal);
+    }
+
+    // Package-private for testing
+    boolean isReaderStarted() { return readerStarted.get(); }
+    void setReaderStarted(boolean readerStarted) { this.readerStarted.set(readerStarted); }
+    CountDownLatch getHandshakeLatch() { return handshakeLatch; }
+    void setHandshakeLatch(CountDownLatch handshakeLatch) {this.handshakeLatch = handshakeLatch;}
+    void setManualDisconnect(boolean manualDisconnect) { this.manualDisconnect.set(manualDisconnect); }
+    void setConnecting(boolean connecting) { this.connecting.set(connecting); }
 
     /**
      * Initialized a TCP connection via TWS.
@@ -58,9 +76,6 @@ public class IBConnection {
      */
     public void disconnect() {
         manualDisconnect.set(true);
-        if(scheduler != null) {
-            scheduler.shutdownNow();
-        }
         synchronizedDisconnect();
     }
 
@@ -69,14 +84,13 @@ public class IBConnection {
      * @param delayMS How long to wait before attempting the connection.
      */
     public void scheduleConnection(int delayMS) {
-        restartScheduler();
         scheduler.schedule(this::connectIfNeeded, delayMS, TimeUnit.MILLISECONDS);
     }
 
     /**
      * Attempts the TWS connection if it is needed.
      */
-    private void connectIfNeeded() {
+    void connectIfNeeded() {
         if(manualDisconnect.get()) {
             return;
         }
@@ -95,13 +109,7 @@ public class IBConnection {
             handshakeLatch = new CountDownLatch(1);
             client.eConnect("127.0.0.1", 4002, 1);
 
-            int waited = 0;
-            while(!client.isConnected() && waited < MAX_TCP_CONNECTION_WAIT_TIME_MS) {
-                try {
-                    Thread.sleep(100);
-                    waited += 100;
-                } catch(InterruptedException _) {}
-            }
+            Thread.sleep(500);
 
             if(!client.isConnected()) {
                 LOGGER.warn("TCP connection not initialized in time, retrying in {} seconds", (float) RECONNECT_DELAY_MS / 1000);
@@ -175,19 +183,6 @@ public class IBConnection {
             LOGGER.error("Error disconnecting: ", e);
         } finally {
             readerStarted.set(false);
-        }
-    }
-
-    /**
-     * Restarts the scheduler if it has not been created or is not running
-     */
-    private void restartScheduler() {
-        if(scheduler == null || scheduler.isShutdown() || scheduler.isTerminated()) {
-            scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
-                Thread t = new Thread(r, "IB-Connector");
-                t.setDaemon(true);
-                return t;
-            });
         }
     }
 
