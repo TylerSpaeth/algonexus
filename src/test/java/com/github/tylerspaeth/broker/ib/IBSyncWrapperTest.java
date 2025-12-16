@@ -344,4 +344,148 @@ public class IBSyncWrapperTest {
         Assertions.assertEquals(0, realtimeBars.size());
     }
 
+    @Test
+    public void testReadNeedsAligning() {
+        DataFeedKey dataFeedKey = new DataFeedKey(null, "ticker", "secType", "exchange", "currency");
+        wrapper.subscribeToDataFeed(dataFeedKey);
+        connection.getWrapper().realtimeBar(dataFeedKey.getReqId(), 5, 2, 2, 1, 1.5, Decimal.get(1), null, -1);
+        connection.getWrapper().realtimeBar(dataFeedKey.getReqId(), 10, 2, 2, 1, 1.5, Decimal.get(2), null, -1);
+        connection.getWrapper().realtimeBar(dataFeedKey.getReqId(), 15, 2, 2, 1, 1.5, Decimal.get(3), null, -1);
+        List<RealtimeBar> realtimeBars = wrapper.readFromDataFeed(dataFeedKey, 10, IntervalUnitEnum.SECOND);
+        Assertions.assertEquals(1, realtimeBars.size());
+        Assertions.assertEquals(Decimal.get(5), realtimeBars.getFirst().volume());
+        Assertions.assertEquals(10, realtimeBars.getFirst().date());
+    }
+
+    @Test
+    public void testPlaceOrderDoesNotReturnNull() {
+        Assertions.assertNotNull(wrapper.placeOrder(new Contract(), new Order()));
+    }
+
+    @Test
+    public void testOrderFilledStatusSet() {
+        int reqId = connection.nextValidId.get();
+        OrderResponse orderResponse = wrapper.placeOrder(new Contract(), new Order());
+        connection.getWrapper().orderStatus(reqId, OrderStatus.Submitted.name(), Decimal.ONE, Decimal.get(2), 3, 4, 5, 6, 7, "", 8);
+        Assertions.assertEquals(1, orderResponse.cumulativeFilled);
+        Assertions.assertEquals(OrderStatus.Submitted, orderResponse.status);
+    }
+
+    @Test
+    public void testOrderThatReceivesFilledStatusCanNotBeUpdated() {
+        int reqId = connection.nextValidId.get();
+        OrderResponse orderResponse = wrapper.placeOrder(new Contract(), new Order());
+        orderResponse.execDetailsEnded = true; // Exec details must have ended since otherwise the order was filled but waiting on the stop updating
+        connection.getWrapper().orderStatus(reqId, OrderStatus.Filled.name(), Decimal.ONE, Decimal.get(2), 3, 4, 5, 6, 7, "", 8);
+        connection.getWrapper().orderStatus(reqId, OrderStatus.Submitted.name(), Decimal.get(100), Decimal.get(200), 300, 400, 500, 600, 700, "", 800);
+        Assertions.assertEquals(1, orderResponse.cumulativeFilled);
+        Assertions.assertEquals(OrderStatus.Filled, orderResponse.status);
+    }
+
+    @Test
+    public void testOrderThatReceivesCancelledStatusCanNotBeUpdated() {
+        int reqId = connection.nextValidId.get();
+        OrderResponse orderResponse = wrapper.placeOrder(new Contract(), new Order());
+        orderResponse.execDetailsEnded = true; // Exec details must have ended since otherwise the order was filled but waiting on the stop updating
+        connection.getWrapper().orderStatus(reqId, OrderStatus.Cancelled.name(), Decimal.ONE, Decimal.get(2), 3, 4, 5, 6, 7, "", 8);
+        connection.getWrapper().orderStatus(reqId, OrderStatus.Submitted.name(), Decimal.get(100), Decimal.get(200), 300, 400, 500, 600, 700, "", 800);
+        Assertions.assertEquals(1, orderResponse.cumulativeFilled);
+        Assertions.assertEquals(OrderStatus.Cancelled, orderResponse.status);
+    }
+
+    @Test
+    public void testOrderThatReceivesApiCancelledStatusCanNotBeUpdated() {
+        int reqId = connection.nextValidId.get();
+        OrderResponse orderResponse = wrapper.placeOrder(new Contract(), new Order());
+        orderResponse.execDetailsEnded = true; // Exec details must have ended since otherwise the order was filled but waiting on the stop updating
+        connection.getWrapper().orderStatus(reqId, OrderStatus.ApiCancelled.name(), Decimal.ONE, Decimal.get(2), 3, 4, 5, 6, 7, "", 8);
+        connection.getWrapper().orderStatus(reqId, OrderStatus.Submitted.name(), Decimal.get(100), Decimal.get(200), 300, 400, 500, 600, 700, "", 800);
+        Assertions.assertEquals(1, orderResponse.cumulativeFilled);
+        Assertions.assertEquals(OrderStatus.ApiCancelled, orderResponse.status);
+    }
+
+    @Test
+    public void testOrderThatReceivesInactiveStatusCanNotBeUpdated() {
+        int reqId = connection.nextValidId.get();
+        OrderResponse orderResponse = wrapper.placeOrder(new Contract(), new Order());
+        orderResponse.execDetailsEnded = true; // Exec details must have ended since otherwise the order was filled but waiting on the stop updating
+        connection.getWrapper().orderStatus(reqId, OrderStatus.Inactive.name(), Decimal.ONE, Decimal.get(2), 3, 4, 5, 6, 7, "", 8);
+        connection.getWrapper().orderStatus(reqId, OrderStatus.Submitted.name(), Decimal.get(100), Decimal.get(200), 300, 400, 500, 600, 700, "", 800);
+        Assertions.assertEquals(1, orderResponse.cumulativeFilled);
+        Assertions.assertEquals(OrderStatus.Inactive, orderResponse.status);
+    }
+
+    @Test
+    public void testSubmittedOrderCanBeUpdated() {
+        int reqId = connection.nextValidId.get();
+        OrderResponse orderResponse = wrapper.placeOrder(new Contract(), new Order());
+        connection.getWrapper().orderStatus(reqId, OrderStatus.Submitted.name(), Decimal.get(100), Decimal.get(200), 300, 400, 500, 600, 700, "", 800);
+        connection.getWrapper().orderStatus(reqId, OrderStatus.Filled.name(), Decimal.ONE, Decimal.get(2), 3, 4, 5, 6, 7, "", 8);
+        Assertions.assertEquals(1, orderResponse.cumulativeFilled); // This should be 1 since orderStatus show cumulative filled status for the order
+        Assertions.assertEquals(OrderStatus.Filled, orderResponse.status);
+    }
+
+    @Test
+    public void testExecutionDetailsUpdated() {
+        int reqId = connection.nextValidId.get();
+        OrderResponse orderResponse = wrapper.placeOrder(new Contract(), new Order());
+        Contract contract = new Contract();
+        contract.conid(1);
+        Execution execution1 = new Execution();
+        execution1.execId("execId1");
+        Execution execution2 = new Execution();
+        execution2.execId("execId2");
+        connection.getWrapper().execDetails(reqId, contract, execution1);
+        connection.getWrapper().execDetails(reqId, contract, execution2);
+        Assertions.assertEquals(2, orderResponse.executions.size());
+        Assertions.assertEquals("execId1", orderResponse.executions.getFirst().execId());
+        Assertions.assertEquals("execId2", orderResponse.executions.getLast().execId());
+    }
+
+    @Test
+    public void testCommissionAndFeesReportUpdated() {
+        int reqId = connection.nextValidId.get();
+        OrderResponse orderResponse = wrapper.placeOrder(new Contract(), new Order());
+        Contract contract = new Contract();
+        contract.conid(1);
+        Execution execution1 = new Execution();
+        execution1.execId("execId1");
+        Execution execution2 = new Execution();
+        execution2.execId("execId2");
+        connection.getWrapper().execDetails(reqId, contract, execution1);
+        connection.getWrapper().execDetails(reqId, contract, execution2);
+        CommissionAndFeesReport commissionAndFeesReport1 = new CommissionAndFeesReport();
+        commissionAndFeesReport1.execId("execId1");
+        CommissionAndFeesReport commissionAndFeesReport2 = new CommissionAndFeesReport();
+        commissionAndFeesReport2.execId("execId2");
+        connection.getWrapper().commissionAndFeesReport(commissionAndFeesReport1);
+        connection.getWrapper().commissionAndFeesReport(commissionAndFeesReport2);
+        Assertions.assertEquals(2, orderResponse.commissions.size());
+    }
+
+    @Test
+    public void testCommissionAndFeesReportWithoutExecutionDoesNothing() {
+        CommissionAndFeesReport commissionAndFeesReport1 = new CommissionAndFeesReport();
+        commissionAndFeesReport1.execId("execId1");
+        Assertions.assertDoesNotThrow(() -> connection.getWrapper().commissionAndFeesReport(commissionAndFeesReport1));
+    }
+
+    @Test
+    public void testExecDetailsEndComesInAfterFinishedStatus() {
+        int reqId = connection.nextValidId.get();
+        OrderResponse orderResponse = wrapper.placeOrder(new Contract(), new Order());
+        Execution execution1 = new Execution();
+        execution1.execId("execId1");
+        connection.getWrapper().execDetails(reqId, new Contract(), execution1);
+        connection.getWrapper().orderStatus(reqId, OrderStatus.Filled.name(), Decimal.ONE, Decimal.get(2), 3, 4, 5, 6, 7, "", 8);
+        connection.getWrapper().execDetailsEnd(reqId);
+        Assertions.assertTrue(orderResponse.execDetailsEnded);
+    }
+
+    @Test
+    public void testCancelOrderCallsIB() {
+        Assertions.assertNotNull(wrapper.cancelOrder(1));
+        Mockito.verify(client, Mockito.times(1)).cancelOrder(Mockito.anyInt(), Mockito.any(OrderCancel.class));
+    }
+
 }
