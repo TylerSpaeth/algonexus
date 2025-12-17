@@ -64,9 +64,15 @@ public class AccountController implements Initializable {
         totalCashValueText.setText(MessageFormat.format(TOTAL_CASH_VALUE, accountSummary.totalCashValue()));
 
         var pnl = accountService.getAccountPnL();
-        dailyPnLText.setText(MessageFormat.format(DAILY_PNL, pnl.dailyPnL()));
-        unrealizedPnLText.setText(MessageFormat.format(UNREALIZED_PNL, pnl.unrealizedPnL()));
-        realizedPnLText.setText(MessageFormat.format(REALIZED_PNL, pnl.realizedPnL()));
+        if(pnl != null) {
+            dailyPnLText.setText(MessageFormat.format(DAILY_PNL, pnl.dailyPnL()));
+            unrealizedPnLText.setText(MessageFormat.format(UNREALIZED_PNL, pnl.unrealizedPnL()));
+            realizedPnLText.setText(MessageFormat.format(REALIZED_PNL, pnl.realizedPnL()));
+        } else {
+            dailyPnLText.setText(MessageFormat.format(DAILY_PNL, ""));
+            unrealizedPnLText.setText(MessageFormat.format(UNREALIZED_PNL, ""));
+            realizedPnLText.setText(MessageFormat.format(REALIZED_PNL, ""));
+        }
     }
 
 }
