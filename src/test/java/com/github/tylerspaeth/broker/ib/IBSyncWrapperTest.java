@@ -368,7 +368,7 @@ public class IBSyncWrapperTest {
         OrderResponse orderResponse = wrapper.placeOrder(new Contract(), new Order());
         connection.getWrapper().orderStatus(reqId, OrderStatus.Submitted.name(), Decimal.ONE, Decimal.get(2), 3, 4, 5, 6, 7, "", 8);
         Assertions.assertEquals(1, orderResponse.cumulativeFilled);
-        Assertions.assertEquals(OrderStatus.Submitted, orderResponse.status);
+        Assertions.assertEquals(OrderStatus.Submitted, orderResponse.statuses.getLast().orderStatus());
     }
 
     @Test
@@ -379,7 +379,7 @@ public class IBSyncWrapperTest {
         connection.getWrapper().orderStatus(reqId, OrderStatus.Filled.name(), Decimal.ONE, Decimal.get(2), 3, 4, 5, 6, 7, "", 8);
         connection.getWrapper().orderStatus(reqId, OrderStatus.Submitted.name(), Decimal.get(100), Decimal.get(200), 300, 400, 500, 600, 700, "", 800);
         Assertions.assertEquals(1, orderResponse.cumulativeFilled);
-        Assertions.assertEquals(OrderStatus.Filled, orderResponse.status);
+        Assertions.assertEquals(OrderStatus.Filled, orderResponse.statuses.getLast().orderStatus());
     }
 
     @Test
@@ -390,7 +390,7 @@ public class IBSyncWrapperTest {
         connection.getWrapper().orderStatus(reqId, OrderStatus.Cancelled.name(), Decimal.ONE, Decimal.get(2), 3, 4, 5, 6, 7, "", 8);
         connection.getWrapper().orderStatus(reqId, OrderStatus.Submitted.name(), Decimal.get(100), Decimal.get(200), 300, 400, 500, 600, 700, "", 800);
         Assertions.assertEquals(1, orderResponse.cumulativeFilled);
-        Assertions.assertEquals(OrderStatus.Cancelled, orderResponse.status);
+        Assertions.assertEquals(OrderStatus.Cancelled, orderResponse.statuses.getLast().orderStatus());
     }
 
     @Test
@@ -401,7 +401,7 @@ public class IBSyncWrapperTest {
         connection.getWrapper().orderStatus(reqId, OrderStatus.ApiCancelled.name(), Decimal.ONE, Decimal.get(2), 3, 4, 5, 6, 7, "", 8);
         connection.getWrapper().orderStatus(reqId, OrderStatus.Submitted.name(), Decimal.get(100), Decimal.get(200), 300, 400, 500, 600, 700, "", 800);
         Assertions.assertEquals(1, orderResponse.cumulativeFilled);
-        Assertions.assertEquals(OrderStatus.ApiCancelled, orderResponse.status);
+        Assertions.assertEquals(OrderStatus.ApiCancelled, orderResponse.statuses.getLast().orderStatus());
     }
 
     @Test
@@ -412,7 +412,7 @@ public class IBSyncWrapperTest {
         connection.getWrapper().orderStatus(reqId, OrderStatus.Inactive.name(), Decimal.ONE, Decimal.get(2), 3, 4, 5, 6, 7, "", 8);
         connection.getWrapper().orderStatus(reqId, OrderStatus.Submitted.name(), Decimal.get(100), Decimal.get(200), 300, 400, 500, 600, 700, "", 800);
         Assertions.assertEquals(1, orderResponse.cumulativeFilled);
-        Assertions.assertEquals(OrderStatus.Inactive, orderResponse.status);
+        Assertions.assertEquals(OrderStatus.Inactive, orderResponse.statuses.getLast().orderStatus());
     }
 
     @Test
@@ -422,7 +422,7 @@ public class IBSyncWrapperTest {
         connection.getWrapper().orderStatus(reqId, OrderStatus.Submitted.name(), Decimal.get(100), Decimal.get(200), 300, 400, 500, 600, 700, "", 800);
         connection.getWrapper().orderStatus(reqId, OrderStatus.Filled.name(), Decimal.ONE, Decimal.get(2), 3, 4, 5, 6, 7, "", 8);
         Assertions.assertEquals(1, orderResponse.cumulativeFilled); // This should be 1 since orderStatus show cumulative filled status for the order
-        Assertions.assertEquals(OrderStatus.Filled, orderResponse.status);
+        Assertions.assertEquals(OrderStatus.Filled, orderResponse.statuses.getLast().orderStatus());
     }
 
     @Test

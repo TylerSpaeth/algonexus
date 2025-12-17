@@ -71,7 +71,7 @@ public class IBWrapper implements EWrapper {
 
         state.updateFromOrderStatus(filledInt, remainingInt, lastFillPrice, OrderStatus.valueOf(status));
 
-        if (List.of(OrderStatus.Filled, OrderStatus.Cancelled, OrderStatus.ApiCancelled, OrderStatus.Inactive).contains(state.status) && state.execDetailsEnded) {
+        if (List.of(OrderStatus.Filled, OrderStatus.Cancelled, OrderStatus.ApiCancelled, OrderStatus.Inactive).contains(state.statuses.getLast().orderStatus()) && state.execDetailsEnded) {
             ibConnection.orderStateMap.remove(orderId);
         }
     }
