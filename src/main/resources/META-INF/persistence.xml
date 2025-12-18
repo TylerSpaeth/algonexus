@@ -9,6 +9,14 @@
         <class>com.github.tylerspaeth.common.data.entity.Symbol</class>
         <class>com.github.tylerspaeth.common.data.entity.HistoricalDataset</class>
         <class>com.github.tylerspaeth.common.data.entity.Candlestick</class>
+        <class>com.github.tylerspaeth.common.data.entity.Order</class>
+        <class>com.github.tylerspaeth.common.data.entity.OrderEvent</class>
+        <class>com.github.tylerspaeth.common.data.entity.Strategy</class>
+        <class>com.github.tylerspaeth.common.data.entity.StrategyParameter</class>
+        <class>com.github.tylerspaeth.common.data.entity.StrategyParameterSet</class>
+        <class>com.github.tylerspaeth.common.data.entity.User</class>
+        <class>com.github.tylerspaeth.common.data.entity.Trade</class>
+        <class>com.github.tylerspaeth.common.data.entity.BacktestResult</class>
 
         <properties>
             <property name="jakarta.persistence.jdbc.driver" value="com.mysql.cj.jdbc.Driver"/>
