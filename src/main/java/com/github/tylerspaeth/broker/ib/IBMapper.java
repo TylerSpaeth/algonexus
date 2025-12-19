@@ -5,6 +5,8 @@ import com.github.tylerspaeth.broker.response.AccountPnL;
 import com.github.tylerspaeth.broker.response.PositionPnL;
 import com.github.tylerspaeth.common.data.entity.Candlestick;
 import com.github.tylerspaeth.common.enums.AssetTypeEnum;
+import com.github.tylerspaeth.common.enums.OrderStatusEnum;
+import com.ib.client.OrderStatus;
 import com.ib.client.Types;
 
 import java.sql.Timestamp;
@@ -79,6 +81,25 @@ public class IBMapper {
         candlestick.setVolume((float)realtimeBar.volume().longValue());
         candlestick.setTimestamp(Timestamp.from(Instant.ofEpochSecond(realtimeBar.date())));
         return candlestick;
+    }
+
+    /**
+     * Map IB OrderStatus to OrderStatusEnum value.
+     * @param orderStatus IB OrderStatus value.
+     * @return Matching OrderStatusEnum value.
+     */
+    public static OrderStatusEnum mapOrderStatus(OrderStatus orderStatus) {
+        return switch(orderStatus) {
+            case PendingSubmit, PreSubmitted -> OrderStatusEnum.PENDING_SUBMIT;
+            case ApiPending -> OrderStatusEnum.PENDING;
+            case Submitted ->  OrderStatusEnum.SUBMITTED;
+            case Cancelled, ApiCancelled -> OrderStatusEnum.CANCELLED;
+            case PendingCancel -> OrderStatusEnum.PENDING_CANCEL;
+            case Inactive -> OrderStatusEnum.INACTIVE;
+            case Filled -> OrderStatusEnum.FILLED;
+            case null -> null;
+            default -> OrderStatusEnum.OTHER;
+        };
     }
 
 }

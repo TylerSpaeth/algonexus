@@ -6,8 +6,10 @@ package com.github.tylerspaeth.common.enums;
 public enum OrderStatusEnum {
     PENDING_SUBMIT,
     SUBMITTED,
+    PENDING,
+    PENDING_CANCEL,
     CANCELLED,
-    PARTIALLY_FILLED,
     FILLED,
-    INACTIVE
+    INACTIVE,
+    OTHER
 }

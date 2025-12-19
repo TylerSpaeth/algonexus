@@ -191,6 +191,7 @@ CREATE TABLE IF NOT EXISTS `algonexus`.`orders` (
   `TrailAmount` FLOAT NULL DEFAULT NULL,
   `TrailPercent` FLOAT NULL DEFAULT NULL,
   `ParentOrderID` INT NULL DEFAULT NULL,
+  `Finalized` BIT(1) NOT NULL DEFAULT b'0',
   PRIMARY KEY (`OrderID`),
   INDEX `fk_orders_symbols_SymbolID_idx` (`SymbolID` ASC) VISIBLE,
   INDEX `fk_orders_backtestresults_BacktestResultID_idx` (`BacktestResultID` ASC) VISIBLE,

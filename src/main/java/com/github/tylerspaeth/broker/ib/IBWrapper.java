@@ -71,7 +71,7 @@ public class IBWrapper implements EWrapper {
 
         state.updateFromOrderStatus(filledInt, remainingInt, lastFillPrice, OrderStatus.valueOf(status));
 
-        if (List.of(OrderStatus.Filled, OrderStatus.Cancelled, OrderStatus.ApiCancelled, OrderStatus.Inactive).contains(state.statuses.getLast().orderStatus()) && state.execDetailsEnded) {
+        if (List.of(OrderStatus.Filled, OrderStatus.Cancelled, OrderStatus.ApiCancelled, OrderStatus.Inactive).contains(state.statuses.getLast().orderStatus()) && state.getExecDetailsEnded()) {
             ibConnection.orderStateMap.remove(orderId);
         }
     }
@@ -149,7 +149,7 @@ public class IBWrapper implements EWrapper {
         // execDetailsEnd oddly uses reqId, but the orderId equals reqId for orders
         OrderResponse state = ibConnection.orderStateMap.get(reqId);
         if (state != null) {
-            state.execDetailsEnded = true;
+            state.setExecDetailsEnded(true);
         }
     }
 

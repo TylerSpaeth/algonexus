@@ -84,6 +84,9 @@ public class Order {
     @JoinColumn(name = "ParentOrderID", referencedColumnName = "OrderID")
     private Order parentOrder;
 
+    @Column(name = "Finalized")
+    private boolean finalized;
+
     @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private List<OrderEvent> orderEvents;
 
@@ -233,6 +236,14 @@ public class Order {
 
     public void setParentOrder(Order parentOrder) {
         this.parentOrder = parentOrder;
+    }
+
+    public boolean isFinalized() {
+        return finalized;
+    }
+
+    public void setFinalized(boolean finalized) {
+        this.finalized = finalized;
     }
 
     public List<OrderEvent> getOrderEvents() {
