@@ -1,4 +1,4 @@
-package com.github.tylerspaeth.broker;
+package com.github.tylerspaeth.broker.service;
 
 import com.github.tylerspaeth.broker.response.AccountPnL;
 import com.github.tylerspaeth.broker.response.AccountSummary;

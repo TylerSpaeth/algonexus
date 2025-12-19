@@ -13,6 +13,10 @@ import java.util.List;
 @Table(name = "orders")
 public class Order {
 
+    @Version
+    @Column(name = "Version")
+    private int version;
+
     @Id
     @Column(name = "OrderID")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -65,7 +69,7 @@ public class Order {
     @JoinColumn(name = "UserID", referencedColumnName = "UserID", nullable = false)
     private User user;
 
-    @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private List<Trade> trades;
 
     @Column(name = "OCAGroup")
@@ -87,7 +91,7 @@ public class Order {
     @Column(name = "Finalized")
     private boolean finalized;
 
-    @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private List<OrderEvent> orderEvents;
 
     public Integer getOrderID() {

@@ -1,7 +1,7 @@
 package com.github.tylerspaeth.broker.ib.service;
 
 import com.github.tylerspaeth.broker.DataFeedKey;
-import com.github.tylerspaeth.broker.IDataFeedService;
+import com.github.tylerspaeth.broker.service.IDataFeedService;
 import com.github.tylerspaeth.broker.ib.IBMapper;
 import com.github.tylerspaeth.broker.ib.IBSyncWrapper;
 import com.github.tylerspaeth.broker.ib.response.RealtimeBar;

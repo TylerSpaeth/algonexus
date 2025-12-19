@@ -1,4 +1,4 @@
-package com.github.tylerspaeth.broker.ib.service;
+package com.github.tylerspaeth.broker.ib;
 
 import com.github.tylerspaeth.broker.ib.response.OrderResponse;
 

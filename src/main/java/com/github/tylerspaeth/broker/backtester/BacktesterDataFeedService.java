@@ -1,6 +1,6 @@
 package com.github.tylerspaeth.broker.backtester;
 
-import com.github.tylerspaeth.broker.IDataFeedService;
+import com.github.tylerspaeth.broker.service.IDataFeedService;
 import com.github.tylerspaeth.common.data.dao.CandlestickDAO;
 import com.github.tylerspaeth.common.data.dao.SymbolDAO;
 import com.github.tylerspaeth.common.data.entity.Candlestick;

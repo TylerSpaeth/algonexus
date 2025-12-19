@@ -113,7 +113,7 @@ public class DataManagerService {
             historicalDataset.setDatasetEnd(endTime);
             historicalDataset.setLastUpdated(Timestamp.from(Instant.now()));
 
-            historicalDatasetDAO.save(historicalDataset);
+            historicalDatasetDAO.insert(historicalDataset);
 
         } catch (Exception e) {
             LOGGER.error("Loading from file failed: {}", file.getName());

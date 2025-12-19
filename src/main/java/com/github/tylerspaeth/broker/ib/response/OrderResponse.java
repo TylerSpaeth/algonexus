@@ -1,6 +1,6 @@
 package com.github.tylerspaeth.broker.ib.response;
 
-import com.github.tylerspaeth.broker.ib.service.IIBOrderResponseListener;
+import com.github.tylerspaeth.broker.ib.IIBOrderResponseListener;
 import com.ib.client.*;
 
 import java.sql.Timestamp;

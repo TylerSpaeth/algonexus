@@ -82,7 +82,6 @@ CREATE TABLE IF NOT EXISTS `algonexus`.`exchanges` (
   `Name` VARCHAR(50) NOT NULL,
   PRIMARY KEY (`ExchangeID`))
 ENGINE = InnoDB
-AUTO_INCREMENT = 7
 DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_0900_ai_ci;
 
@@ -102,7 +101,6 @@ CREATE TABLE IF NOT EXISTS `algonexus`.`symbols` (
     FOREIGN KEY (`ExchangeID`)
     REFERENCES `algonexus`.`exchanges` (`ExchangeID`))
 ENGINE = InnoDB
-AUTO_INCREMENT = 17
 DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_0900_ai_ci;
 
@@ -126,7 +124,6 @@ CREATE TABLE IF NOT EXISTS `algonexus`.`historicaldataset` (
     FOREIGN KEY (`SymbolID`)
     REFERENCES `algonexus`.`symbols` (`SymbolID`))
 ENGINE = InnoDB
-AUTO_INCREMENT = 8
 DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_0900_ai_ci;
 
@@ -149,7 +146,6 @@ CREATE TABLE IF NOT EXISTS `algonexus`.`candlesticks` (
     FOREIGN KEY (`HistoricalDatasetID`)
     REFERENCES `algonexus`.`historicaldataset` (`HistoricalDatasetID`))
 ENGINE = InnoDB
-AUTO_INCREMENT = 15089
 DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_0900_ai_ci;
 
@@ -163,7 +159,6 @@ CREATE TABLE IF NOT EXISTS `algonexus`.`users` (
   `AccountType` VARCHAR(30) NULL DEFAULT NULL,
   PRIMARY KEY (`UserID`))
 ENGINE = InnoDB
-AUTO_INCREMENT = 4
 DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_0900_ai_ci;
 
@@ -192,6 +187,7 @@ CREATE TABLE IF NOT EXISTS `algonexus`.`orders` (
   `TrailPercent` FLOAT NULL DEFAULT NULL,
   `ParentOrderID` INT NULL DEFAULT NULL,
   `Finalized` BIT(1) NOT NULL DEFAULT b'0',
+  `Version` INT NOT NULL DEFAULT '0',
   PRIMARY KEY (`OrderID`),
   INDEX `fk_orders_symbols_SymbolID_idx` (`SymbolID` ASC) VISIBLE,
   INDEX `fk_orders_backtestresults_BacktestResultID_idx` (`BacktestResultID` ASC) VISIBLE,

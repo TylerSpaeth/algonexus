@@ -1,6 +1,6 @@
 package com.github.tylerspaeth.broker.ib.service;
 
-import com.github.tylerspaeth.broker.IAccountService;
+import com.github.tylerspaeth.broker.service.IAccountService;
 import com.github.tylerspaeth.broker.ib.IBMapper;
 import com.github.tylerspaeth.broker.ib.IBSyncWrapper;
 import com.github.tylerspaeth.broker.response.AccountPnL;
