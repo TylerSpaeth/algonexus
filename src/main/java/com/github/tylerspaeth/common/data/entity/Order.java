@@ -94,6 +94,61 @@ public class Order {
     @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private List<OrderEvent> orderEvents;
 
+    /**
+     * Validates that the Order is in a placeable state.
+     */
+    public void validatePlaceable() {
+        if(finalized) {
+            throw new IllegalStateException("Order is finalized.");
+        }
+        if(externalOrderID != null) {
+            throw new IllegalStateException("ExternalOrderID should be null.");
+        }
+        if(timePlaced != null) {
+            throw new IllegalStateException("Place time should not be set.");
+        }
+        if(timeClosed != null) {
+            throw new IllegalStateException("Close time should not be set.");
+        }
+        if(symbol == null) {
+            throw new IllegalStateException("Symbol must be set.");
+        }
+        if(side == null) {
+            throw new IllegalStateException("Side must be set.");
+        }
+        if(quantity == null || quantity <= 0) {
+            throw new IllegalStateException("Quantity must be greater than 0.");
+        }
+        if(orderType == null) {
+            throw new IllegalStateException("OrderType must be set.");
+        }
+        if(user == null) {
+            throw new IllegalStateException("User must be set.");
+        }
+        if(timeInForce == null) {
+            throw new IllegalStateException("TimeInForce must be set.");
+        }
+
+        // Confirm expected values are set for the given order type
+        switch(orderType) {
+            case MKT, MOC -> {
+                if(price != null) {
+                    throw new IllegalStateException("Price should not be set for market orders.");
+                }
+            }
+            case LMT, STP_LMT, STP, LOC -> {
+                if(price == null) {
+                    throw new IllegalStateException("Price must be set for limit or stop orders.");
+                }
+            }
+            case TRL_LMT -> {
+                if (trailAmount == null && trailPercent == null) {
+                    throw new IllegalStateException("Trail amount or limit must be set for trail limit orders.");
+                }
+            }
+        }
+    }
+
     public Integer getOrderID() {
         return orderID;
     }
