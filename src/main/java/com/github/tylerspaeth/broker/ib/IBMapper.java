@@ -4,8 +4,12 @@ import com.github.tylerspaeth.broker.ib.response.RealtimeBar;
 import com.github.tylerspaeth.broker.response.AccountPnL;
 import com.github.tylerspaeth.broker.response.PositionPnL;
 import com.github.tylerspaeth.common.data.entity.Candlestick;
+import com.github.tylerspaeth.common.data.entity.Order;
+import com.github.tylerspaeth.common.data.entity.Symbol;
 import com.github.tylerspaeth.common.enums.AssetTypeEnum;
 import com.github.tylerspaeth.common.enums.OrderStatusEnum;
+import com.ib.client.Contract;
+import com.ib.client.Decimal;
 import com.ib.client.OrderStatus;
 import com.ib.client.Types;
 
@@ -100,6 +104,38 @@ public class IBMapper {
             case null -> null;
             default -> OrderStatusEnum.OTHER;
         };
+    }
+
+    /**
+     * Maps a standard domain Order into an IB Contract and Order
+     * @param order Order containing contents to be mapped.
+     * @param contract Contract that will be populated with data from the domain Order
+     * @param ibOrder IB Order object that will be populated from the domain Order.
+     */
+    public static void mapOrderToIBContractAndOrder(Order order, Contract contract, com.ib.client.Order ibOrder) {
+
+        // Map Order to IB Contract
+        Symbol symbol = order.getSymbol();
+        contract.symbol(symbol.getTicker());
+        contract.currency("USD");
+        contract.secType(mapAssetTypeToSecType(symbol.getAssetType()));
+        contract.exchange(symbol.getExchange().getName());
+
+        // Map Order to IB Order
+        ibOrder.action(order.getSide().name());
+        ibOrder.totalQuantity(Decimal.get(order.getQuantity()));
+        ibOrder.lmtPrice(order.getPrice());
+        ibOrder.orderType(order.getOrderType().name());
+        ibOrder.tif(order.getTimeInForce().name());
+        ibOrder.ocaGroup(order.getOCAGroup());
+        ibOrder.transmit(order.getLastInOCAGroup());
+        ibOrder.trailStopPrice(order.getTrailAmount());
+        ibOrder.trailingPercent(order.getTrailPercent());
+        if(order.getParentOrder() != null) {
+            ibOrder.parentId(Integer.parseInt(order.getParentOrder().getExternalOrderID()));
+        }
+
+
     }
 
 }

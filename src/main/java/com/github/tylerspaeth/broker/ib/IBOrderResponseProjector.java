@@ -1,7 +1,6 @@
 package com.github.tylerspaeth.broker.ib;
 
 import com.github.tylerspaeth.broker.ib.response.OrderResponse;
-import com.github.tylerspaeth.broker.ib.service.IIBOrderResponseListener;
 import com.github.tylerspaeth.broker.response.OrderStatus;
 import com.github.tylerspaeth.common.data.entity.Order;
 import com.github.tylerspaeth.common.data.entity.OrderEvent;
@@ -18,15 +17,23 @@ import java.util.Optional;
  */
 public class IBOrderResponseProjector implements IIBOrderResponseListener {
 
-    private final Order order;
+    private final Object lock = new Object();
 
-    public IBOrderResponseProjector(Order order) {
+    private final Order order;
+    private final IOrderListener orderListener;
+
+    public IBOrderResponseProjector(Order order, IOrderListener orderListener) {
         this.order = order;
+        this.orderListener = orderListener;
     }
 
+    /**
+     * {@inheritDoc}
+     * Note that this will persist the update to the database.
+     */
     @Override
     public void update(OrderResponse orderResponse) {
-        synchronized (order) {
+        synchronized (lock) {
             if (order.getExternalOrderID() == null) {
                 order.setExternalOrderID(String.valueOf(orderResponse.order.permId()));
             }
@@ -85,6 +92,8 @@ public class IBOrderResponseProjector implements IIBOrderResponseListener {
             if(orderResponse.getExecDetailsEnded()) {
                 order.setFinalized(true);
             }
+
+            orderListener.update(order);
         }
     }
 }
