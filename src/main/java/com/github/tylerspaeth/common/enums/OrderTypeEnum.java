@@ -8,7 +8,7 @@ public enum OrderTypeEnum {
     LMT,
     STP,
     STP_LMT,
-    TRL_STP,
+    TRL_LMT,
     MOC,
     LOC
 }

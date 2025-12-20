@@ -95,6 +95,7 @@ CREATE TABLE IF NOT EXISTS `algonexus`.`symbols` (
   `Name` VARCHAR(50) NULL DEFAULT NULL,
   `ExchangeID` INT NOT NULL,
   `AssetType` VARCHAR(20) NOT NULL,
+  `Currency` VARCHAR(3) NULL DEFAULT NULL,
   PRIMARY KEY (`SymbolID`),
   INDEX `ExchangeID_idx` (`ExchangeID` ASC) VISIBLE,
   CONSTRAINT `fk_symbols_exchanges_ExchangeID`
@@ -172,7 +173,7 @@ CREATE TABLE IF NOT EXISTS `algonexus`.`orders` (
   `OrderType` VARCHAR(20) NOT NULL,
   `Side` VARCHAR(10) NOT NULL,
   `Quantity` FLOAT NOT NULL,
-  `Price` FLOAT NOT NULL,
+  `Price` FLOAT NULL DEFAULT NULL,
   `TimeInForce` VARCHAR(3) NOT NULL,
   `TimePlaced` TIMESTAMP(6) NOT NULL,
   `TimeClosed` TIMESTAMP(6) NULL DEFAULT NULL,

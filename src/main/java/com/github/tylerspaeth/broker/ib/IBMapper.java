@@ -6,12 +6,8 @@ import com.github.tylerspaeth.broker.response.PositionPnL;
 import com.github.tylerspaeth.common.data.entity.Candlestick;
 import com.github.tylerspaeth.common.data.entity.Order;
 import com.github.tylerspaeth.common.data.entity.Symbol;
-import com.github.tylerspaeth.common.enums.AssetTypeEnum;
-import com.github.tylerspaeth.common.enums.OrderStatusEnum;
-import com.ib.client.Contract;
-import com.ib.client.Decimal;
-import com.ib.client.OrderStatus;
-import com.ib.client.Types;
+import com.github.tylerspaeth.common.enums.*;
+import com.ib.client.*;
 
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -49,7 +45,7 @@ public class IBMapper {
             case FOREX -> Types.SecType.CASH;
             case OPTIONS -> Types.SecType.OPT;
             case CRYPTOCURRENCY -> Types.SecType.CRYPTO;
-            default -> null;
+            case OTHER -> null;
         };
     }
 
@@ -107,6 +103,48 @@ public class IBMapper {
     }
 
     /**
+     * Map SideEnum to IB Action.
+     * @param side SideEnum
+     * @return Action
+     */
+    public static Types.Action mapSideEnumToAction(SideEnum side) {
+        return switch(side) {
+            case BUY -> Types.Action.BUY;
+            case SELL -> Types.Action.SELL;
+        };
+    }
+
+    /**
+     * Map OrderTypeEnum to IB OrderType
+     * @param orderType OrderTypeEnum
+     * @return OrderType
+     */
+    public static OrderType mapOrderTypeEnumToOrderType(OrderTypeEnum orderType) {
+        return switch(orderType) {
+            case MKT -> OrderType.MKT;
+            case LMT -> OrderType.LMT;
+            case STP_LMT -> OrderType.STP_LMT;
+            case STP -> OrderType.STP;
+            case TRL_LMT -> OrderType.TRAIL_LIMIT;
+            case MOC -> OrderType.MOC;
+            case LOC -> OrderType.LOC;
+        };
+    }
+
+    /**
+     * Map TimeInForEnum to IB TimeInForce
+     * @param timeInForce TimeInForceEnum
+     * @return TimeInForce
+     */
+    public static Types.TimeInForce mapTimeInForceEnumToTimeInForce(TimeInForceEnum timeInForce) {
+        return switch(timeInForce) {
+            case DAY -> Types.TimeInForce.DAY;
+            case GTC -> Types.TimeInForce.GTC;
+            case IOC -> Types.TimeInForce.IOC;
+        };
+    }
+
+    /**
      * Maps a standard domain Order into an IB Contract and Order
      * @param order Order containing contents to be mapped.
      * @param contract Contract that will be populated with data from the domain Order
@@ -117,20 +155,27 @@ public class IBMapper {
         // Map Order to IB Contract
         Symbol symbol = order.getSymbol();
         contract.symbol(symbol.getTicker());
-        contract.currency("USD");
+        String currency = symbol.getCurrency() == null ? "USD" : symbol.getCurrency();
+        contract.currency(currency);
         contract.secType(mapAssetTypeToSecType(symbol.getAssetType()));
         contract.exchange(symbol.getExchange().getName());
 
         // Map Order to IB Order
-        ibOrder.action(order.getSide().name());
+        ibOrder.action(mapSideEnumToAction(order.getSide()));
         ibOrder.totalQuantity(Decimal.get(order.getQuantity()));
-        ibOrder.lmtPrice(order.getPrice());
-        ibOrder.orderType(order.getOrderType().name());
-        ibOrder.tif(order.getTimeInForce().name());
+        if(order.getPrice() != null) {
+            ibOrder.lmtPrice(order.getPrice());
+        }
+        ibOrder.orderType(mapOrderTypeEnumToOrderType(order.getOrderType()));
+        ibOrder.tif(mapTimeInForceEnumToTimeInForce(order.getTimeInForce()));
         ibOrder.ocaGroup(order.getOCAGroup());
         ibOrder.transmit(order.getLastInOCAGroup());
-        ibOrder.trailStopPrice(order.getTrailAmount());
-        ibOrder.trailingPercent(order.getTrailPercent());
+        if(order.getTrailAmount() != null) {
+            ibOrder.trailStopPrice(order.getTrailAmount());
+        }
+        if(order.getTrailPercent() != null) {
+            ibOrder.trailingPercent(order.getTrailPercent());
+        }
         if(order.getParentOrder() != null) {
             ibOrder.parentId(Integer.parseInt(order.getParentOrder().getExternalOrderID()));
         }

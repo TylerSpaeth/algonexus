@@ -226,6 +226,7 @@ public class IBSyncWrapper {
             contract.secType(dataFeedKey.getSecType());
             contract.exchange(dataFeedKey.getExchange());
             contract.currency(dataFeedKey.getCurrency());
+            // TODO we should be getting the conid from ib before placing this order to ensure there is no ambiguity
             ibConnection.client.reqRealTimeBars(reqId, contract, 5, "MIDPOINT", false, null);
         }
 

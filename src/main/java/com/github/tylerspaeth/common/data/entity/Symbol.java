@@ -29,6 +29,9 @@ public class Symbol {
     @Enumerated(EnumType.STRING)
     private AssetTypeEnum assetType;
 
+    @Column(name = "Currency", length = 3)
+    private String currency;
+
     @OneToMany(mappedBy = "symbol", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private List<HistoricalDataset> historicalDatasets;
 
@@ -71,6 +74,14 @@ public class Symbol {
 
     public void setAssetType(AssetTypeEnum assetType) {
         this.assetType = assetType;
+    }
+
+    public String getCurrency() {
+        return currency;
+    }
+
+    public void setCurrency(String currency) {
+        this.currency = currency;
     }
 
     public List<HistoricalDataset> getHistoricalDatasets() {
