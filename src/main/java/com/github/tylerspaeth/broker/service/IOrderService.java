@@ -1,6 +1,7 @@
 package com.github.tylerspaeth.broker.service;
 
 import com.github.tylerspaeth.common.data.entity.Order;
+import com.github.tylerspaeth.common.data.entity.User;
 
 import java.util.List;
 
@@ -23,9 +24,10 @@ public interface IOrderService {
     void cancelOrder(Order order);
 
     /**
-     * Get open (non-finalized) orders for the active account.
+     * Get open (non-finalized) orders for the provided user.
+     * @param user User to get open orders for.
      * @return List of Orders.
      */
-    List<Order> getOpenOrders();
+    List<Order> getOpenOrders(User user);
 
 }
