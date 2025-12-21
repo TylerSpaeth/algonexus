@@ -1,6 +1,6 @@
 package com.github.tylerspaeth.broker.ib;
 
-import com.github.tylerspaeth.broker.DataFeedKey;
+import com.github.tylerspaeth.broker.IBDataFeedKey;
 import com.github.tylerspaeth.broker.ib.response.*;
 import com.github.tylerspaeth.common.enums.IntervalUnitEnum;
 import com.ib.client.*;
@@ -180,7 +180,7 @@ public class IBSyncWrapperTest {
 
     @Test
     public void testSubscribeToNewFeed() {
-        wrapper.subscribeToDataFeed(new DataFeedKey(null, "ticker", "secType", "exchange", "currency"));
+        wrapper.subscribeToDataFeed(new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency"));
         Mockito.verify(client, Mockito.times(1)).reqRealTimeBars(Mockito.anyInt(), Mockito.any(Contract.class), Mockito.anyInt(), Mockito.anyString(), Mockito.anyBoolean(), Mockito.any());
         Assertions.assertEquals(1, connection.datafeeds.size());
     }
@@ -188,7 +188,7 @@ public class IBSyncWrapperTest {
     @Test
     public void testSubscribeToSameFeedFromDifferentThreads() throws InterruptedException {
 
-        DataFeedKey dataFeedKey = new DataFeedKey(null, "ticker", "secType", "exchange", "currency");
+        IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency");
 
         wrapper.subscribeToDataFeed(dataFeedKey);
         Mockito.verify(client, Mockito.times(1)).reqRealTimeBars(Mockito.anyInt(), Mockito.any(Contract.class), Mockito.anyInt(), Mockito.anyString(), Mockito.anyBoolean(), Mockito.any());
@@ -210,15 +210,15 @@ public class IBSyncWrapperTest {
 
     @Test
     public void testSubscribeToDifferentFeedsFromSingleThread() {
-        wrapper.subscribeToDataFeed(new DataFeedKey(null, "ticker", "secType", "exchange", "currency"));
-        wrapper.subscribeToDataFeed(new DataFeedKey(null, "otherTicker", "secType", "exchange", "currency"));
+        wrapper.subscribeToDataFeed(new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency"));
+        wrapper.subscribeToDataFeed(new IBDataFeedKey(null, "otherTicker", "secType", "exchange", "currency"));
         Mockito.verify(client, Mockito.times(2)).reqRealTimeBars(Mockito.anyInt(), Mockito.any(Contract.class), Mockito.anyInt(), Mockito.anyString(), Mockito.anyBoolean(), Mockito.any());
         Assertions.assertEquals(2, connection.datafeeds.size());
     }
 
     @Test
     public void testSubscribeAgainAfterUnsubscribing() {
-        DataFeedKey dataFeedKey = new DataFeedKey(null, "ticker", "secType", "exchange", "currency");
+        IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency");
         wrapper.subscribeToDataFeed(dataFeedKey);
         wrapper.unsubscribeFromDataFeed(dataFeedKey);
         wrapper.subscribeToDataFeed(dataFeedKey);
@@ -230,13 +230,13 @@ public class IBSyncWrapperTest {
 
     @Test
     public void testReadFromUnsubscribedDatafeed() {
-        Assertions.assertTrue(wrapper.readFromDataFeed(new DataFeedKey(null, "ticker", "secType", "exchange", "currency"), 1, IntervalUnitEnum.SECOND   ).isEmpty());
+        Assertions.assertTrue(wrapper.readFromDataFeed(new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency"), 1, IntervalUnitEnum.SECOND   ).isEmpty());
     }
 
     @Test
     public void testReadFromSameFeedFromDifferentThreads() {
 
-        DataFeedKey dataFeedKey = new DataFeedKey(null, "ticker", "secType", "exchange", "currency");
+        IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency");
 
         wrapper.subscribeToDataFeed(dataFeedKey);
 
@@ -269,7 +269,7 @@ public class IBSyncWrapperTest {
 
     @Test
     public void testReadAtSubFiveSecondGranularity() {
-        DataFeedKey dataFeedKey = new DataFeedKey(null, "ticker", "secType", "exchange", "currency");
+        IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency");
         wrapper.subscribeToDataFeed(dataFeedKey);
         connection.getWrapper().realtimeBar(dataFeedKey.getReqId(), 0, 1, 2, 3, 4, Decimal.ONE_HUNDRED, null, -1);
         Assertions.assertTrue(wrapper.readFromDataFeed(dataFeedKey, 1, IntervalUnitEnum.SECOND).isEmpty());
@@ -277,7 +277,7 @@ public class IBSyncWrapperTest {
 
     @Test
     public void testReadAtSevenSecondGranularity() {
-        DataFeedKey dataFeedKey = new DataFeedKey(null, "ticker", "secType", "exchange", "currency");
+        IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency");
         wrapper.subscribeToDataFeed(dataFeedKey);
         connection.getWrapper().realtimeBar(dataFeedKey.getReqId(), 0, 1, 2, 3, 4, Decimal.ONE_HUNDRED, null, -1);
         connection.getWrapper().realtimeBar(dataFeedKey.getReqId(), 5, 1, 2, 3, 4, Decimal.ONE_HUNDRED, null, -1);
@@ -286,7 +286,7 @@ public class IBSyncWrapperTest {
 
     @Test
     public void testReadFromDataFeedCondenseBars() {
-        DataFeedKey dataFeedKey = new DataFeedKey(null, "ticker", "secType", "exchange", "currency");
+        IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency");
         wrapper.subscribeToDataFeed(dataFeedKey);
         connection.getWrapper().realtimeBar(dataFeedKey.getReqId(), 0, 2, 2, 1, 1.5, Decimal.ONE_HUNDRED, null, -1);
         connection.getWrapper().realtimeBar(dataFeedKey.getReqId(), 5, 1.5, 5, 2, 4, Decimal.ONE_HUNDRED, null, -1);
@@ -303,7 +303,7 @@ public class IBSyncWrapperTest {
 
     @Test
     public void testUnsubscribeCancelsIBSubscription() {
-        DataFeedKey dataFeedKey = new DataFeedKey(null, "ticker", "secType", "exchange", "currency");
+        IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency");
         wrapper.subscribeToDataFeed(dataFeedKey);
         wrapper.unsubscribeFromDataFeed(dataFeedKey);
         Mockito.verify(client, Mockito.times(1)).cancelRealTimeBars(Mockito.anyInt());
@@ -312,13 +312,13 @@ public class IBSyncWrapperTest {
 
     @Test
     public void testUnsubscribeDoesNotCancelIfNotSubscribed() {
-        wrapper.unsubscribeFromDataFeed(new DataFeedKey(null, "ticker", "secType", "exchange", "currency"));
+        wrapper.unsubscribeFromDataFeed(new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency"));
         Mockito.verify(client, Mockito.times(0)).cancelRealTimeBars(Mockito.anyInt());
     }
 
     @Test
     public void testUnsubscribeDoesNotCancelIfThereIsAnotherSubscriber() throws InterruptedException {
-        DataFeedKey dataFeedKey = new DataFeedKey(null, "ticker", "secType", "exchange", "currency");
+        IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency");
         wrapper.subscribeToDataFeed(dataFeedKey);
 
         CountDownLatch latch = new CountDownLatch(1);
@@ -336,7 +336,7 @@ public class IBSyncWrapperTest {
 
     @Test
     public void testReadAfterUnsubscribe() {
-        DataFeedKey dataFeedKey = new DataFeedKey(null, "ticker", "secType", "exchange", "currency");
+        IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency");
         wrapper.subscribeToDataFeed(dataFeedKey);
         connection.getWrapper().realtimeBar(dataFeedKey.getReqId(), 0, 2, 2, 1, 1.5, Decimal.ONE_HUNDRED, null, -1);
         wrapper.unsubscribeFromDataFeed(dataFeedKey);
@@ -346,7 +346,7 @@ public class IBSyncWrapperTest {
 
     @Test
     public void testReadNeedsAligning() {
-        DataFeedKey dataFeedKey = new DataFeedKey(null, "ticker", "secType", "exchange", "currency");
+        IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency");
         wrapper.subscribeToDataFeed(dataFeedKey);
         connection.getWrapper().realtimeBar(dataFeedKey.getReqId(), 5, 2, 2, 1, 1.5, Decimal.get(1), null, -1);
         connection.getWrapper().realtimeBar(dataFeedKey.getReqId(), 10, 2, 2, 1, 1.5, Decimal.get(2), null, -1);
@@ -375,7 +375,7 @@ public class IBSyncWrapperTest {
     public void testOrderThatReceivesFilledStatusCanNotBeUpdated() {
         int reqId = connection.nextValidId.get();
         OrderResponse orderResponse = wrapper.placeOrder(new Contract(), new Order());
-        orderResponse.execDetailsEnded = true; // Exec details must have ended since otherwise the order was filled but waiting on the stop updating
+        orderResponse.setExecDetailsEnded(true); // Exec details must have ended since otherwise the order was filled but waiting on the stop updating
         connection.getWrapper().orderStatus(reqId, OrderStatus.Filled.name(), Decimal.ONE, Decimal.get(2), 3, 4, 5, 6, 7, "", 8);
         connection.getWrapper().orderStatus(reqId, OrderStatus.Submitted.name(), Decimal.get(100), Decimal.get(200), 300, 400, 500, 600, 700, "", 800);
         Assertions.assertEquals(1, orderResponse.cumulativeFilled);
@@ -386,7 +386,7 @@ public class IBSyncWrapperTest {
     public void testOrderThatReceivesCancelledStatusCanNotBeUpdated() {
         int reqId = connection.nextValidId.get();
         OrderResponse orderResponse = wrapper.placeOrder(new Contract(), new Order());
-        orderResponse.execDetailsEnded = true; // Exec details must have ended since otherwise the order was filled but waiting on the stop updating
+        orderResponse.setExecDetailsEnded(true); // Exec details must have ended since otherwise the order was filled but waiting on the stop updating
         connection.getWrapper().orderStatus(reqId, OrderStatus.Cancelled.name(), Decimal.ONE, Decimal.get(2), 3, 4, 5, 6, 7, "", 8);
         connection.getWrapper().orderStatus(reqId, OrderStatus.Submitted.name(), Decimal.get(100), Decimal.get(200), 300, 400, 500, 600, 700, "", 800);
         Assertions.assertEquals(1, orderResponse.cumulativeFilled);
@@ -397,7 +397,7 @@ public class IBSyncWrapperTest {
     public void testOrderThatReceivesApiCancelledStatusCanNotBeUpdated() {
         int reqId = connection.nextValidId.get();
         OrderResponse orderResponse = wrapper.placeOrder(new Contract(), new Order());
-        orderResponse.execDetailsEnded = true; // Exec details must have ended since otherwise the order was filled but waiting on the stop updating
+        orderResponse.setExecDetailsEnded(true); // Exec details must have ended since otherwise the order was filled but waiting on the stop updating
         connection.getWrapper().orderStatus(reqId, OrderStatus.ApiCancelled.name(), Decimal.ONE, Decimal.get(2), 3, 4, 5, 6, 7, "", 8);
         connection.getWrapper().orderStatus(reqId, OrderStatus.Submitted.name(), Decimal.get(100), Decimal.get(200), 300, 400, 500, 600, 700, "", 800);
         Assertions.assertEquals(1, orderResponse.cumulativeFilled);
@@ -408,7 +408,7 @@ public class IBSyncWrapperTest {
     public void testOrderThatReceivesInactiveStatusCanNotBeUpdated() {
         int reqId = connection.nextValidId.get();
         OrderResponse orderResponse = wrapper.placeOrder(new Contract(), new Order());
-        orderResponse.execDetailsEnded = true; // Exec details must have ended since otherwise the order was filled but waiting on the stop updating
+        orderResponse.setExecDetailsEnded(true); // Exec details must have ended since otherwise the order was filled but waiting on the stop updating
         connection.getWrapper().orderStatus(reqId, OrderStatus.Inactive.name(), Decimal.ONE, Decimal.get(2), 3, 4, 5, 6, 7, "", 8);
         connection.getWrapper().orderStatus(reqId, OrderStatus.Submitted.name(), Decimal.get(100), Decimal.get(200), 300, 400, 500, 600, 700, "", 800);
         Assertions.assertEquals(1, orderResponse.cumulativeFilled);
@@ -479,7 +479,7 @@ public class IBSyncWrapperTest {
         connection.getWrapper().execDetails(reqId, new Contract(), execution1);
         connection.getWrapper().orderStatus(reqId, OrderStatus.Filled.name(), Decimal.ONE, Decimal.get(2), 3, 4, 5, 6, 7, "", 8);
         connection.getWrapper().execDetailsEnd(reqId);
-        Assertions.assertTrue(orderResponse.execDetailsEnded);
+        Assertions.assertTrue(orderResponse.getExecDetailsEnded());
     }
 
     @Test

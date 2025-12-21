@@ -1,7 +1,7 @@
 package com.github.tylerspaeth.broker.ib;
 
 import com.github.tylerspaeth.broker.ib.response.OrderResponse;
-import com.github.tylerspaeth.broker.DataFeedKey;
+import com.github.tylerspaeth.broker.IBDataFeedKey;
 import com.github.tylerspaeth.common.MultiReaderQueue;
 import com.github.tylerspaeth.broker.ib.response.RealtimeBar;
 import com.ib.client.EClientSocket;
@@ -31,7 +31,7 @@ public class IBConnection {
 
     public final IBRequestRepository ibRequestRepository = new IBRequestRepository();
     public final AtomicInteger nextValidId = new AtomicInteger();
-    public final ConcurrentHashMap<DataFeedKey, MultiReaderQueue<RealtimeBar>> datafeeds = new ConcurrentHashMap<>();
+    public final ConcurrentHashMap<IBDataFeedKey, MultiReaderQueue<RealtimeBar>> datafeeds = new ConcurrentHashMap<>();
     public final ConcurrentHashMap<Integer, MultiReaderQueue<RealtimeBar>> datafeedReqIdMap = new ConcurrentHashMap<>();
     public final ConcurrentHashMap<Integer, OrderResponse> orderStateMap = new ConcurrentHashMap<>();
 

@@ -1,6 +1,8 @@
 package com.github.tylerspaeth.broker;
 
-public final class DataFeedKey {
+import java.util.Objects;
+
+public final class IBDataFeedKey {
 
     private Integer reqId; // Set when the request is processed. Should not be set by the user.
     private final String ticker;
@@ -8,7 +10,7 @@ public final class DataFeedKey {
     private final String exchange;
     private final String currency;
 
-    public DataFeedKey(Integer reqId, String ticker, String secType, String exchange, String currency) {
+    public IBDataFeedKey(Integer reqId, String ticker, String secType, String exchange, String currency) {
         this.reqId = reqId;
         this.ticker = ticker;
         this.secType = secType;
@@ -18,11 +20,11 @@ public final class DataFeedKey {
 
     @Override
     public boolean equals(Object other) {
-        if (other.getClass() != DataFeedKey.class) {
+        if (other == null || other.getClass() != IBDataFeedKey.class) {
             return false;
         }
 
-        DataFeedKey cast = (DataFeedKey) other;
+        IBDataFeedKey cast = (IBDataFeedKey) other;
         return cast.ticker.equals(ticker) &&
                 cast.secType.equals(secType) &&
                 cast.exchange.equals(exchange) &&
@@ -39,7 +41,15 @@ public final class DataFeedKey {
                 "currency=" + currency + ']';
     }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(ticker, secType, exchange, currency);
+    }
+
     public void setReqId(Integer reqId) {
+        if(this.reqId != null) {
+            throw new IllegalStateException("reqId is already set.");
+        }
         this.reqId = reqId;
     }
 

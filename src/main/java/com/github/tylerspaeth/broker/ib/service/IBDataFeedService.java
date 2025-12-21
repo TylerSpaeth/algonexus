@@ -1,6 +1,6 @@
 package com.github.tylerspaeth.broker.ib.service;
 
-import com.github.tylerspaeth.broker.DataFeedKey;
+import com.github.tylerspaeth.broker.IBDataFeedKey;
 import com.github.tylerspaeth.broker.service.IDataFeedService;
 import com.github.tylerspaeth.broker.ib.IBMapper;
 import com.github.tylerspaeth.broker.ib.IBSyncWrapper;
@@ -31,7 +31,7 @@ public class IBDataFeedService implements IDataFeedService {
 
     @Override
     public List<Candlestick> readFromDataFeed(Symbol symbol, int intervalDuration, IntervalUnitEnum intervalUnit) {
-        DataFeedKey dataFeedKey = getDataFeedKeyFromSymbol(symbol);
+        IBDataFeedKey dataFeedKey = getDataFeedKeyFromSymbol(symbol);
         List<RealtimeBar> realtimeBars = wrapper.readFromDataFeed(dataFeedKey, intervalDuration, intervalUnit);
         return realtimeBars.stream().map(IBMapper::mapRealTimeBarToCandlestick).collect(Collectors.toList());
     }
@@ -46,8 +46,8 @@ public class IBDataFeedService implements IDataFeedService {
      * @param symbol Symbol
      * @return DataFeedKey
      */
-    private DataFeedKey getDataFeedKeyFromSymbol(Symbol symbol) {
-        return new DataFeedKey(null, symbol.getTicker(), IBMapper.mapAssetTypeToSecType(symbol.getAssetType()).name(), symbol.getExchange().getName(), "USD");
+    private IBDataFeedKey getDataFeedKeyFromSymbol(Symbol symbol) {
+        return new IBDataFeedKey(null, symbol.getTicker(), IBMapper.mapAssetTypeToSecType(symbol.getAssetType()).name(), symbol.getExchange().getName(), "USD");
     }
 
 }

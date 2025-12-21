@@ -19,9 +19,9 @@ public class IBOrderService implements IOrderService {
 
     private final OrderDAO orderDAO;
 
-    public IBOrderService() {
+    public IBOrderService(OrderDAO orderDAO) {
         this.wrapper = IBSyncWrapper.getInstance();
-        this.orderDAO = new OrderDAO();
+        this.orderDAO = orderDAO;
     }
 
     @Override

@@ -1,6 +1,6 @@
 package com.github.tylerspaeth.broker.ib;
 
-import com.github.tylerspaeth.broker.DataFeedKey;
+import com.github.tylerspaeth.broker.IBDataFeedKey;
 import com.github.tylerspaeth.broker.ib.response.AccountPnL;
 import com.github.tylerspaeth.broker.ib.response.AccountSummary;
 import com.github.tylerspaeth.broker.ib.response.OrderResponse;
@@ -207,7 +207,7 @@ public class IBSyncWrapper {
      * Creates a new subscription that matches the given datafeed.
      * @param dataFeedKey Key defining the subscription.
      */
-    public void subscribeToDataFeed(DataFeedKey dataFeedKey) {
+    public void subscribeToDataFeed(IBDataFeedKey dataFeedKey) {
         MultiReaderQueue<RealtimeBar> queue = ibConnection.datafeeds.get(dataFeedKey);
 
         if (queue == null) {
@@ -240,7 +240,7 @@ public class IBSyncWrapper {
      * @param intervalUnit used in determining the granularity of the data to retrieve
      * @return List of all OHLCV data that has not been read yet.
      */
-    public List<RealtimeBar> readFromDataFeed(DataFeedKey dataFeedKey, int intervalDuration, IntervalUnitEnum intervalUnit) {
+    public List<RealtimeBar> readFromDataFeed(IBDataFeedKey dataFeedKey, int intervalDuration, IntervalUnitEnum intervalUnit) {
         MultiReaderQueue<RealtimeBar> queue = ibConnection.datafeeds.get(dataFeedKey);
 
         if(queue == null) {
@@ -289,7 +289,7 @@ public class IBSyncWrapper {
      * Unsubscribes this subscriber from the data feed.
      * @param dataFeedKey Defines the datafeed subscription
      */
-    public void unsubscribeFromDataFeed(DataFeedKey dataFeedKey) {
+    public void unsubscribeFromDataFeed(IBDataFeedKey dataFeedKey) {
         MultiReaderQueue<RealtimeBar> queue = ibConnection.datafeeds.get(dataFeedKey);
 
         if(queue != null) {
@@ -298,7 +298,7 @@ public class IBSyncWrapper {
             // If there are no more reader reading from the queue, cancel the IB request and delete the data feed
             if(queue.readerCount() == 0) {
 
-                DataFeedKey storedKey = null;
+                IBDataFeedKey storedKey = null;
                 for(var pairs : ibConnection.datafeeds.entrySet()) {
                     if(pairs.getKey().equals(dataFeedKey)) {
                         storedKey = pairs.getKey();
