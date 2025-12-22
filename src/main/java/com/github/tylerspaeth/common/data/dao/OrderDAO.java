@@ -1,6 +1,7 @@
 package com.github.tylerspaeth.common.data.dao;
 
 import com.github.tylerspaeth.common.data.entity.Order;
+import com.github.tylerspaeth.common.data.entity.Order_;
 import com.github.tylerspaeth.common.data.entity.User;
 import com.github.tylerspaeth.config.DatasourceConfig;
 import jakarta.persistence.EntityManager;
@@ -24,8 +25,8 @@ public class OrderDAO extends AbstractDAO<Order> {
         CriteriaQuery<Order> cq = cb.createQuery(Order.class);
         Root<Order> root = cq.from(Order.class);
 
-        Predicate predicate = cb.equal(root.get("user"), user);
-        predicate = cb.and(predicate, cb.isTrue(root.get("finalized")));
+        Predicate predicate = cb.equal(root.get(Order_.user), user);
+        predicate = cb.and(predicate, cb.isTrue(root.get(Order_.finalized)));
 
         cq.select(root).where(predicate);
         return entityManager.createQuery(cq).getResultList();

@@ -1,6 +1,7 @@
 package com.github.tylerspaeth.common.data.dao;
 
 import com.github.tylerspaeth.common.data.entity.Candlestick;
+import com.github.tylerspaeth.common.data.entity.Candlestick_;
 import com.github.tylerspaeth.common.data.entity.HistoricalDataset;
 import com.github.tylerspaeth.config.DatasourceConfig;
 import jakarta.persistence.EntityManager;
@@ -27,10 +28,10 @@ public class CandlestickDAO {
         CriteriaQuery<Candlestick> cq = cb.createQuery(Candlestick.class);
         Root<Candlestick> root = cq.from(Candlestick.class);
 
-        Predicate predicate = cb.equal(root.get("historicalDataset"), historicalDataset);
-        predicate = cb.and(predicate, cb.greaterThan(root.get("timestamp"), startTime));
+        Predicate predicate = cb.equal(root.get(Candlestick_.historicalDataset), historicalDataset);
+        predicate = cb.and(predicate, cb.greaterThan(root.get(Candlestick_.timestamp), startTime));
 
-        cq.select(root).where(predicate).orderBy(cb.asc(root.get("timestamp")));
+        cq.select(root).where(predicate).orderBy(cb.asc(root.get(Candlestick_.timestamp)));
         return entityManager.createQuery(cq).setMaxResults(numCandles).getResultList();
     }
 

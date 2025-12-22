@@ -1,6 +1,8 @@
 package com.github.tylerspaeth.common.data.dao;
 
 import com.github.tylerspaeth.common.data.entity.Exchange;
+import com.github.tylerspaeth.common.data.entity.Exchange_;
+import com.github.tylerspaeth.common.data.entity.Symbol_;
 import com.github.tylerspaeth.common.enums.AssetTypeEnum;
 import com.github.tylerspaeth.config.DatasourceConfig;
 import com.github.tylerspaeth.common.data.entity.Symbol;
@@ -43,9 +45,9 @@ public class SymbolDAO {
         Root<Symbol> root = cq.from(Symbol.class);
         Join<Symbol, Exchange> join = root.join(Exchange.class);
 
-        Predicate predicate = cb.equal(root.get("ticker"), ticker);
-        predicate = cb.and(predicate, cb.equal(join.get("exchangeName"), exchangeName));
-        predicate = cb.and(predicate, cb.equal(root.get("assetType"), assetType));
+        Predicate predicate = cb.equal(root.get(Symbol_.ticker), ticker);
+        predicate = cb.and(predicate, cb.equal(join.get(Exchange_.name), exchangeName));
+        predicate = cb.and(predicate, cb.equal(root.get(Symbol_.assetType), assetType));
 
         cq.select(root).where(predicate);
 
@@ -69,10 +71,10 @@ public class SymbolDAO {
         CriteriaQuery<Symbol> cq = cb.createQuery(Symbol.class);
         Root<Symbol> root = cq.from(Symbol.class);
 
-        Predicate predicate = cb.equal(root.get("ticker"), symbol.getTicker());
-        predicate = cb.and(predicate, cb.equal(root.get("name"), symbol.getName()));
-        predicate = cb.and(predicate, cb.equal(root.get("exchange"), symbol.getExchange()));
-        predicate = cb.and(predicate, cb.equal(root.get("assetType"), symbol.getAssetType()));
+        Predicate predicate = cb.equal(root.get(Symbol_.ticker), symbol.getTicker());
+        predicate = cb.and(predicate, cb.equal(root.get(Symbol_.name), symbol.getName()));
+        predicate = cb.and(predicate, cb.equal(root.get(Symbol_.exchange), symbol.getExchange()));
+        predicate = cb.and(predicate, cb.equal(root.get(Symbol_.assetType), symbol.getAssetType()));
 
         cq.select(root).where(predicate);
 
