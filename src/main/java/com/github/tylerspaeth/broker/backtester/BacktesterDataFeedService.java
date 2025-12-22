@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -24,10 +25,16 @@ public class BacktesterDataFeedService implements IDataFeedService {
     private final SymbolDAO symbolDAO;
     private final CandlestickDAO candlestickDAO;
 
-    private final Map<String, List<HistoricalDataset>> datafeeds = new ConcurrentHashMap<>();
-    private final Map<String, Timestamp> lastSeenOffsets = new ConcurrentHashMap<>();
+    private final Map<BacktesterDataFeedKey, List<HistoricalDataset>> datafeeds = new ConcurrentHashMap<>(); // Used for querying more data
+    private final Map<BacktesterDataFeedKey, Timestamp> lastSeenOffsets = new ConcurrentHashMap<>(); // Last seen timestamp offset for each datafeed
+    private final Map<BacktesterDataFeedKey, Integer> datafeedIntervalMap = new ConcurrentHashMap<>(); // Map of the interval duration being read by each data feed
+    private final Map<BacktesterDataFeedKey, IntervalUnitEnum> dataFeedIntervalUnitMap = new ConcurrentHashMap<>(); // Map of the interval unit being read by each data feed
+    private final Map<BacktesterDataFeedKey, List<Candlestick>> candlesticksPendingReturn = new ConcurrentHashMap<>(); // Map of candlesticks that have already been built for each data feed
 
-    public BacktesterDataFeedService(SymbolDAO symbolDAO, CandlestickDAO candlestickDAO) {
+    private final BacktesterSharedService backtesterSharedService;
+
+    public BacktesterDataFeedService(BacktesterSharedService backtesterSharedService, SymbolDAO symbolDAO, CandlestickDAO candlestickDAO) {
+        this.backtesterSharedService = backtesterSharedService;
         this.symbolDAO = symbolDAO;
         this.candlestickDAO = candlestickDAO;
     }
@@ -47,7 +54,7 @@ public class BacktesterDataFeedService implements IDataFeedService {
             return;
         }
 
-        String mapKey = persistedSymbol.toString() + "-" + Thread.currentThread().threadId();
+        BacktesterDataFeedKey mapKey = BacktesterDataFeedKey.createKeyForSymbol(persistedSymbol.getSymbolID());
 
         datafeeds.put(mapKey, historicalDatasets);
         lastSeenOffsets.put(mapKey, Timestamp.from(Instant.EPOCH));
@@ -65,7 +72,7 @@ public class BacktesterDataFeedService implements IDataFeedService {
             return List.of();
         }
 
-        String mapKey = persistedSymbol.toString() + "-" + Thread.currentThread().threadId();
+        BacktesterDataFeedKey mapKey = BacktesterDataFeedKey.createKeyForSymbol(persistedSymbol.getSymbolID());
 
         List<HistoricalDataset> datasets = datafeeds.get(mapKey);
         if(datasets == null || datasets.isEmpty()) {
@@ -84,6 +91,28 @@ public class BacktesterDataFeedService implements IDataFeedService {
             return List.of();
         }
 
+        List<Candlestick> prebuiltCandlesticks = candlesticksPendingReturn.get(mapKey);
+        Integer expectedDuration = datafeedIntervalMap.get(mapKey);
+        IntervalUnitEnum expectedUnit = dataFeedIntervalUnitMap.get(mapKey);
+
+        List<Candlestick> dataFeedToReturn = new ArrayList<>();
+
+        if(expectedDuration != null && expectedUnit != null && (expectedDuration != intervalDuration || expectedUnit != intervalUnit)) {
+            throw new IllegalStateException("Can not modify the interval duration and units after the first read.");
+        } else if(prebuiltCandlesticks != null && prebuiltCandlesticks.size() > 1) {
+            // If we already have built candlesticks for this, then just grab the first one
+            return new ArrayList<>(List.of(prebuiltCandlesticks.removeFirst()));
+        } else if(prebuiltCandlesticks != null && prebuiltCandlesticks.size() == 1) {
+            // If we will be removing the last prebuild candlestick do not return it right away, we need to build some more.
+            dataFeedToReturn.add(prebuiltCandlesticks.removeFirst());
+        } else if(prebuiltCandlesticks == null) {
+            // If we have not read from the datafeed yet then initialize values in the maps
+            prebuiltCandlesticks = new ArrayList<>();
+            candlesticksPendingReturn.put(mapKey, prebuiltCandlesticks);
+            datafeedIntervalMap.put(mapKey, intervalDuration);
+            dataFeedIntervalUnitMap.put(mapKey, intervalUnit);
+        }
+
         // Align the first Candlestick
         Candlestick firstCandlestick = null;
         while(true) {
@@ -100,12 +129,11 @@ public class BacktesterDataFeedService implements IDataFeedService {
 
         if(firstCandlestick == null) {
             lastSeenOffsets.put(mapKey, lastSeenTime);
-            return List.of();
+            return dataFeedToReturn;
         }
 
         // Determine how many Candlesticks will be condensed into a single Candlestick
         int numCandlesToCondense = (intervalDuration * intervalUnit.secondsPer) / (dataset.getTimeInterval() * dataset.getIntervalUnit().secondsPer);
-        List<Candlestick> dataFeedToReturn = new ArrayList<>();
 
         // Determine how many Candlesticks we will pull in this run.
         int numCandlestickToQuery = MAX_CANDLESTICKS;
@@ -123,10 +151,19 @@ public class BacktesterDataFeedService implements IDataFeedService {
             for(int i = 0; i < numCandlesToCondense; i++) {
                 singleCandlestickList.add(candlesticksToCondense.removeFirst());
             }
-            dataFeedToReturn.add(condenseCandlesticks(singleCandlestickList));
+            prebuiltCandlesticks.add(condenseCandlesticks(singleCandlestickList));
+        }
+
+        if(dataFeedToReturn.isEmpty() && !prebuiltCandlesticks.isEmpty()) {
+            dataFeedToReturn.add(prebuiltCandlesticks.removeFirst());
         }
 
         lastSeenOffsets.put(mapKey, lastSeenTime);
+        if(!dataFeedToReturn.isEmpty()) {
+            backtesterSharedService.updateDataFeed(mapKey, dataFeedToReturn.getLast(), Timestamp.from(dataFeedToReturn.getLast().getTimestamp().toInstant()
+                    .plus((long) intervalDuration * intervalUnit.secondsPer, ChronoUnit.SECONDS)));
+        }
+
         return dataFeedToReturn;
     }
 
@@ -138,10 +175,13 @@ public class BacktesterDataFeedService implements IDataFeedService {
             return;
         }
 
-        String mapKey = persistedSymbol.toString() + "-" + Thread.currentThread().threadId();
+        BacktesterDataFeedKey mapKey = BacktesterDataFeedKey.createKeyForSymbol(persistedSymbol.getSymbolID());
 
         datafeeds.remove(mapKey);
         lastSeenOffsets.remove(mapKey);
+        datafeedIntervalMap.remove(mapKey);
+        dataFeedIntervalUnitMap.remove(mapKey);
+        candlesticksPendingReturn.remove(mapKey);
     }
 
     /**

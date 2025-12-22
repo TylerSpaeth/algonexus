@@ -18,6 +18,14 @@ public final class IBDataFeedKey {
         this.currency = currency;
     }
 
+    /**
+     * Creates an exact copy of the existing key.
+     * @return IBDataFeedKey
+     */
+    public IBDataFeedKey copy() {
+        return new IBDataFeedKey(reqId, ticker, secType, exchange, currency);
+    }
+
     @Override
     public boolean equals(Object other) {
         if (other == null || other.getClass() != IBDataFeedKey.class) {

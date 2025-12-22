@@ -236,6 +236,8 @@ public class IBSyncWrapperTest {
     @Test
     public void testReadFromSameFeedFromDifferentThreads() {
 
+        int reqId = connection.nextValidId.get();
+
         IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency");
 
         wrapper.subscribeToDataFeed(dataFeedKey);
@@ -253,7 +255,7 @@ public class IBSyncWrapperTest {
             Assertions.assertEquals(1, realtimeBars.size());
         }, "OtherThread").start();
 
-        connection.getWrapper().realtimeBar(dataFeedKey.getReqId(), 0, 1, 2, 3, 4, Decimal.ONE_HUNDRED, null, -1);
+        connection.getWrapper().realtimeBar(reqId, 0, 1, 2, 3, 4, Decimal.ONE_HUNDRED, null, -1);
 
         latch.countDown();
 
@@ -269,27 +271,30 @@ public class IBSyncWrapperTest {
 
     @Test
     public void testReadAtSubFiveSecondGranularity() {
+        int reqId = connection.nextValidId.get();
         IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency");
         wrapper.subscribeToDataFeed(dataFeedKey);
-        connection.getWrapper().realtimeBar(dataFeedKey.getReqId(), 0, 1, 2, 3, 4, Decimal.ONE_HUNDRED, null, -1);
+        connection.getWrapper().realtimeBar(reqId, 0, 1, 2, 3, 4, Decimal.ONE_HUNDRED, null, -1);
         Assertions.assertTrue(wrapper.readFromDataFeed(dataFeedKey, 1, IntervalUnitEnum.SECOND).isEmpty());
     }
 
     @Test
     public void testReadAtSevenSecondGranularity() {
+        int reqId = connection.nextValidId.get();
         IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency");
         wrapper.subscribeToDataFeed(dataFeedKey);
-        connection.getWrapper().realtimeBar(dataFeedKey.getReqId(), 0, 1, 2, 3, 4, Decimal.ONE_HUNDRED, null, -1);
-        connection.getWrapper().realtimeBar(dataFeedKey.getReqId(), 5, 1, 2, 3, 4, Decimal.ONE_HUNDRED, null, -1);
+        connection.getWrapper().realtimeBar(reqId, 0, 1, 2, 3, 4, Decimal.ONE_HUNDRED, null, -1);
+        connection.getWrapper().realtimeBar(reqId, 5, 1, 2, 3, 4, Decimal.ONE_HUNDRED, null, -1);
         Assertions.assertTrue(wrapper.readFromDataFeed(dataFeedKey, 7, IntervalUnitEnum.SECOND).isEmpty());
     }
 
     @Test
     public void testReadFromDataFeedCondenseBars() {
+        int reqId = connection.nextValidId.get();
         IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency");
         wrapper.subscribeToDataFeed(dataFeedKey);
-        connection.getWrapper().realtimeBar(dataFeedKey.getReqId(), 0, 2, 2, 1, 1.5, Decimal.ONE_HUNDRED, null, -1);
-        connection.getWrapper().realtimeBar(dataFeedKey.getReqId(), 5, 1.5, 5, 2, 4, Decimal.ONE_HUNDRED, null, -1);
+        connection.getWrapper().realtimeBar(reqId, 0, 2, 2, 1, 1.5, Decimal.ONE_HUNDRED, null, -1);
+        connection.getWrapper().realtimeBar(reqId, 5, 1.5, 5, 2, 4, Decimal.ONE_HUNDRED, null, -1);
         List<RealtimeBar> realtimeBars = wrapper.readFromDataFeed(dataFeedKey, 10, IntervalUnitEnum.SECOND);
         Assertions.assertEquals(1, realtimeBars.size());
         Assertions.assertEquals(0, realtimeBars.getFirst().date());
@@ -336,9 +341,10 @@ public class IBSyncWrapperTest {
 
     @Test
     public void testReadAfterUnsubscribe() {
+        int reqId = connection.nextValidId.get();
         IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency");
         wrapper.subscribeToDataFeed(dataFeedKey);
-        connection.getWrapper().realtimeBar(dataFeedKey.getReqId(), 0, 2, 2, 1, 1.5, Decimal.ONE_HUNDRED, null, -1);
+        connection.getWrapper().realtimeBar(reqId, 0, 2, 2, 1, 1.5, Decimal.ONE_HUNDRED, null, -1);
         wrapper.unsubscribeFromDataFeed(dataFeedKey);
         List<RealtimeBar> realtimeBars = wrapper.readFromDataFeed(dataFeedKey, 5, IntervalUnitEnum.SECOND);
         Assertions.assertEquals(0, realtimeBars.size());
@@ -346,11 +352,12 @@ public class IBSyncWrapperTest {
 
     @Test
     public void testReadNeedsAligning() {
+        int reqId = connection.nextValidId.get();
         IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency");
         wrapper.subscribeToDataFeed(dataFeedKey);
-        connection.getWrapper().realtimeBar(dataFeedKey.getReqId(), 5, 2, 2, 1, 1.5, Decimal.get(1), null, -1);
-        connection.getWrapper().realtimeBar(dataFeedKey.getReqId(), 10, 2, 2, 1, 1.5, Decimal.get(2), null, -1);
-        connection.getWrapper().realtimeBar(dataFeedKey.getReqId(), 15, 2, 2, 1, 1.5, Decimal.get(3), null, -1);
+        connection.getWrapper().realtimeBar(reqId, 5, 2, 2, 1, 1.5, Decimal.get(1), null, -1);
+        connection.getWrapper().realtimeBar(reqId, 10, 2, 2, 1, 1.5, Decimal.get(2), null, -1);
+        connection.getWrapper().realtimeBar(reqId, 15, 2, 2, 1, 1.5, Decimal.get(3), null, -1);
         List<RealtimeBar> realtimeBars = wrapper.readFromDataFeed(dataFeedKey, 10, IntervalUnitEnum.SECOND);
         Assertions.assertEquals(1, realtimeBars.size());
         Assertions.assertEquals(Decimal.get(5), realtimeBars.getFirst().volume());

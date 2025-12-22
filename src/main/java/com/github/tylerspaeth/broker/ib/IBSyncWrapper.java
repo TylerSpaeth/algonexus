@@ -208,24 +208,27 @@ public class IBSyncWrapper {
      * @param dataFeedKey Key defining the subscription.
      */
     public void subscribeToDataFeed(IBDataFeedKey dataFeedKey) {
-        MultiReaderQueue<RealtimeBar> queue = ibConnection.datafeeds.get(dataFeedKey);
+
+        IBDataFeedKey dataFeedKeyCopy = dataFeedKey.copy();
+
+        MultiReaderQueue<RealtimeBar> queue = ibConnection.datafeeds.get(dataFeedKeyCopy);
 
         if (queue == null) {
 
             // Create the new queue
             int reqId = ibConnection.nextValidId.getAndIncrement();
-            dataFeedKey.setReqId(reqId);
+            dataFeedKeyCopy.setReqId(reqId);
             MultiReaderQueue<RealtimeBar> newQueue = new MultiReaderQueue<>();
-            ibConnection.datafeeds.put(dataFeedKey, newQueue);
+            ibConnection.datafeeds.put(dataFeedKeyCopy, newQueue);
             ibConnection.datafeedReqIdMap.put(reqId, newQueue);
             queue = newQueue;
 
             // Make IB request
             Contract contract = new Contract();
-            contract.symbol(dataFeedKey.getTicker());
-            contract.secType(dataFeedKey.getSecType());
-            contract.exchange(dataFeedKey.getExchange());
-            contract.currency(dataFeedKey.getCurrency());
+            contract.symbol(dataFeedKeyCopy.getTicker());
+            contract.secType(dataFeedKeyCopy.getSecType());
+            contract.exchange(dataFeedKeyCopy.getExchange());
+            contract.currency(dataFeedKeyCopy.getCurrency());
             // TODO we should be getting the conid from ib before placing this order to ensure there is no ambiguity
             ibConnection.client.reqRealTimeBars(reqId, contract, 5, "MIDPOINT", false, null);
         }

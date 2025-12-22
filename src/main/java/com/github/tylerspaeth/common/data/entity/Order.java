@@ -92,7 +92,7 @@ public class Order {
     private boolean finalized;
 
     @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    private List<OrderEvent> orderEvents;
+    private List<OrderEvent> orderEvents; // Backtester does not use order events
 
     /**
      * Validates that the Order is in a placeable state.

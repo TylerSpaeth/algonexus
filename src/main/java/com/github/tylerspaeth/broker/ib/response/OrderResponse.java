@@ -35,17 +35,23 @@ public class OrderResponse {
     public synchronized void updateFromOrderStatus(int filled, int remaining, double lastFillPrice, com.ib.client.OrderStatus newStatus) {
         statuses.add(new com.github.tylerspaeth.broker.response.OrderStatus(newStatus, Timestamp.from(Instant.now())));
         cumulativeFilled = filled;
-        orderResponseListener.update(this);
+        if(orderResponseListener != null) {
+            orderResponseListener.update(this);
+        }
     }
 
     public synchronized void addExecution(Execution e) {
         executions.add(e);
-        orderResponseListener.update(this);
+        if(orderResponseListener != null) {
+            orderResponseListener.update(this);
+        }
     }
 
     public synchronized void addCommission(CommissionAndFeesReport commissionAndFeesReport) {
         commissions.add(commissionAndFeesReport);
-        orderResponseListener.update(this);
+        if(orderResponseListener != null) {
+            orderResponseListener.update(this);
+        }
     }
 
     /**
@@ -55,7 +61,9 @@ public class OrderResponse {
      */
     public void setOrderResponseListener(IIBOrderResponseListener orderResponseListener) {
         this.orderResponseListener = orderResponseListener;
-        orderResponseListener.update(this);
+        if(orderResponseListener != null) {
+            orderResponseListener.update(this);
+        }
     }
 
     public boolean getExecDetailsEnded() {

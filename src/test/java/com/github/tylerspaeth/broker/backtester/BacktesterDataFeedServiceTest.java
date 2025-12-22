@@ -1,6 +1,7 @@
 package com.github.tylerspaeth.broker.backtester;
 
 import com.github.tylerspaeth.common.data.dao.CandlestickDAO;
+import com.github.tylerspaeth.common.data.dao.OrderDAO;
 import com.github.tylerspaeth.common.data.dao.SymbolDAO;
 import com.github.tylerspaeth.common.data.entity.Candlestick;
 import com.github.tylerspaeth.common.data.entity.Exchange;
@@ -16,6 +17,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.lang.reflect.Field;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -30,11 +32,13 @@ public class BacktesterDataFeedServiceTest {
     private SymbolDAO symbolDAO;
     @Mock
     private CandlestickDAO candlestickDAO;
+    @Mock
+    private OrderDAO orderDAO;
     private BacktesterDataFeedService backtesterDataFeedService;
 
     @BeforeEach
     public void setup() {
-        backtesterDataFeedService = new BacktesterDataFeedService(symbolDAO, candlestickDAO);
+        backtesterDataFeedService = new BacktesterDataFeedService(new BacktesterSharedService(orderDAO), symbolDAO, candlestickDAO);
     }
 
     private void mockPaginatedCandlesticks() {
@@ -50,6 +54,12 @@ public class BacktesterDataFeedServiceTest {
             }
             return candlesticks;
         });
+    }
+
+    private void setSymbolIDOnSymbol(Symbol symbol, int symbolID) throws Exception {
+        Field field = symbol.getClass().getDeclaredField("symbolID");
+        field.setAccessible(true);
+        field.set(symbol, symbolID);
     }
 
     @Test
@@ -73,12 +83,13 @@ public class BacktesterDataFeedServiceTest {
     }
 
     @Test
-    public void testUnsubscribeDoesNotThrowExceptions() {
+    public void testUnsubscribeDoesNotThrowExceptions() throws Exception {
         Symbol symbol = new Symbol();
         symbol.setName("Test Symbol");
         symbol.setTicker("TS");
         symbol.setExchange(new Exchange());
         symbol.setAssetType(AssetTypeEnum.OTHER);
+        setSymbolIDOnSymbol(symbol, 1);
         when(symbolDAO.getPersistedVersionOfSymbol(Mockito.any(Symbol.class))).thenReturn(symbol);
         backtesterDataFeedService.subscribeToDataFeed(symbol);
         Assertions.assertDoesNotThrow(() -> backtesterDataFeedService.unsubscribeFromDataFeed(symbol));
@@ -95,24 +106,26 @@ public class BacktesterDataFeedServiceTest {
     }
 
     @Test
-    public void testReadFromSymbolWithoutDatasetsReturnsEmptyList() {
+    public void testReadFromSymbolWithoutDatasetsReturnsEmptyList() throws Exception {
         Symbol symbol = new Symbol();
         symbol.setName("Test Symbol");
         symbol.setTicker("TS");
         symbol.setExchange(new Exchange());
         symbol.setAssetType(AssetTypeEnum.OTHER);
+        setSymbolIDOnSymbol(symbol, 1);
         when(symbolDAO.getPersistedVersionOfSymbol(Mockito.any(Symbol.class))).thenReturn(symbol);
         backtesterDataFeedService.subscribeToDataFeed(symbol);
         Assertions.assertTrue(backtesterDataFeedService.readFromDataFeed(symbol, 1, IntervalUnitEnum.SECOND).isEmpty());
     }
 
     @Test
-    public void testReadFromSymbolWithEmptyDatasetReturnsEmptyList() {
+    public void testReadFromSymbolWithEmptyDatasetReturnsEmptyList() throws Exception {
         Symbol symbol = new Symbol();
         symbol.setName("Test Symbol");
         symbol.setTicker("TS");
         symbol.setExchange(new Exchange());
         symbol.setAssetType(AssetTypeEnum.OTHER);
+        setSymbolIDOnSymbol(symbol, 1);
 
         HistoricalDataset historicalDataset = new HistoricalDataset();
         historicalDataset.setDatasetName("Test Dataset");
@@ -131,12 +144,13 @@ public class BacktesterDataFeedServiceTest {
     }
 
     @Test
-    public void testReadSingleNotAdjustedCandlestick() {
+    public void testReadSingleNotAdjustedCandlestick() throws Exception {
         Symbol symbol = new Symbol();
         symbol.setName("Test Symbol");
         symbol.setTicker("TS");
         symbol.setExchange(new Exchange());
         symbol.setAssetType(AssetTypeEnum.OTHER);
+        setSymbolIDOnSymbol(symbol, 1);
 
         HistoricalDataset historicalDataset = new HistoricalDataset();
         historicalDataset.setDatasetName("Test Dataset");
@@ -171,12 +185,13 @@ public class BacktesterDataFeedServiceTest {
     }
 
     @Test
-    public void testReadFiveCandlesticksCondensedToOne() {
+    public void testReadFiveCandlesticksCondensedToOne() throws Exception {
         Symbol symbol = new Symbol();
         symbol.setName("Test Symbol");
         symbol.setTicker("TS");
         symbol.setExchange(new Exchange());
         symbol.setAssetType(AssetTypeEnum.OTHER);
+        setSymbolIDOnSymbol(symbol, 1);
 
         HistoricalDataset historicalDataset = new HistoricalDataset();
         historicalDataset.setDatasetName("Test Dataset");
@@ -251,12 +266,13 @@ public class BacktesterDataFeedServiceTest {
     }
 
     @Test
-    public void testReadThreeCandleSticksWithFirstBeingTrimmed() {
+    public void testReadThreeCandleSticksWithFirstBeingTrimmed() throws Exception {
         Symbol symbol = new Symbol();
         symbol.setName("Test Symbol");
         symbol.setTicker("TS");
         symbol.setExchange(new Exchange());
         symbol.setAssetType(AssetTypeEnum.OTHER);
+        setSymbolIDOnSymbol(symbol, 1);
 
         HistoricalDataset historicalDataset = new HistoricalDataset();
         historicalDataset.setDatasetName("Test Dataset");
@@ -311,12 +327,13 @@ public class BacktesterDataFeedServiceTest {
     }
 
     @Test
-    public void testReadFromSymbolWithMultipleDatasetsThatAreAllBad() {
+    public void testReadFromSymbolWithMultipleDatasetsThatAreAllBad() throws Exception {
         Symbol symbol = new Symbol();
         symbol.setName("Test Symbol");
         symbol.setTicker("TS");
         symbol.setExchange(new Exchange());
         symbol.setAssetType(AssetTypeEnum.OTHER);
+        setSymbolIDOnSymbol(symbol, 1);
 
         HistoricalDataset historicalDataset1 = new HistoricalDataset();
         historicalDataset1.setDatasetName("Test Dataset");
@@ -364,12 +381,13 @@ public class BacktesterDataFeedServiceTest {
     }
 
     @Test
-    public void testReadFromSymbolWithMultipleDatasetsWhereOneMatchesExactly() {
+    public void testReadFromSymbolWithMultipleDatasetsWhereOneMatchesExactly() throws Exception {
         Symbol symbol = new Symbol();
         symbol.setName("Test Symbol");
         symbol.setTicker("TS");
         symbol.setExchange(new Exchange());
         symbol.setAssetType(AssetTypeEnum.OTHER);
+        setSymbolIDOnSymbol(symbol, 1);
 
         HistoricalDataset historicalDataset1 = new HistoricalDataset();
         historicalDataset1.setDatasetName("Test Dataset");
@@ -424,12 +442,13 @@ public class BacktesterDataFeedServiceTest {
     }
 
     @Test
-    public void testReadFromSymbolWithMultipleDatasetsWhereOneIsAcceptable() {
+    public void testReadFromSymbolWithMultipleDatasetsWhereOneIsAcceptable() throws Exception {
         Symbol symbol = new Symbol();
         symbol.setName("Test Symbol");
         symbol.setTicker("TS");
         symbol.setExchange(new Exchange());
         symbol.setAssetType(AssetTypeEnum.OTHER);
+        setSymbolIDOnSymbol(symbol, 1);
 
         HistoricalDataset historicalDataset1 = new HistoricalDataset();
         historicalDataset1.setDatasetName("Test Dataset");
@@ -494,12 +513,13 @@ public class BacktesterDataFeedServiceTest {
     }
 
     @Test
-    public void testReadFromSymbolWithMultipleDatasetsWhereMultipleAreAcceptable() {
+    public void testReadFromSymbolWithMultipleDatasetsWhereMultipleAreAcceptable() throws Exception {
         Symbol symbol = new Symbol();
         symbol.setName("Test Symbol");
         symbol.setTicker("TS");
         symbol.setExchange(new Exchange());
         symbol.setAssetType(AssetTypeEnum.OTHER);
+        setSymbolIDOnSymbol(symbol, 1);
 
         HistoricalDataset historicalDataset1 = new HistoricalDataset();
         historicalDataset1.setDatasetName("Test Dataset");
@@ -595,12 +615,13 @@ public class BacktesterDataFeedServiceTest {
     }
 
     @Test
-    public void testReadMultipleCandlesticks() {
+    public void testReadMultipleCandlesticks() throws Exception {
         Symbol symbol = new Symbol();
         symbol.setName("Test Symbol");
         symbol.setTicker("TS");
         symbol.setExchange(new Exchange());
         symbol.setAssetType(AssetTypeEnum.OTHER);
+        setSymbolIDOnSymbol(symbol, 1);
 
         HistoricalDataset historicalDataset = new HistoricalDataset();
         historicalDataset.setDatasetName("Test Dataset");
@@ -666,12 +687,20 @@ public class BacktesterDataFeedServiceTest {
         mockPaginatedCandlesticks();
         backtesterDataFeedService.subscribeToDataFeed(symbol);
         List<Candlestick> returnedCandlestick = backtesterDataFeedService.readFromDataFeed(symbol, 1, IntervalUnitEnum.SECOND);
-        Assertions.assertEquals(5, returnedCandlestick.size());
-        Assertions.assertEquals(Timestamp.from(Instant.ofEpochSecond(0)), returnedCandlestick.get(0).getTimestamp());
-        Assertions.assertEquals(Timestamp.from(Instant.ofEpochSecond(1)), returnedCandlestick.get(1).getTimestamp());
-        Assertions.assertEquals(Timestamp.from(Instant.ofEpochSecond(2)), returnedCandlestick.get(2).getTimestamp());
-        Assertions.assertEquals(Timestamp.from(Instant.ofEpochSecond(3)), returnedCandlestick.get(3).getTimestamp());
-        Assertions.assertEquals(Timestamp.from(Instant.ofEpochSecond(4)), returnedCandlestick.get(4).getTimestamp());
+        Assertions.assertEquals(1, returnedCandlestick.size());
+        Assertions.assertEquals(Timestamp.from(Instant.ofEpochSecond(0)), returnedCandlestick.getFirst().getTimestamp());
+        returnedCandlestick = backtesterDataFeedService.readFromDataFeed(symbol, 1, IntervalUnitEnum.SECOND);
+        Assertions.assertEquals(1, returnedCandlestick.size());
+        Assertions.assertEquals(Timestamp.from(Instant.ofEpochSecond(1)), returnedCandlestick.getFirst().getTimestamp());
+        returnedCandlestick = backtesterDataFeedService.readFromDataFeed(symbol, 1, IntervalUnitEnum.SECOND);
+        Assertions.assertEquals(1, returnedCandlestick.size());
+        Assertions.assertEquals(Timestamp.from(Instant.ofEpochSecond(2)), returnedCandlestick.getFirst().getTimestamp());
+        returnedCandlestick = backtesterDataFeedService.readFromDataFeed(symbol, 1, IntervalUnitEnum.SECOND);
+        Assertions.assertEquals(1, returnedCandlestick.size());
+        Assertions.assertEquals(Timestamp.from(Instant.ofEpochSecond(3)), returnedCandlestick.getFirst().getTimestamp());
+        returnedCandlestick = backtesterDataFeedService.readFromDataFeed(symbol, 1, IntervalUnitEnum.SECOND);
+        Assertions.assertEquals(1, returnedCandlestick.size());
+        Assertions.assertEquals(Timestamp.from(Instant.ofEpochSecond(4)), returnedCandlestick.getFirst().getTimestamp());
     }
 
 }
