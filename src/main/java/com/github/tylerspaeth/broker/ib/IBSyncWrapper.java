@@ -1,6 +1,5 @@
 package com.github.tylerspaeth.broker.ib;
 
-import com.github.tylerspaeth.broker.IBDataFeedKey;
 import com.github.tylerspaeth.broker.ib.response.AccountPnL;
 import com.github.tylerspaeth.broker.ib.response.AccountSummary;
 import com.github.tylerspaeth.broker.ib.response.OrderResponse;

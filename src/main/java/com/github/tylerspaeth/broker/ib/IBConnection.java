@@ -1,7 +1,6 @@
 package com.github.tylerspaeth.broker.ib;
 
 import com.github.tylerspaeth.broker.ib.response.OrderResponse;
-import com.github.tylerspaeth.broker.IBDataFeedKey;
 import com.github.tylerspaeth.common.MultiReaderQueue;
 import com.github.tylerspaeth.broker.ib.response.RealtimeBar;
 import com.ib.client.EClientSocket;

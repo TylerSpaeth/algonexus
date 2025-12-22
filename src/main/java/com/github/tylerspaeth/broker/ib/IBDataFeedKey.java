@@ -1,4 +1,4 @@
-package com.github.tylerspaeth.broker;
+package com.github.tylerspaeth.broker.ib;
 
 import java.util.Objects;
 

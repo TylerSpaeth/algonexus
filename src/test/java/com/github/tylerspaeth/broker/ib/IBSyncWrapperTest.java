@@ -1,6 +1,5 @@
 package com.github.tylerspaeth.broker.ib;
 
-import com.github.tylerspaeth.broker.IBDataFeedKey;
 import com.github.tylerspaeth.broker.ib.response.*;
 import com.github.tylerspaeth.common.enums.IntervalUnitEnum;
 import com.ib.client.*;

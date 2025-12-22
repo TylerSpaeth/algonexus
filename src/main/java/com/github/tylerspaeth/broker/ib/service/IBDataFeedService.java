@@ -1,6 +1,6 @@
 package com.github.tylerspaeth.broker.ib.service;
 
-import com.github.tylerspaeth.broker.IBDataFeedKey;
+import com.github.tylerspaeth.broker.ib.IBDataFeedKey;
 import com.github.tylerspaeth.broker.service.IDataFeedService;
 import com.github.tylerspaeth.broker.ib.IBMapper;
 import com.github.tylerspaeth.broker.ib.IBSyncWrapper;
