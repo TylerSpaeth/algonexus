@@ -183,7 +183,7 @@ CREATE TABLE IF NOT EXISTS `algonexus`.`orders` (
   `StrategyParameterSetID` INT NOT NULL,
   `UserID` INT NOT NULL,
   `OCAGroup` VARCHAR(20) NULL DEFAULT NULL,
-  `LastInOCAGroup` BIT(1) NULL DEFAULT NULL,
+  `Transmit` BIT(1) NOT NULL DEFAULT b'0',
   `TrailAmount` FLOAT NULL DEFAULT NULL,
   `TrailPercent` FLOAT NULL DEFAULT NULL,
   `ParentOrderID` INT NULL DEFAULT NULL,

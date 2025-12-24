@@ -169,7 +169,7 @@ public class IBMapper {
         ibOrder.orderType(mapOrderTypeEnumToOrderType(order.getOrderType()));
         ibOrder.tif(mapTimeInForceEnumToTimeInForce(order.getTimeInForce()));
         ibOrder.ocaGroup(order.getOCAGroup());
-        ibOrder.transmit(order.getLastInOCAGroup());
+        ibOrder.transmit(order.isTransmit());
         if(order.getTrailAmount() != null) {
             ibOrder.trailStopPrice(order.getTrailAmount());
         }

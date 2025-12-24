@@ -7,6 +7,7 @@ import com.github.tylerspaeth.common.enums.TimeInForceEnum;
 import jakarta.persistence.*;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -75,8 +76,8 @@ public class Order {
     @Column(name = "OCAGroup")
     private String OCAGroup;
 
-    @Column(name = "LastInOCAGroup")
-    private Boolean lastInOCAGroup;
+    @Column(name = "Transmit")
+    private Boolean transmit;
 
     @Column(name = "TrailAmount")
     private Float trailAmount;
@@ -265,12 +266,12 @@ public class Order {
         this.OCAGroup = OCAGroup;
     }
 
-    public Boolean getLastInOCAGroup() {
-        return lastInOCAGroup;
+    public Boolean isTransmit() {
+        return transmit;
     }
 
-    public void setLastInOCAGroup(Boolean lastInOCAGroup) {
-        this.lastInOCAGroup = lastInOCAGroup;
+    public void setTransmit(Boolean transmit) {
+        this.transmit = transmit;
     }
 
     public Float getTrailAmount() {
@@ -310,6 +311,9 @@ public class Order {
     }
 
     public List<Trade> getTrades() {
+        if(trades == null) {
+            trades = new ArrayList<>();
+        }
         return trades;
     }
 
