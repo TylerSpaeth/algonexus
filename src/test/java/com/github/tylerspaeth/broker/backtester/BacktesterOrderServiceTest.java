@@ -147,12 +147,18 @@ public class BacktesterOrderServiceTest {
 
     @Test
     public void testCancelOrderWithIDDoesNothing() throws Exception {
+
+        Symbol symbol = new Symbol();
+        Field symbolID = symbol.getClass().getDeclaredField("symbolID");
+        symbolID.setAccessible(true);
+        symbolID.set(symbol, 1);
+
         Order order = new Order();
         order.setQuantity(2f);
         order.setUser(new User());
         order.setSide(SideEnum.BUY);
         order.setOrderType(OrderTypeEnum.MKT);
-        order.setSymbol(new Symbol());
+        order.setSymbol(symbol);
         order.setTimeInForce(TimeInForceEnum.GTC);
         Field orderID = order.getClass().getDeclaredField("orderID");
         orderID.setAccessible(true);
