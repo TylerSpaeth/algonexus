@@ -178,8 +178,13 @@ public class BacktesterSharedService {
         pendingOrdersForMapKey.put(order.getOrderID(), order);
 
         boolean filled = tryToFillOrder(mapKey, order, true);
-        if(filled && order.getOCAGroup() != null && !order.getOCAGroup().isBlank()) {
-            ocaGroupTriggered(mapKey, order.getOCAGroup());
+        if(filled) {
+           if(order.getOCAGroup() != null && !order.getOCAGroup().isBlank()) {
+               ocaGroupTriggered(mapKey, order.getOCAGroup());
+           }
+           pendingOrdersForMapKey.values().stream()
+                   .filter(childOrder -> childOrder.getParentOrder() != null && childOrder.getParentOrder().equals(order))
+                   .forEach(childOrder -> tryToFillOrder(mapKey, childOrder, true));
         }
 
         // Once a transmit flag is seen all other pending orders should have their flags updated
@@ -190,9 +195,15 @@ public class BacktesterSharedService {
                     orderDAO.update(pendingOrder);
 
                     boolean pendingOrderFilled = tryToFillOrder(mapKey, pendingOrder, true);
-                    if(pendingOrderFilled && pendingOrder.getOCAGroup() != null && !pendingOrder.getOCAGroup().isBlank()) {
-                        ocaGroupTriggered(mapKey, pendingOrder.getOCAGroup());
+                    if(pendingOrderFilled) {
+                        if(pendingOrder.getOCAGroup() != null && !pendingOrder.getOCAGroup().isBlank()) {
+                            ocaGroupTriggered(mapKey, pendingOrder.getOCAGroup());
+                        }
+                        pendingOrdersForMapKey.values().stream()
+                                .filter(childOrder -> childOrder.getParentOrder() != null && childOrder.getParentOrder().equals(pendingOrder))
+                                .forEach(childOrder -> tryToFillOrder(mapKey, childOrder, true));
                     }
+
                 }
             });
         }
