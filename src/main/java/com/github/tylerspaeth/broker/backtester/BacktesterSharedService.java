@@ -17,6 +17,10 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+// Note that Trail limit orders are not perfectly simulated right now. We can not simulate the behavior that happens in
+// the middle of the candlestick exactly. It could be reworked to incorporate RNG to determine the inner candle ordering.
+// For now, it assumes that the trigger price will be changes before the limit is hit.
+
 public class BacktesterSharedService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BacktesterSharedService.class);
@@ -66,14 +70,14 @@ public class BacktesterSharedService {
                         if(order.getPrice() == null) {
                             order.setPrice(newPrice);
                         } else {
-                            order.setPrice(Math.max(order.getPrice(), newPrice));
+                            order.setPrice(Math.min(order.getPrice(), newPrice));
                         }
                     } else if(trailPercent != null) {
                         float newPrice = lastSeenCandlestick.getLow() * (1 + trailPercent);
                         if(order.getPrice() == null) {
                             order.setPrice(newPrice );
                         } else {
-                            order.setPrice(Math.max(order.getPrice(), newPrice));
+                            order.setPrice(Math.min(order.getPrice(), newPrice));
                         }
                     }
                 } else if(order.getSide() == SideEnum.SELL) {
@@ -82,14 +86,14 @@ public class BacktesterSharedService {
                         if(order.getPrice() == null) {
                             order.setPrice(newPrice);
                         } else {
-                            order.setPrice(Math.min(order.getPrice(), newPrice));
+                            order.setPrice(Math.max(order.getPrice(), newPrice));
                         }
                     } else if(trailPercent != null) {
                         float newPrice = lastSeenCandlestick.getHigh() * (1 - trailPercent);
                         if(order.getPrice() == null) {
                             order.setPrice(newPrice );
                         } else {
-                            order.setPrice(Math.min(order.getPrice(), newPrice));
+                            order.setPrice(Math.max(order.getPrice(), newPrice));
                         }
                     }
                 }
@@ -98,7 +102,7 @@ public class BacktesterSharedService {
             for(Iterator<Order> it = pendingOrdersForMapKey.values().iterator(); it.hasNext();) {
                 Order order = it.next();
                 boolean filled = tryToFillOrder(mapKey, order, false);
-                if(filled && !order.getOCAGroup().isBlank()) {
+                if(filled && order.getOCAGroup() != null && !order.getOCAGroup().isBlank()) {
                     ocaGroupTriggered(mapKey, order.getOCAGroup());
                 }
             }
@@ -291,6 +295,9 @@ public class BacktesterSharedService {
         float candlestickLow = newOrder ? lastSeenCandlestick.getClose() : lastSeenCandlestick.getLow();
         float candlestickHigh = newOrder ? lastSeenCandlestick.getClose() : lastSeenCandlestick.getHigh();
 
+        float limitFillPriceLow = newOrder ? candlestickLow : order.getPrice();
+        float limitFillPriceHigh = newOrder ? candlestickHigh : order.getPrice();
+
         // If this is a new order then the only price with will be considered for filling is close price
         switch (order.getOrderType()) {
             case MKT:
@@ -298,28 +305,19 @@ public class BacktesterSharedService {
                 return true;
             case LMT:
                 if(order.getSide() == SideEnum.BUY && candlestickLow <= order.getPrice()) {
-                    fillOrder(order, candlestickLow, currentTimestamp);
+                    fillOrder(order, limitFillPriceLow, currentTimestamp);
                     return true;
                 } else if(order.getSide() == SideEnum.SELL && candlestickHigh >= order.getPrice()) {
-                    fillOrder(order, candlestickHigh, currentTimestamp);
+                    fillOrder(order, limitFillPriceHigh, currentTimestamp);
                     return true;
                 }
                 break;
             case STP, STP_LMT:
                 if(order.getSide() == SideEnum.BUY && candlestickHigh >= order.getPrice()) {
-                    if(newOrder) {
-                        fillOrder(order, candlestickHigh, currentTimestamp);
-                    } else {
-                        fillOrder(order, order.getPrice(), currentTimestamp);
-                    }
-
+                    fillOrder(order, limitFillPriceHigh, currentTimestamp);
                     return true;
                 } else if(order.getSide() == SideEnum.SELL && candlestickLow <= order.getPrice()) {
-                    if(newOrder) {
-                        fillOrder(order, candlestickLow, currentTimestamp);
-                    } else {
-                        fillOrder(order, candlestickLow, currentTimestamp);
-                    }
+                    fillOrder(order, limitFillPriceLow, currentTimestamp);
                     return true;
                 }
                 break;

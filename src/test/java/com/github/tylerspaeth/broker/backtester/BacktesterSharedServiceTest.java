@@ -33,6 +33,46 @@ public class BacktesterSharedServiceTest {
         backtesterSharedService = new BacktesterSharedService(orderDAO);
     }
 
+
+    private Symbol loadDataAndCreateSymbol(int symbolID) throws Exception {
+        BacktesterDataFeedKey key = BacktesterDataFeedKey.createKeyForSymbol(1);
+        Timestamp timestamp = new Timestamp(0);
+        Candlestick candlestick = new Candlestick();
+        candlestick.setOpen(1f);
+        candlestick.setHigh(5f);
+        candlestick.setLow(0f);
+        candlestick.setClose(3f);
+        candlestick.setVolume(1000f);
+        candlestick.setTimestamp(timestamp);
+        backtesterSharedService.updateDataFeed(key, candlestick, timestamp);
+
+        return createSymbol(symbolID);
+    }
+
+    private Symbol loadDataAnddCreateSymbol(int symbolID, float open, float high, float low, float close, float volume) throws Exception {
+        BacktesterDataFeedKey key = BacktesterDataFeedKey.createKeyForSymbol(1);
+        Timestamp timestamp = new Timestamp(0);
+        Candlestick candlestick = new Candlestick();
+        candlestick.setOpen(open);
+        candlestick.setHigh(high);
+        candlestick.setLow(low);
+        candlestick.setClose(close);
+        candlestick.setVolume(volume);
+        candlestick.setTimestamp(timestamp);
+        backtesterSharedService.updateDataFeed(key, candlestick, timestamp);
+
+        return createSymbol(symbolID);
+    }
+
+    private Symbol createSymbol(int symbolID) throws Exception {
+        Symbol symbol = new Symbol();
+        Field symbolIDField = symbol.getClass().getDeclaredField("symbolID");
+        symbolIDField.setAccessible(true);
+        symbolIDField.set(symbol, 1);
+
+        return symbol;
+    }
+
     @Test
     public void testUpdateDataFeedWithNullKeyDoesNotThrow() {
         Assertions.assertDoesNotThrow(() -> backtesterSharedService.updateDataFeed(null, new Candlestick(), new Timestamp(1)));
@@ -123,26 +163,6 @@ public class BacktesterSharedServiceTest {
         backtesterSharedService.addOrder(BacktesterDataFeedKey.createKeyForSymbol(1), order);
         Assertions.assertEquals(0, backtesterSharedService.pendingOrders.size());
         Assertions.assertNull(order.getStatus());
-    }
-
-    private Symbol loadDataAndCreateSymbol(int symbolID) throws Exception {
-        BacktesterDataFeedKey key = BacktesterDataFeedKey.createKeyForSymbol(1);
-        Timestamp timestamp = new Timestamp(0);
-        Candlestick candlestick = new Candlestick();
-        candlestick.setOpen(1f);
-        candlestick.setHigh(5f);
-        candlestick.setLow(0f);
-        candlestick.setClose(3f);
-        candlestick.setVolume(1000f);
-        candlestick.setTimestamp(timestamp);
-        backtesterSharedService.updateDataFeed(key, candlestick, timestamp);
-
-        Symbol symbol = new Symbol();
-        Field symbolIDField = symbol.getClass().getDeclaredField("symbolID");
-        symbolIDField.setAccessible(true);
-        symbolIDField.set(symbol, 1);
-
-        return symbol;
     }
 
     @Test
@@ -894,7 +914,264 @@ public class BacktesterSharedServiceTest {
         Assertions.assertEquals(1, childOrder.getTrades().size());
     }
 
-    // TODO add cancellation tests
-    // TODO add update data feed tests
+    @Test
+    public void testUpdateDataFeedLimitOrderFillsAtCorrectPriceBuy() throws Exception {
+        BacktesterDataFeedKey key = BacktesterDataFeedKey.createKeyForSymbol(1);
+        Symbol symbol = loadDataAnddCreateSymbol(1, 100, 200, 50, 100, 1000);
+
+        Order order = new Order();
+        order.setPrice(40f);
+        order.setOrderType(OrderTypeEnum.LMT);
+        order.setSide(SideEnum.BUY);
+        order.setTimeInForce(TimeInForceEnum.GTC);
+        order.setQuantity(4f);
+        order.setUser(new User());
+        order.setSymbol(symbol);
+        order.setTransmit(true);
+        Field parentOrderID = order.getClass().getDeclaredField("orderID");
+        parentOrderID.setAccessible(true);
+        parentOrderID.set(order, 1);
+
+        backtesterSharedService.addOrder(key, order);
+
+        backtesterSharedService.updateDataFeed(key, new Candlestick(100f, 110f, 30f, 50f, 100f, new Timestamp(1)), new Timestamp(1));
+
+        Assertions.assertEquals(OrderStatusEnum.FILLED, order.getStatus());
+        Assertions.assertEquals(1, order.getTrades().size());
+        Assertions.assertEquals(40, order.getTrades().getFirst().getFillPrice());
+    }
+
+    @Test
+    public void testUpdateDataFeedLimitOrderFillsAtCorrectPriceSell() throws Exception {
+        BacktesterDataFeedKey key = BacktesterDataFeedKey.createKeyForSymbol(1);
+        Symbol symbol = loadDataAnddCreateSymbol(1, 100, 200, 50, 100, 1000);
+
+        Order order = new Order();
+        order.setPrice(300f);
+        order.setOrderType(OrderTypeEnum.LMT);
+        order.setSide(SideEnum.SELL);
+        order.setTimeInForce(TimeInForceEnum.GTC);
+        order.setQuantity(4f);
+        order.setUser(new User());
+        order.setSymbol(symbol);
+        order.setTransmit(true);
+        Field parentOrderID = order.getClass().getDeclaredField("orderID");
+        parentOrderID.setAccessible(true);
+        parentOrderID.set(order, 1);
+
+        backtesterSharedService.addOrder(key, order);
+
+        backtesterSharedService.updateDataFeed(key, new Candlestick(100f, 375f, 30f, 50f, 100f, new Timestamp(1)), new Timestamp(1));
+
+        Assertions.assertEquals(OrderStatusEnum.FILLED, order.getStatus());
+        Assertions.assertEquals(1, order.getTrades().size());
+        Assertions.assertEquals(300, order.getTrades().getFirst().getFillPrice());
+    }
+
+    @Test
+    public void testUpdateDataFeedStopOrderFillsAtCorrectPriceBuy() throws Exception {
+        BacktesterDataFeedKey key = BacktesterDataFeedKey.createKeyForSymbol(1);
+        Symbol symbol = loadDataAnddCreateSymbol(1, 100, 200, 50, 100, 1000);
+
+        Order order = new Order();
+        order.setPrice(300f);
+        order.setOrderType(OrderTypeEnum.STP);
+        order.setSide(SideEnum.BUY);
+        order.setTimeInForce(TimeInForceEnum.GTC);
+        order.setQuantity(4f);
+        order.setUser(new User());
+        order.setSymbol(symbol);
+        order.setTransmit(true);
+        Field parentOrderID = order.getClass().getDeclaredField("orderID");
+        parentOrderID.setAccessible(true);
+        parentOrderID.set(order, 1);
+
+        backtesterSharedService.addOrder(key, order);
+
+        backtesterSharedService.updateDataFeed(key, new Candlestick(100f, 350f, 30f, 50f, 100f, new Timestamp(1)), new Timestamp(1));
+
+        Assertions.assertEquals(OrderStatusEnum.FILLED, order.getStatus());
+        Assertions.assertEquals(1, order.getTrades().size());
+        Assertions.assertEquals(300, order.getTrades().getFirst().getFillPrice());
+    }
+
+    @Test
+    public void testUpdateDataFeedStopOrderFillsAtCorrectPriceSell() throws Exception {
+        BacktesterDataFeedKey key = BacktesterDataFeedKey.createKeyForSymbol(1);
+        Symbol symbol = loadDataAnddCreateSymbol(1, 100, 200, 50, 100, 1000);
+
+        Order order = new Order();
+        order.setPrice(40f);
+        order.setOrderType(OrderTypeEnum.STP_LMT);
+        order.setSide(SideEnum.SELL);
+        order.setTimeInForce(TimeInForceEnum.GTC);
+        order.setQuantity(4f);
+        order.setUser(new User());
+        order.setSymbol(symbol);
+        order.setTransmit(true);
+        Field parentOrderID = order.getClass().getDeclaredField("orderID");
+        parentOrderID.setAccessible(true);
+        parentOrderID.set(order, 1);
+
+        backtesterSharedService.addOrder(key, order);
+
+        backtesterSharedService.updateDataFeed(key, new Candlestick(100f, 110f, 30f, 50f, 100f, new Timestamp(1)), new Timestamp(1));
+
+        Assertions.assertEquals(OrderStatusEnum.FILLED, order.getStatus());
+        Assertions.assertEquals(1, order.getTrades().size());
+        Assertions.assertEquals(40, order.getTrades().getFirst().getFillPrice());
+    }
+    @Test
+    public void testUpdateDataFeedTrailOrderFillsAtCorrectPriceBuy() throws Exception {
+        BacktesterDataFeedKey key = BacktesterDataFeedKey.createKeyForSymbol(1);
+        Symbol symbol = loadDataAnddCreateSymbol(1, 100, 200, 50, 100, 1000);
+
+        Order order = new Order();
+        order.setOrderType(OrderTypeEnum.TRL_LMT);
+        order.setSide(SideEnum.BUY);
+        order.setTimeInForce(TimeInForceEnum.GTC);
+        order.setQuantity(4f);
+        order.setUser(new User());
+        order.setSymbol(symbol);
+        order.setTransmit(true);
+        order.setTrailAmount(50f);
+        Field parentOrderID = order.getClass().getDeclaredField("orderID");
+        parentOrderID.setAccessible(true);
+        parentOrderID.set(order, 1);
+
+        backtesterSharedService.addOrder(key, order);
+
+        backtesterSharedService.updateDataFeed(key, new Candlestick(100f, 100f, 1f, 70f, 100f, new Timestamp(1)), new Timestamp(1));
+
+        Assertions.assertEquals(OrderStatusEnum.FILLED, order.getStatus());
+        Assertions.assertEquals(1, order.getTrades().size());
+        Assertions.assertEquals(51, order.getTrades().getFirst().getFillPrice());
+    }
+
+    @Test
+    public void testUpdateDataFeedTrailOrderFillsAtCorrectPriceSell() throws Exception {
+        BacktesterDataFeedKey key = BacktesterDataFeedKey.createKeyForSymbol(1);
+        Symbol symbol = loadDataAnddCreateSymbol(1, 100, 200, 50, 100, 1000);
+
+        Order order = new Order();
+        order.setOrderType(OrderTypeEnum.TRL_LMT);
+        order.setSide(SideEnum.SELL);
+        order.setTimeInForce(TimeInForceEnum.GTC);
+        order.setQuantity(4f);
+        order.setUser(new User());
+        order.setSymbol(symbol);
+        order.setTransmit(true);
+        order.setTrailAmount(50f);
+        Field parentOrderID = order.getClass().getDeclaredField("orderID");
+        parentOrderID.setAccessible(true);
+        parentOrderID.set(order, 1);
+
+        backtesterSharedService.addOrder(key, order);
+
+        backtesterSharedService.updateDataFeed(key, new Candlestick(100f, 100f, 1f, 30f, 100f, new Timestamp(1)), new Timestamp(1));
+
+        Assertions.assertEquals(OrderStatusEnum.FILLED, order.getStatus());
+        Assertions.assertEquals(1, order.getTrades().size());
+        Assertions.assertEquals(50, order.getTrades().getFirst().getFillPrice());
+    }
+
+    @Test
+    public void testUpdateDataFeedTriggersOCA() throws Exception {
+        BacktesterDataFeedKey key = BacktesterDataFeedKey.createKeyForSymbol(1);
+        Symbol symbol = loadDataAndCreateSymbol(1);
+
+        Order parentOrder = new Order();
+        parentOrder.setPrice(1000f);
+        parentOrder.setOrderType(OrderTypeEnum.LMT);
+        parentOrder.setSide(SideEnum.SELL);
+        parentOrder.setTimeInForce(TimeInForceEnum.GTC);
+        parentOrder.setQuantity(4f);
+        parentOrder.setUser(new User());
+        parentOrder.setSymbol(symbol);
+        parentOrder.setTransmit(true);
+        parentOrder.setOCAGroup("OCA");
+        Field parentOrderID = parentOrder.getClass().getDeclaredField("orderID");
+        parentOrderID.setAccessible(true);
+        parentOrderID.set(parentOrder, 1);
+        backtesterSharedService.addOrder(key, parentOrder);
+
+        Order childOrder = new Order();
+        childOrder.setPrice(1100f);
+        childOrder.setOrderType(OrderTypeEnum.LMT);
+        childOrder.setSide(SideEnum.SELL);
+        childOrder.setTimeInForce(TimeInForceEnum.GTC);
+        childOrder.setQuantity(4f);
+        childOrder.setUser(new User());
+        childOrder.setSymbol(symbol);
+        childOrder.setTransmit(true);
+        childOrder.setParentOrder(parentOrder);
+        childOrder.setOCAGroup("OCA");
+        Field childOrderID = childOrder.getClass().getDeclaredField("orderID");
+        childOrderID.setAccessible(true);
+        childOrderID.set(childOrder, 2);
+        backtesterSharedService.addOrder(key, childOrder);
+
+        backtesterSharedService.updateDataFeed(key, new Candlestick(100f, 1050f, 1f, 30f, 100f, new Timestamp(1)), new Timestamp(1));
+
+        backtesterSharedService.cancelOrder(key, parentOrder.getOrderID());
+        Assertions.assertEquals(OrderStatusEnum.FILLED, parentOrder.getStatus());
+        Assertions.assertEquals(OrderStatusEnum.CANCELLED, childOrder.getStatus());
+        Assertions.assertEquals(0, childOrder.getTrades().size());
+    }
+
+    @Test
+    public void testCancelWithNullKeyDoesNothing() {
+        Assertions.assertDoesNotThrow(() -> backtesterSharedService.cancelOrder(null, 1));
+    }
+
+    @Test
+    public void testCancelOnKeyWithoutOrdersDoesNothing() {
+        Assertions.assertDoesNotThrow(() -> backtesterSharedService.cancelOrder(BacktesterDataFeedKey.createKeyForSymbol(1), 1));
+    }
+
+    @Test
+    public void testCancelOrderThatDoesNotExistDoesNothing() throws Exception {
+        Symbol symbol = loadDataAndCreateSymbol(1);
+        Assertions.assertDoesNotThrow(() -> backtesterSharedService.cancelOrder(BacktesterDataFeedKey.createKeyForSymbol(1), 1));
+    }
+
+    @Test
+    public void testCancelParentCancelsChildren() throws Exception {
+        BacktesterDataFeedKey key = BacktesterDataFeedKey.createKeyForSymbol(1);
+        Symbol symbol = loadDataAndCreateSymbol(1);
+
+        Order parentOrder = new Order();
+        parentOrder.setPrice(1000f);
+        parentOrder.setOrderType(OrderTypeEnum.LMT);
+        parentOrder.setSide(SideEnum.SELL);
+        parentOrder.setTimeInForce(TimeInForceEnum.GTC);
+        parentOrder.setQuantity(4f);
+        parentOrder.setUser(new User());
+        parentOrder.setSymbol(symbol);
+        parentOrder.setTransmit(true);
+        Field parentOrderID = parentOrder.getClass().getDeclaredField("orderID");
+        parentOrderID.setAccessible(true);
+        parentOrderID.set(parentOrder, 1);
+        backtesterSharedService.addOrder(key, parentOrder);
+
+        Order childOrder = new Order();
+        childOrder.setPrice(1000f);
+        childOrder.setOrderType(OrderTypeEnum.LMT);
+        childOrder.setSide(SideEnum.SELL);
+        childOrder.setTimeInForce(TimeInForceEnum.GTC);
+        childOrder.setQuantity(4f);
+        childOrder.setUser(new User());
+        childOrder.setSymbol(symbol);
+        childOrder.setTransmit(true);
+        childOrder.setParentOrder(parentOrder);
+        Field childOrderID = childOrder.getClass().getDeclaredField("orderID");
+        childOrderID.setAccessible(true);
+        childOrderID.set(childOrder, 2);
+        backtesterSharedService.addOrder(key, childOrder);
+
+        backtesterSharedService.cancelOrder(key, parentOrder.getOrderID());
+        Assertions.assertEquals(OrderStatusEnum.CANCELLED, parentOrder.getStatus());
+        Assertions.assertEquals(OrderStatusEnum.CANCELLED, childOrder.getStatus());
+    }
 
 }
