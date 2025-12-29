@@ -21,6 +21,11 @@ public class StrategyParameter {
     @Column(name = "Value")
     private String value;
 
+    @Override
+    public String toString() {
+        return name + " : " + value;
+    }
+
     public Integer getStrategyParameterID() {
         return strategyParameterID;
     }

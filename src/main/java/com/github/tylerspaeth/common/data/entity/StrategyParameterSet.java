@@ -2,6 +2,7 @@ package com.github.tylerspaeth.common.data.entity;
 
 import jakarta.persistence.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -25,6 +26,11 @@ public class StrategyParameterSet {
 
     @OneToMany(mappedBy = "strategyParameterSet", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private List<StrategyParameter> strategyParameters;
+
+    @Override
+    public String toString() {
+        return name;
+    }
 
     public Integer getStrategyParameterSetID() {
         return strategyParameterSetID;
@@ -55,6 +61,9 @@ public class StrategyParameterSet {
     }
 
     public List<StrategyParameter> getStrategyParameters() {
+        if(strategyParameters == null) {
+            strategyParameters = new ArrayList<>();
+        }
         return strategyParameters;
     }
 
