@@ -82,13 +82,13 @@ public class DataManagerController implements Initializable {
     private HistoricalDatasetDAO historicalDatasetDAO;
 
     @Override
-    public void initialize(URL location, ResourceBundle resources) {
+    public void initialize(URL _location, ResourceBundle _resources) {
         historicalDatasetDAO = new HistoricalDatasetDAO();
         dataManagerService = new DataManagerService();
 
         datasets.addAll(historicalDatasetDAO.getAllHistoricalDatasets());
         datasetListView.setItems(datasets);
-        datasetListView.getSelectionModel().selectedItemProperty().addListener((_obs, oldVal, newVal) -> {
+        datasetListView.getSelectionModel().selectedItemProperty().addListener((_obs, _oldVal, newVal) -> {
             selectedDataset = newVal;
             setDatasetTextFields();
         });
