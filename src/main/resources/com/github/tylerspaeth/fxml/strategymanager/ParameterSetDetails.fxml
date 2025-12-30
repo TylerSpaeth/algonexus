@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.ButtonBar?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.text.Text?>
+<?import javafx.scene.control.TextField?>
+<AnchorPane fx:id="parameterSetDetailsAnchorPane" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="com.github.tylerspaeth.ui.controllers.strategymanager.ParameterSetDetailsController">
+    <HBox AnchorPane.topAnchor="0" AnchorPane.bottomAnchor="0" AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0">
+        <ListView fx:id="parameterListView" HBox.hgrow="ALWAYS" />
+        <BorderPane >
+            <top>
+                <ButtonBar BorderPane.alignment="CENTER">
+                    <buttons>
+                        <Button text="Refresh" mnemonicParsing="false" onAction="#refreshListView"/>
+                    </buttons>
+                </ButtonBar>
+            </top>
+            <center>
+                <GridPane>
+                    <columnConstraints>
+                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                    </columnConstraints>
+                    <rowConstraints>
+                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                    </rowConstraints>
+                    <Text text="Name:" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                    <Text fx:id="nameText" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+                    <Text text="Value:" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                    <TextField fx:id="valueTextField" GridPane.columnIndex="2" GridPane.rowIndex="2" />
+                </GridPane>
+            </center>
+        </BorderPane>
+    </HBox>
+</AnchorPane>

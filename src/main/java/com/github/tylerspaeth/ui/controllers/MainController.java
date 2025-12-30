@@ -24,7 +24,7 @@ public class MainController {
 
     @FXML
     public Button strategiesButton;
-    private static final String STRATEGIES_FXML = "/com/github/tylerspaeth/fxml/Strategies.fxml";
+    private static final String STRATEGY_MANANGER_FXML = "/com/github/tylerspaeth/fxml/strategymanager/StrategyManager.fxml";
 
     @FXML
     public Button homeButton;
@@ -67,11 +67,11 @@ public class MainController {
     }
 
     /**
-     * Switches to the strategies screen
+     * Switches to the strategy manager screen
      */
     @FXML
     public void strategiesButtonClicked() {
-        switchContext(STRATEGIES_FXML);
+        switchContext(STRATEGY_MANANGER_FXML);
     }
 
     /**

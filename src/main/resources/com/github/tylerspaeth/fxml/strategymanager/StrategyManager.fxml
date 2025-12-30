@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<AnchorPane fx:id="strategyManagerAnchorPane" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.github.tylerspaeth.ui.controllers.strategymanager.StrategyManagerController">
+   <TabPane fx:id="strategyManagerTabPane" tabClosingPolicy="ALL_TABS" AnchorPane.topAnchor="0" AnchorPane.bottomAnchor="0" AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0">
+       <Tab closable="false" text="Strategies">
+           <fx:include fx:id="strategies" source="Strategies.fxml" />
+       </Tab>
+   </TabPane>
+</AnchorPane>
