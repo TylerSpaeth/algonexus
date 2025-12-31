@@ -24,7 +24,7 @@ public class StrategyParameterSet {
     @JoinColumn(name = "StrategyID", referencedColumnName = "StrategyID", nullable = false)
     private Strategy strategy;
 
-    @OneToMany(mappedBy = "strategyParameterSet", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "strategyParameterSet", fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private List<StrategyParameter> strategyParameters;
 
     @Override

@@ -1,6 +1,7 @@
 package com.github.tylerspaeth.strategy.annotation;
 
 import com.github.tylerspaeth.common.data.entity.StrategyParameterSet;
+import com.github.tylerspaeth.strategy.AbstractStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,11 +19,10 @@ public class StrategyParameterLoader {
 
     /**
      * Populates all the fields marked with StrategyParameter annotations with values from the provided StrategyParameterSet.
-     * @param strategy Object containing StrategyParameter annotations.
+     * @param strategy AbstractStrategy containing StrategyParameter annotations.
      * @param parameterSet StrategyParameterSet containing values that should populate all the annotations on this strategy.
      */
-    // TODO switch the object strategy type to a generic that extends the base strategy
-    public static void populateParameters(Object strategy, StrategyParameterSet parameterSet) {
+    public static void populateParameters(AbstractStrategy strategy, StrategyParameterSet parameterSet) {
         for (Field field : strategy.getClass().getDeclaredFields()) {
             StrategyParameter annotation = field.getAnnotation(StrategyParameter.class);
             if(annotation == null) {

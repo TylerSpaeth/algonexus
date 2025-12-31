@@ -3,6 +3,7 @@ package com.github.tylerspaeth.common.data.entity;
 import jakarta.persistence.*;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -20,11 +21,17 @@ public class Strategy {
     @Column(name = "Description")
     private String description;
 
+    @Column(name = "Version")
+    private Integer version;
+
     @Column(name = "Active")
     private Boolean active;
 
     @Column(name = "CreatedAt")
     private Timestamp createdAt;
+
+    @Column(name = "LastUpdated")
+    private Timestamp lastUpdated;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ParentStrategyID", referencedColumnName = "StrategyID")
@@ -58,7 +65,15 @@ public class Strategy {
         this.description = description;
     }
 
-    public Boolean getActive() {
+    public Integer getVersion() {
+        return version;
+    }
+
+    public void setVersion(Integer version) {
+        this.version = version;
+    }
+
+    public Boolean isActive() {
         return active;
     }
 
@@ -74,6 +89,14 @@ public class Strategy {
         this.createdAt = createdAt;
     }
 
+    public Timestamp getLastUpdated() {
+        return lastUpdated;
+    }
+
+    public void setLastUpdated(Timestamp lastUpdated)  {
+        this.lastUpdated = lastUpdated;
+    }
+
     public Strategy getParentStrategy() {
         return parentStrategy;
     }
@@ -83,6 +106,9 @@ public class Strategy {
     }
 
     public List<StrategyParameterSet> getStrategyParameterSets() {
+        if(strategyParameterSets == null) {
+            strategyParameterSets = new ArrayList<>();
+        }
         return strategyParameterSets;
     }
 }
