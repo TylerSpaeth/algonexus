@@ -42,7 +42,7 @@ public class Strategy {
 
     @Override
     public String toString() {
-        return name;
+        return name + " - " + version;
     }
 
     public Integer getStrategyID() {

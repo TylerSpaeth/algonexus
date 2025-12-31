@@ -9,7 +9,14 @@
 <?import javafx.scene.control.TextField?>
 <AnchorPane fx:id="parameterSetDetailsAnchorPane" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="com.github.tylerspaeth.ui.controllers.strategymanager.ParameterSetDetailsController">
     <HBox AnchorPane.topAnchor="0" AnchorPane.bottomAnchor="0" AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0">
-        <ListView fx:id="parameterListView" HBox.hgrow="ALWAYS" />
+        <BorderPane HBox.hgrow="ALWAYS">
+            <top>
+                <Text text="Parameters" />
+            </top>
+            <center>
+                <ListView fx:id="parameterListView" />
+            </center>
+        </BorderPane>
         <BorderPane >
             <top>
                 <ButtonBar BorderPane.alignment="CENTER">

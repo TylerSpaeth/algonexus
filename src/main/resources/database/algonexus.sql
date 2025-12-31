@@ -30,7 +30,6 @@ CREATE TABLE IF NOT EXISTS `algonexus`.`strategies` (
   `LastUpdated` TIMESTAMP(6) NOT NULL,
   `ParentStrategyID` INT NULL DEFAULT NULL,
   PRIMARY KEY (`StrategyID`),
-  UNIQUE INDEX `Name_UNIQUE` (`Name` ASC) VISIBLE,
   INDEX `ParentStrategyID_idx` (`ParentStrategyID` ASC) VISIBLE,
   CONSTRAINT `fk_strategies_strategies_ParentStrategyID`
     FOREIGN KEY (`ParentStrategyID`)

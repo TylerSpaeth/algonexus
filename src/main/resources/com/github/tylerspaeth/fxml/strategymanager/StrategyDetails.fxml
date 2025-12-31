@@ -8,7 +8,14 @@
 <?import javafx.scene.text.Text?>
 <AnchorPane fx:id="strategyDetailsAnchorPane" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="com.github.tylerspaeth.ui.controllers.strategymanager.StrategyDetailsController">
     <HBox AnchorPane.topAnchor="0" AnchorPane.bottomAnchor="0" AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0">
-        <ListView HBox.hgrow="ALWAYS" fx:id="parameterSetListView" />
+        <BorderPane HBox.hgrow="ALWAYS">
+            <top>
+                <Text text="Parameter Sets" />
+            </top>
+            <center>
+                <ListView fx:id="parameterSetListView" />
+            </center>
+        </BorderPane>
         <BorderPane>
             <top>
                 <ButtonBar BorderPane.alignment="CENTER">
@@ -21,6 +28,7 @@
             </top>
             <center>
                 <VBox BorderPane.alignment="CENTER" >
+                    <Text text="Strategy Details:" />
                     <Text fx:id="descriptionText" />
                     <Text fx:id="parentNameText" />
                 </VBox>

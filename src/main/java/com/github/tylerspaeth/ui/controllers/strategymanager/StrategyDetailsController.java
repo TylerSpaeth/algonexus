@@ -179,7 +179,7 @@ public class StrategyDetailsController implements Initializable {
         } else {
             descriptionText.setText(MessageFormat.format(DESCRIPTION, strategy.getDescription()));
             if(strategy.getParentStrategy() != null) {
-                descriptionText.setText(MessageFormat.format(PARENT_NAME, strategy.getParentStrategy().getName()));
+                parentNameText.setText(MessageFormat.format(PARENT_NAME, strategy.getParentStrategy().toString()));
             }
         }
     }

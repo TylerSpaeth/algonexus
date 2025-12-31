@@ -78,7 +78,7 @@ public class StrategiesController implements Initializable {
             strategyDetailsController.setStrategyManagerService(strategyManagerService);
 
             Tab tab = new Tab();
-            tab.setText("Strategy: " + selectedStrategy.getName());
+            tab.setText("Strategy: " + selectedStrategy.toString());
             tab.setContent(content);
 
             strategyManagerController.addTabToTabPane(tab);
