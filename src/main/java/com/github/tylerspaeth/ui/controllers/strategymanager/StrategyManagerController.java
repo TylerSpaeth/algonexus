@@ -1,5 +1,7 @@
 package com.github.tylerspaeth.ui.controllers.strategymanager;
 
+import com.github.tylerspaeth.common.data.dao.StrategyDAO;
+import com.github.tylerspaeth.strategy.StrategyManagerService;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Tab;
@@ -20,6 +22,7 @@ public class StrategyManagerController implements Initializable {
     public void initialize(URL url, ResourceBundle resourceBundle) {
         if(strategiesController != null) {
             strategiesController.setStrategyManagerController(this);
+            strategiesController.setStrategyManagerService(new StrategyManagerService(new StrategyDAO()));
         }
     }
 

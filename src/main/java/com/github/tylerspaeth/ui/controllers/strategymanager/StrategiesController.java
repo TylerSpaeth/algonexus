@@ -2,6 +2,7 @@ package com.github.tylerspaeth.ui.controllers.strategymanager;
 
 import com.github.tylerspaeth.common.data.dao.StrategyDAO;
 import com.github.tylerspaeth.common.data.entity.Strategy;
+import com.github.tylerspaeth.strategy.StrategyManagerService;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -27,9 +28,11 @@ public class StrategiesController implements Initializable {
 
     private StrategyManagerController strategyManagerController;
 
+    private StrategyManagerService strategyManagerService;
+
     @FXML
     private ListView<Strategy> strategiesListView;
-    private ObservableList<Strategy> strategies = FXCollections.observableArrayList();
+    private final ObservableList<Strategy> strategies = FXCollections.observableArrayList();
     private Strategy selectedStrategy;
 
     @Override
@@ -72,6 +75,7 @@ public class StrategiesController implements Initializable {
             StrategyDetailsController strategyDetailsController = loader.getController();
             strategyDetailsController.setStrategy(selectedStrategy);
             strategyDetailsController.setStrategyManagerController(strategyManagerController);
+            strategyDetailsController.setStrategyManagerService(strategyManagerService);
 
             Tab tab = new Tab();
             tab.setText("Strategy: " + selectedStrategy.getName());
@@ -91,6 +95,10 @@ public class StrategiesController implements Initializable {
      */
     public void setStrategyManagerController(StrategyManagerController strategyManagerController) {
         this.strategyManagerController = strategyManagerController;
+    }
+
+    public void setStrategyManagerService(StrategyManagerService strategyManagerService) {
+        this.strategyManagerService = strategyManagerService;
     }
 
 }

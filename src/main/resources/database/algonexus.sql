@@ -22,7 +22,7 @@ USE `algonexus` ;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `algonexus`.`strategies` (
   `StrategyID` INT NOT NULL AUTO_INCREMENT,
-  `Name` VARCHAR(50) NOT NULL,
+  `Name` VARCHAR(255) NOT NULL,
   `Description` MEDIUMTEXT NULL DEFAULT NULL,
   `Version` INT NOT NULL,
   `Active` BIT(1) NOT NULL DEFAULT b'1',

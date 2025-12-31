@@ -14,7 +14,7 @@
                 <ButtonBar BorderPane.alignment="CENTER">
                     <buttons>
                         <Button text="Refresh" mnemonicParsing="false" onAction="#refreshListView"/>
-                        <Button text="Create New Parameter Set" mnemonicParsing="false" onAction="#createParameterSet" />
+                        <Button text="Create New Parameter Set" mnemonicParsing="false" onAction="#showCreateParameterSetForm" />
                         <Button text="View Parameter Set" mnemonicParsing="false" onAction="#viewParameterSet" />
                     </buttons>
                 </ButtonBar>

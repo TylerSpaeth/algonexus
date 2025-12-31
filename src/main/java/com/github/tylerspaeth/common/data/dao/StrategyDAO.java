@@ -55,4 +55,19 @@ public class StrategyDAO extends AbstractDAO<Strategy> {
 
         return entityManager.createQuery(cq).getResultList();
     }
+
+    /**
+     * Gets the Strategy with the matching StrategyID if one exists.
+     * @param strategyID Integer
+     * @return Strategy or null.
+     */
+    public Strategy findByStrategyID(Integer strategyID) {
+        EntityManager entityManager = DatasourceConfig.entityManagerFactory.createEntityManager();
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Strategy> cq = cb.createQuery(Strategy.class);
+        Root<Strategy> root = cq.from(Strategy.class);
+
+        cq.select(root).where(cb.equal(root.get(Strategy_.strategyID), strategyID));
+        return entityManager.createQuery(cq).getSingleResultOrNull();
+    }
 }
