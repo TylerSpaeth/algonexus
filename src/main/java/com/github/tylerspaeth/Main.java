@@ -1,16 +1,20 @@
 package com.github.tylerspaeth;
 
-import com.github.tylerspaeth.common.data.dao.StrategyDAO;
 import com.github.tylerspaeth.config.DatasourceConfig;
-import com.github.tylerspaeth.strategy.StrategyRegistry;
 
 public class Main {
-    public static void main(String[] args) {
+    static void main() throws InterruptedException {
 
+        // Initialization logic
         DatasourceConfig.validate();
 
-        StrategyRegistry strategyRegistry = new StrategyRegistry(new StrategyDAO());
-        strategyRegistry.initialize();
+        AppInitializer.initializeStrategyRegistry();
 
+        Thread engineThread = AppInitializer.launchEngine();
+
+        Thread uiThread = AppInitializer.launchUI();
+
+        engineThread.join();
+        uiThread.join();
     }
 }
