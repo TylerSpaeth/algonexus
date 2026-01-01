@@ -14,6 +14,7 @@ java {
 
 application {
     mainClass = 'com.github.tylerspaeth.Main'
+    applicationDefaultJvmArgs = ["--sun-misc-unsafe-memory-access=allow"]
 }
 
 repositories {
@@ -52,4 +53,5 @@ test {
     testLogging {
         showStandardStreams = true
     }
+    jvmArgs += ["-Dnet.bytebuddy.experimental=true"]
 }

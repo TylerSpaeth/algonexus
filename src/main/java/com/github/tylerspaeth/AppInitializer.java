@@ -3,6 +3,7 @@ package com.github.tylerspaeth;
 import com.github.tylerspaeth.broker.backtester.BacktesterDataFeedService;
 import com.github.tylerspaeth.broker.backtester.BacktesterOrderService;
 import com.github.tylerspaeth.broker.backtester.BacktesterSharedService;
+import com.github.tylerspaeth.broker.ib.IBSyncWrapper;
 import com.github.tylerspaeth.broker.ib.service.IBAccountService;
 import com.github.tylerspaeth.broker.ib.service.IBDataFeedService;
 import com.github.tylerspaeth.broker.ib.service.IBOrderService;
@@ -33,18 +34,19 @@ public class AppInitializer {
      * @return Thread that the engine is running on.
      */
     public static Thread launchEngine() {
-        Thread engineThread = new Thread(() -> {
-            OrderDAO orderDAO = new OrderDAO();
-            SymbolDAO symbolDAO = new SymbolDAO();
-            CandlestickDAO candlestickDAO = new CandlestickDAO();
-            BacktesterSharedService backtesterSharedService = new BacktesterSharedService(orderDAO);
-            new EngineCoordinator(Executors.newCachedThreadPool(),
-                    new IBAccountService(),
-                    new IBDataFeedService(),
-                    new IBOrderService(orderDAO),
-                    new BacktesterDataFeedService(backtesterSharedService, symbolDAO, candlestickDAO),
-                    new BacktesterOrderService(backtesterSharedService, orderDAO, symbolDAO)).run();
-        }, "Engine-Thread");
+        IBSyncWrapper.getInstance().connect(); // TODO Remove this
+        OrderDAO orderDAO = new OrderDAO();
+        SymbolDAO symbolDAO = new SymbolDAO();
+        CandlestickDAO candlestickDAO = new CandlestickDAO();
+        BacktesterSharedService backtesterSharedService = new BacktesterSharedService(orderDAO);
+        EngineCoordinator engineCoordinator = new EngineCoordinator(Executors.newCachedThreadPool(),
+                new IBAccountService(),
+                new IBDataFeedService(),
+                new IBOrderService(orderDAO),
+                new BacktesterDataFeedService(backtesterSharedService, symbolDAO, candlestickDAO),
+                new BacktesterOrderService(backtesterSharedService, orderDAO, symbolDAO));
+
+        Thread engineThread = new Thread(engineCoordinator::run, "Engine-Thread");
         engineThread.start();
         return engineThread;
     }
