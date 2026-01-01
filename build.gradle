@@ -1,7 +1,6 @@
 plugins {
     id 'java'
     id 'application'
-    id 'org.openjfx.javafxplugin' version '0.1.0'
 }
 
 group = 'com.github.tylerspaeth'
@@ -15,12 +14,6 @@ java {
 
 application {
     mainClass = 'com.github.tylerspaeth.Main'
-    applicationDefaultJvmArgs = ['--enable-native-access=javafx.graphics', "--sun-misc-unsafe-memory-access=allow"]
-}
-
-javafx {
-    version = '25'
-    modules = [ 'javafx.controls', 'javafx.fxml' ]
 }
 
 repositories {
@@ -42,6 +35,7 @@ dependencies {
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:6.3.0.Final"
 
     implementation 'org.reflections:reflections:0.10.2'
+    implementation 'com.googlecode.lanterna:lanterna:3.1.2'
 
     // Junit
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
@@ -58,5 +52,4 @@ test {
     testLogging {
         showStandardStreams = true
     }
-    jvmArgs += ["-Dnet.bytebuddy.experimental=true"]
 }
