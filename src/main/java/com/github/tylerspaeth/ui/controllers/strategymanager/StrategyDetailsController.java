@@ -157,6 +157,7 @@ public class StrategyDetailsController implements Initializable {
             Parent content = loader.load();
             ParameterSetDetailsController parameterSetDetailsController = loader.getController();
             parameterSetDetailsController.setParameterSet(parameterSet);
+            parameterSetDetailsController.setStrategyManagerController(strategyManagerController);
 
             Tab tab = new Tab();
             tab.setText("ParameterSet: " + parameterSet.getName());

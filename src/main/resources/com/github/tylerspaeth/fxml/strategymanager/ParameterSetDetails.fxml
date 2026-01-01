@@ -22,6 +22,7 @@
                 <ButtonBar BorderPane.alignment="CENTER">
                     <buttons>
                         <Button text="Refresh" mnemonicParsing="false" onAction="#refreshListView"/>
+                        <Button text="View Backtests" mnemonicParsing="false" onAction="#viewBacktests" />
                     </buttons>
                 </ButtonBar>
             </top>

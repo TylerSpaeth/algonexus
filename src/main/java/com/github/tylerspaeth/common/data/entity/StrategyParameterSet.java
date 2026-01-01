@@ -27,6 +27,9 @@ public class StrategyParameterSet {
     @OneToMany(mappedBy = "strategyParameterSet", fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private List<StrategyParameter> strategyParameters;
 
+    @OneToMany(mappedBy = "strategyParameterSet", fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    private List<BacktestResult> backtestResults;
+
     @Override
     public String toString() {
         return name;
@@ -65,6 +68,13 @@ public class StrategyParameterSet {
             strategyParameters = new ArrayList<>();
         }
         return strategyParameters;
+    }
+
+    public List<BacktestResult> getBacktestResults() {
+        if(backtestResults == null) {
+            backtestResults = new ArrayList<>();
+        }
+        return backtestResults;
     }
 
 }
