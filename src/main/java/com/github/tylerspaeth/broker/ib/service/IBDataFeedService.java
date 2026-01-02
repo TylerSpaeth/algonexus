@@ -25,20 +25,20 @@ public class IBDataFeedService implements IDataFeedService {
     }
 
     @Override
-    public void subscribeToDataFeed(Symbol symbol) {
-        wrapper.subscribeToDataFeed(getDataFeedKeyFromSymbol(symbol));
+    public void subscribeToDataFeed(long threadID, Symbol symbol) {
+        wrapper.subscribeToDataFeed(threadID, getDataFeedKeyFromSymbol(symbol));
     }
 
     @Override
-    public List<Candlestick> readFromDataFeed(Symbol symbol, int intervalDuration, IntervalUnitEnum intervalUnit) {
+    public List<Candlestick> readFromDataFeed(long threadID, Symbol symbol, int intervalDuration, IntervalUnitEnum intervalUnit) {
         IBDataFeedKey dataFeedKey = getDataFeedKeyFromSymbol(symbol);
-        List<RealtimeBar> realtimeBars = wrapper.readFromDataFeed(dataFeedKey, intervalDuration, intervalUnit);
+        List<RealtimeBar> realtimeBars = wrapper.readFromDataFeed(threadID, dataFeedKey, intervalDuration, intervalUnit);
         return realtimeBars.stream().map(IBMapper::mapRealTimeBarToCandlestick).collect(Collectors.toList());
     }
 
     @Override
-    public void unsubscribeFromDataFeed(Symbol symbol) {
-        wrapper.unsubscribeFromDataFeed(getDataFeedKeyFromSymbol(symbol));
+    public void unsubscribeFromDataFeed(long threadID, Symbol symbol) {
+        wrapper.unsubscribeFromDataFeed(threadID, getDataFeedKeyFromSymbol(symbol));
     }
 
     /**

@@ -33,11 +33,10 @@ public class MultiReaderQueue<T> {
 
     /**
      * Reads from the queue.
+     * @param threadID long ID of the thread that this request originates from.
      * @return The next object in the queue that the reader has yet to read.
      */
-    public T read() {
-
-        long threadID = Thread.currentThread().threadId();
+    public T read(long threadID) {
 
         ConcurrentLinkedQueue<T> queue = queues.get(threadID);
         if(queue == null) {
@@ -48,13 +47,12 @@ public class MultiReaderQueue<T> {
 
     /**
      * Reads a fixed number of items from the queue.
+     * @param threadID long ID of the thread that this request originates from.
      * @param desiredCount The number of objects to be read from the queue.
      * @return List with desiredCount objects if there are at least that many objects in the queue.
      * If there are not enough, then an empty list will be returned.
      */
-    public List<T> read(int desiredCount) {
-
-        long threadID = Thread.currentThread().threadId();
+    public List<T> read(long threadID, int desiredCount) {
 
         ConcurrentLinkedQueue<T> queue = queues.get(threadID);
         if(queue == null || queue.size() < desiredCount) {
@@ -69,11 +67,10 @@ public class MultiReaderQueue<T> {
 
     /**
      * Gets all the unread objects in the queue for this reader.
+     * @param threadID long ID of the thread that this request originates from.
      * @return List of all unread objects.
      */
-    public List<T> dump() {
-
-        long threadID = Thread.currentThread().threadId();
+    public List<T> dump(long threadID) {
 
         ConcurrentLinkedQueue<T> queue = queues.get(threadID);
         if(queue == null) {
@@ -89,10 +86,10 @@ public class MultiReaderQueue<T> {
 
     /**
      * Look at the first element in the queue without removing it.
+     * @param threadID long ID of the thread that this request originates from.
      * @return First element in the queue, null if the queue is empty.
      */
-    public T peek() {
-        long threadID = Thread.currentThread().threadId();
+    public T peek(long threadID) {
 
         ConcurrentLinkedQueue<T> queue = queues.get(threadID);
         if(queue == null) {
@@ -104,9 +101,9 @@ public class MultiReaderQueue<T> {
 
     /**
      * Subscribes a new reader to this queue.
+     * @param threadID long ID of the thread that this request originates from.
      */
-    public void subscribe() {
-        long threadID = Thread.currentThread().threadId();
+    public void subscribe(long threadID) {
         if(queues.put(threadID, new ConcurrentLinkedQueue<>()) == null) {
             LOGGER.info("New subscription: {}.", threadID);
         }
@@ -117,9 +114,9 @@ public class MultiReaderQueue<T> {
 
     /**
      * Unsubscribes a reader from this queue.
+     * @param threadID long ID of the thread that this request originates from.
      */
-    public void unsubscribe() {
-        long threadID = Thread.currentThread().threadId();
+    public void unsubscribe(long threadID) {
         if(queues.remove(threadID) != null) {
             LOGGER.info("{} unsubscribed.", threadID);
         }

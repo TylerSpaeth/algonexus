@@ -40,7 +40,7 @@ public class BacktesterDataFeedService implements IDataFeedService {
     }
 
     @Override
-    public void subscribeToDataFeed(Symbol symbol) {
+    public void subscribeToDataFeed(long threadID, Symbol symbol) {
 
         Symbol persistedSymbol = symbolDAO.getPersistedVersionOfSymbol(symbol);
         if(persistedSymbol == null) {
@@ -61,7 +61,7 @@ public class BacktesterDataFeedService implements IDataFeedService {
     }
 
     @Override
-    public List<Candlestick> readFromDataFeed(Symbol symbol, int intervalDuration, IntervalUnitEnum intervalUnit) {
+    public List<Candlestick> readFromDataFeed(long threadID, Symbol symbol, int intervalDuration, IntervalUnitEnum intervalUnit) {
 
         // This implementation will use the feed that matches the desired interval duration and unit if possible. Otherwise,
         // it will take the least granular.
@@ -168,7 +168,7 @@ public class BacktesterDataFeedService implements IDataFeedService {
     }
 
     @Override
-    public void unsubscribeFromDataFeed(Symbol symbol) {
+    public void unsubscribeFromDataFeed(long threadID, Symbol symbol) {
         Symbol persistedSymbol = symbolDAO.getPersistedVersionOfSymbol(symbol);
         if(persistedSymbol == null) {
             LOGGER.error("Symbol {} is not persisted, therefore can not unsubscribe.", symbol);
