@@ -3,7 +3,6 @@ package com.github.tylerspaeth;
 import com.github.tylerspaeth.broker.backtester.BacktesterDataFeedService;
 import com.github.tylerspaeth.broker.backtester.BacktesterOrderService;
 import com.github.tylerspaeth.broker.backtester.BacktesterSharedService;
-import com.github.tylerspaeth.broker.ib.IBSyncWrapper;
 import com.github.tylerspaeth.broker.ib.service.IBAccountService;
 import com.github.tylerspaeth.broker.ib.service.IBDataFeedService;
 import com.github.tylerspaeth.broker.ib.service.IBOrderService;
@@ -13,6 +12,9 @@ import com.github.tylerspaeth.common.data.dao.StrategyDAO;
 import com.github.tylerspaeth.common.data.dao.SymbolDAO;
 import com.github.tylerspaeth.engine.EngineCoordinator;
 import com.github.tylerspaeth.strategy.StrategyRegistry;
+import com.github.tylerspaeth.ui.TUI;
+import com.github.tylerspaeth.ui.UIContext;
+import com.github.tylerspaeth.ui.view.SignInMenu;
 
 import java.util.concurrent.Executors;
 
@@ -30,22 +32,28 @@ public class AppInitializer {
     }
 
     /**
-     * Wires and launches the engine thread.
-     * @return Thread that the engine is running on.
+     * Create the EngineCoordinator that will be used the engine and ui threads
+     * @return EngineCoordinator
      */
-    public static Thread launchEngine() {
-        IBSyncWrapper.getInstance().connect(); // TODO Remove this
+    public static EngineCoordinator createEngine() {
         OrderDAO orderDAO = new OrderDAO();
         SymbolDAO symbolDAO = new SymbolDAO();
         CandlestickDAO candlestickDAO = new CandlestickDAO();
         BacktesterSharedService backtesterSharedService = new BacktesterSharedService(orderDAO);
-        EngineCoordinator engineCoordinator = new EngineCoordinator(Executors.newCachedThreadPool(),
+        return new EngineCoordinator(Executors.newCachedThreadPool(),
                 new IBAccountService(),
                 new IBDataFeedService(),
                 new IBOrderService(orderDAO),
                 new BacktesterDataFeedService(backtesterSharedService, symbolDAO, candlestickDAO),
                 new BacktesterOrderService(backtesterSharedService, orderDAO, symbolDAO));
+    }
 
+    /**
+     * Wires and launches the engine thread.
+     * @param engineCoordinator EngineCoordinator
+     * @return Thread that the engine is running on.
+     */
+    public static Thread launchEngine(EngineCoordinator engineCoordinator) {
         Thread engineThread = new Thread(engineCoordinator::run, "Engine-Thread");
         engineThread.start();
         return engineThread;
@@ -53,11 +61,12 @@ public class AppInitializer {
 
     /**
      * Wires and launches the UI thread.
+     * @param engineCoordinator EngineCoordinator
      * @return Thread that the UI is running on.
      */
-    public static Thread launchUI() {
+    public static Thread launchUI(EngineCoordinator engineCoordinator) {
         Thread uiThread = new Thread(() -> {
-            // TODO run the ui
+                new TUI(new UIContext(engineCoordinator)).run(new SignInMenu());
         }, "UI-Thread");
         uiThread.start();
         return uiThread;

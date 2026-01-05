@@ -1,6 +1,7 @@
 package com.github.tylerspaeth;
 
 import com.github.tylerspaeth.config.DatasourceConfig;
+import com.github.tylerspaeth.engine.EngineCoordinator;
 
 public class Main {
     static void main() throws InterruptedException {
@@ -10,9 +11,11 @@ public class Main {
 
         AppInitializer.initializeStrategyRegistry();
 
-        Thread engineThread = AppInitializer.launchEngine();
+        EngineCoordinator engineCoordinator = AppInitializer.createEngine();
 
-        Thread uiThread = AppInitializer.launchUI();
+        Thread engineThread = AppInitializer.launchEngine(engineCoordinator);
+
+        Thread uiThread = AppInitializer.launchUI(engineCoordinator);
 
         engineThread.join();
         uiThread.join();
