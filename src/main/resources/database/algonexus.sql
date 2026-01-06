@@ -159,7 +159,8 @@ CREATE TABLE IF NOT EXISTS `algonexus`.`users` (
   `UserID` INT NOT NULL AUTO_INCREMENT,
   `ExternalAccountID` VARCHAR(100) NOT NULL,
   `AccountType` VARCHAR(30) NULL DEFAULT NULL,
-  PRIMARY KEY (`UserID`))
+  PRIMARY KEY (`UserID`),
+  UNIQUE INDEX `ExternalAccountID_UNIQUE` (`ExternalAccountID` ASC) VISIBLE)
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_0900_ai_ci;

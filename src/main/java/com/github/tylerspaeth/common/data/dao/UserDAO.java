@@ -28,4 +28,19 @@ public class UserDAO extends AbstractDAO<User> {
         return entityManager.createQuery(cq).getResultList();
     }
 
+    /**
+     * Finds the user with the matching externalAccountID or returns null.
+     * @param externalAccountID ID corresponding to an external system.
+     * @return User or null.
+     */
+    public User findUserByExternalAccountID(String externalAccountID) {
+        EntityManager entityManager = DatasourceConfig.entityManagerFactory.createEntityManager();
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<User> cq =  cb.createQuery(User.class);
+        Root<User> root = cq.from(User.class);
+
+        cq.select(root).where(cb.equal(root.get(User_.externalAccountID), externalAccountID));
+        return entityManager.createQuery(cq).getSingleResultOrNull();
+    }
+
 }

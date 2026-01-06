@@ -4,13 +4,13 @@ import com.github.tylerspaeth.common.data.dao.UserDAO;
 import com.github.tylerspaeth.common.data.entity.User;
 import com.github.tylerspaeth.common.enums.AccountTypeEnum;
 import com.github.tylerspaeth.engine.request.IBConnectionRequest;
+import com.github.tylerspaeth.engine.request.account.AccountSummaryRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 public class SignInMenu extends AbstractMenuView {
 
@@ -19,13 +19,16 @@ public class SignInMenu extends AbstractMenuView {
     public SignInMenu() {
 
         UserDAO userDAO = new UserDAO();
-        List<String> accountOptions = userDAO.findUsersByAccountType(AccountTypeEnum.INTERNAL).stream().map(User::getExternalAccountID).collect(Collectors.toList());
+        List<User> users = userDAO.findUsersByAccountType(AccountTypeEnum.INTERNAL);
 
+        List<String> accountOptions = new ArrayList<>();
         List<Supplier<AbstractView>> optionBehaviors = new ArrayList<>();
-        accountOptions.forEach(accountOption -> {
+        users.forEach(user -> {
+            accountOptions.add(user.getExternalAccountID());
             optionBehaviors.add(() -> {
-                LOGGER.info("User {} selected", accountOption);
-                return null;
+                LOGGER.info("User {} selected", user.getExternalAccountID());
+                uiContext.activeUser = user;
+                return new MainMenuView();
             });
         });
 
@@ -34,10 +37,18 @@ public class SignInMenu extends AbstractMenuView {
         optionBehaviors.add(() -> {
             try {
                 uiContext.engineCoordinator.submitRequest(new IBConnectionRequest());
+                String accountID = uiContext.engineCoordinator.submitRequest(new AccountSummaryRequest()).accountID();
+                User user = userDAO.findUserByExternalAccountID(accountID);
+                if(user == null) {
+                    user = new User();
+                    user.setExternalAccountID(accountID);
+                    user = userDAO.update(user);
+                }
+                uiContext.activeUser = user;
             } catch (Exception e) {
                 LOGGER.error("Failed to connect to IB Account.");
             }
-            return null;
+            return new MainMenuView();
         });
         setTopText("Select Account to Use:");
         setOptions(accountOptions, optionBehaviors);

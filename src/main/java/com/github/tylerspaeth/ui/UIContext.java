@@ -1,5 +1,6 @@
 package com.github.tylerspaeth.ui;
 
+import com.github.tylerspaeth.common.data.entity.User;
 import com.github.tylerspaeth.engine.EngineCoordinator;
 
 /**
@@ -8,6 +9,8 @@ import com.github.tylerspaeth.engine.EngineCoordinator;
 public class UIContext {
 
     public final EngineCoordinator engineCoordinator;
+
+    public User activeUser = null;
 
     public UIContext(EngineCoordinator engineCoordinator) {
         this.engineCoordinator = engineCoordinator;

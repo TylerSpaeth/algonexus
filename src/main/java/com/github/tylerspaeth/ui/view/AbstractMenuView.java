@@ -1,6 +1,5 @@
 package com.github.tylerspaeth.ui.view;
 
-import com.googlecode.lanterna.TerminalSize;
 import com.googlecode.lanterna.TextColor;
 import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.screen.Screen;
@@ -43,16 +42,21 @@ public abstract class AbstractMenuView extends AbstractView {
 
     @Override
     public void render(Screen screen) throws Exception {
-        TerminalSize size = screen.getTerminalSize();
         int startRow = 0;
         int col = 0;
 
         var textGraphics = screen.newTextGraphics();
 
         // Print top text
-        textGraphics.setForegroundColor(TextColor.ANSI.WHITE)
-                .setForegroundColor(TextColor.ANSI.DEFAULT)
-                .putString(col, startRow++, topText);
+        if(topText != null) {
+            textGraphics.setForegroundColor(TextColor.ANSI.WHITE)
+                    .setForegroundColor(TextColor.ANSI.DEFAULT)
+                    .putString(col, startRow++, topText);
+        }
+
+        if(options == null) {
+            return;
+        }
 
         // Print options
         for (int i = 0; i < options.size(); i++) {
