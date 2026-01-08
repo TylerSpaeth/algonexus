@@ -1,10 +1,13 @@
-package com.github.tylerspaeth.ui.view;
+package com.github.tylerspaeth.ui.view.signin;
 
 import com.github.tylerspaeth.common.data.dao.UserDAO;
 import com.github.tylerspaeth.common.data.entity.User;
 import com.github.tylerspaeth.common.enums.AccountTypeEnum;
 import com.github.tylerspaeth.engine.request.IBConnectionRequest;
 import com.github.tylerspaeth.engine.request.account.AccountSummaryRequest;
+import com.github.tylerspaeth.ui.view.AbstractMenuView;
+import com.github.tylerspaeth.ui.view.AbstractView;
+import com.github.tylerspaeth.ui.view.MainMenuView;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

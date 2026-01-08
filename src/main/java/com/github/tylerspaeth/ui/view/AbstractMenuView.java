@@ -14,6 +14,7 @@ public abstract class AbstractMenuView extends AbstractView {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractMenuView.class);
 
     private String topText;
+    private String bottomText;
     private List<String> options;
     private List<Supplier<AbstractView>> optionBehaviors;
 
@@ -21,6 +22,10 @@ public abstract class AbstractMenuView extends AbstractView {
 
     public void setTopText(String topText) {
         this.topText = topText;
+    }
+
+    public void setBottomText(String bottomText) {
+        this.bottomText = bottomText;
     }
 
     /**
@@ -47,29 +52,42 @@ public abstract class AbstractMenuView extends AbstractView {
 
         var textGraphics = screen.newTextGraphics();
 
-        // Print top text
+        // Print top text, creating a new line when "\n" is seen
         if(topText != null) {
-            textGraphics.setForegroundColor(TextColor.ANSI.WHITE)
-                    .setForegroundColor(TextColor.ANSI.DEFAULT)
-                    .putString(col, startRow++, topText);
-        }
 
-        if(options == null) {
-            return;
+            String[] topTextLines = topText.split("\n");
+            for(String line : topTextLines) {
+                textGraphics.setForegroundColor(TextColor.ANSI.WHITE)
+                        .setForegroundColor(TextColor.ANSI.DEFAULT)
+                        .putString(col, startRow++, line);
+            }
         }
 
         // Print options
-        for (int i = 0; i < options.size(); i++) {
-            if (i == selected) {
-                textGraphics.setForegroundColor(TextColor.ANSI.BLACK)
-                        .setBackgroundColor(TextColor.ANSI.WHITE)
-                        .putString(col, startRow + i, "> " + options.get(i));
-            } else {
-                textGraphics.setForegroundColor(TextColor.ANSI.WHITE)
-                        .setBackgroundColor(TextColor.ANSI.DEFAULT)
-                        .putString(col, startRow + i, "  " + options.get(i));
+        if(options != null) {
+            for (int i = 0; i < options.size(); i++) {
+                if (i == selected) {
+                    textGraphics.setForegroundColor(TextColor.ANSI.BLACK)
+                            .setBackgroundColor(TextColor.ANSI.WHITE)
+                            .putString(col, startRow + i, "> " + options.get(i));
+                } else {
+                    textGraphics.setForegroundColor(TextColor.ANSI.WHITE)
+                            .setBackgroundColor(TextColor.ANSI.DEFAULT)
+                            .putString(col, startRow + i, "  " + options.get(i));
+                }
             }
         }
+
+        // Print bottom text, creating a new line when "\n" is seen
+        if(bottomText != null) {
+            String[] bottomTextLines = bottomText.split("\n");
+            for(String line : bottomTextLines) {
+                textGraphics.setForegroundColor(TextColor.ANSI.WHITE)
+                        .setForegroundColor(TextColor.ANSI.DEFAULT)
+                        .putString(col, startRow++, line);
+            }
+        }
+
     }
 
     @Override

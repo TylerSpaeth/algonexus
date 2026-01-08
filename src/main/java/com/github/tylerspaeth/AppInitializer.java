@@ -14,7 +14,7 @@ import com.github.tylerspaeth.engine.EngineCoordinator;
 import com.github.tylerspaeth.strategy.StrategyRegistry;
 import com.github.tylerspaeth.ui.TUI;
 import com.github.tylerspaeth.ui.UIContext;
-import com.github.tylerspaeth.ui.view.SignInMenu;
+import com.github.tylerspaeth.ui.view.signin.SignInMenu;
 
 import java.util.concurrent.Executors;
 
