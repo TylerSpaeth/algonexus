@@ -8,6 +8,20 @@ public abstract class AbstractView {
 
     protected UIContext uiContext;
 
+    // Number of columns to leave blank on top and left. These are for use in concrete Views.
+    protected final int leftPadding;
+    protected final int topPadding;
+
+    public AbstractView() {
+        this.leftPadding = 0;
+        this.topPadding = 0;
+    }
+
+    public AbstractView(int leftPadding, int topPadding) {
+        this.leftPadding = leftPadding;
+        this.topPadding  = topPadding;
+    }
+
     /**
      * Called when the View becomes active.
      * @param uiContext UIContext with all app context that is available to the UI.

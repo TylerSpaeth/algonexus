@@ -20,6 +20,13 @@ public abstract class AbstractMenuView extends AbstractView {
 
     private int selected = 0;
 
+    public AbstractMenuView() {}
+
+    public AbstractMenuView(int leftPadding, int topPadding)  {
+        super(leftPadding, topPadding);
+    }
+
+
     public void setTopText(String topText) {
         this.topText = topText;
     }
@@ -47,8 +54,8 @@ public abstract class AbstractMenuView extends AbstractView {
 
     @Override
     public void render(Screen screen) throws Exception {
-        int startRow = 0;
-        int col = 0;
+        int startRow = topPadding;
+        int col = leftPadding;
 
         var textGraphics = screen.newTextGraphics();
 
