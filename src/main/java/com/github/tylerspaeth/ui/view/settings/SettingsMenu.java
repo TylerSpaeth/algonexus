@@ -2,8 +2,13 @@ package com.github.tylerspaeth.ui.view.settings;
 
 import com.github.tylerspaeth.ui.UIContext;
 import com.github.tylerspaeth.ui.view.AbstractMenuView;
+import com.github.tylerspaeth.ui.view.AbstractView;
 
 public class SettingsMenu extends AbstractMenuView {
+
+    public SettingsMenu(AbstractView parent)  {
+        super(parent);
+    }
 
     @Override
     public void onEnter(UIContext uiContext)    {

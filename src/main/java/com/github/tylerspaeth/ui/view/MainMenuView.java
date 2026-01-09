@@ -18,7 +18,8 @@ public class MainMenuView extends AbstractMenuView {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MainMenuView.class);
 
-    public MainMenuView() {
+    public MainMenuView(AbstractView parent) {
+        super(parent);
     }
 
     @Override
@@ -32,22 +33,22 @@ public class MainMenuView extends AbstractMenuView {
 
         if(uiContext.activeUser.getAccountType() == AccountTypeEnum.INTERNAL) {
             options.add("Backtesting");
-            optionBehaviors.add(BacktestMenu::new);
+            optionBehaviors.add(() -> new BacktestMenu(this));
         } else {
             options.add("Live Trading");
-            optionBehaviors.add(LiveTradingMenu::new);
+            optionBehaviors.add(() -> new LiveTradingMenu(this));
         }
 
         options.add("Strategy Manager");
-        optionBehaviors.add(StrategyManagerMenu::new);
+        optionBehaviors.add(() -> new StrategyManagerMenu(this));
 
         options.add("Settings");
-        optionBehaviors.add(SettingsMenu::new);
+        optionBehaviors.add(() -> new SettingsMenu(this));
 
         options.add("Sign Out");
         optionBehaviors.add(() -> {
             LOGGER.info("Signing out user {}", uiContext.activeUser);
-            return new SignInMenu();
+            return new SignInMenu(null);
         });
 
         options.add("Exit");

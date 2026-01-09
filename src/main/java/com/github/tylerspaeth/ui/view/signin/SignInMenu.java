@@ -19,7 +19,8 @@ public class SignInMenu extends AbstractMenuView {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SignInMenu.class);
 
-    public SignInMenu() {
+    public SignInMenu(AbstractView parent) {
+        super(parent);
 
         UserDAO userDAO = new UserDAO();
         List<User> users = userDAO.findUsersByAccountType(AccountTypeEnum.INTERNAL);
@@ -31,7 +32,7 @@ public class SignInMenu extends AbstractMenuView {
             optionBehaviors.add(() -> {
                 LOGGER.info("User {} selected", user.getExternalAccountID());
                 uiContext.activeUser = user;
-                return new MainMenuView();
+                return new MainMenuView(this);
             });
         });
 
@@ -51,7 +52,7 @@ public class SignInMenu extends AbstractMenuView {
             } catch (Exception e) {
                 LOGGER.error("Failed to connect to IB Account.");
             }
-            return new MainMenuView();
+            return new MainMenuView(this);
         });
         setTopText("Select Account to Use:");
         setOptions(accountOptions, optionBehaviors);

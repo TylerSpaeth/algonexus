@@ -2,7 +2,6 @@ package com.github.tylerspaeth.ui;
 
 import com.github.tylerspaeth.ui.view.AbstractView;
 import com.googlecode.lanterna.input.KeyStroke;
-import com.googlecode.lanterna.input.KeyType;
 import com.googlecode.lanterna.screen.Screen;
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
 import org.slf4j.Logger;
@@ -51,11 +50,7 @@ public class TUI {
                         screen.clear();
                     }
 
-                    if(keyStroke.getKeyType() == KeyType.Escape) {
-                        running = false;
-                    } else {
-                        dirty = true;
-                    }
+                    dirty = true;
                 }
 
                 if(dirty) {

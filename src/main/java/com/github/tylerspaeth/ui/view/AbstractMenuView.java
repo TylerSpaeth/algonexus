@@ -20,10 +20,12 @@ public abstract class AbstractMenuView extends AbstractView {
 
     private int selected = 0;
 
-    public AbstractMenuView() {}
+    public AbstractMenuView(AbstractView parent) {
+        super(parent);
+    }
 
-    public AbstractMenuView(int leftPadding, int topPadding)  {
-        super(leftPadding, topPadding);
+    public AbstractMenuView(AbstractMenuView parent, int leftPadding, int topPadding)  {
+        super(parent, leftPadding, topPadding);
     }
 
 
@@ -103,6 +105,7 @@ public abstract class AbstractMenuView extends AbstractView {
             case ArrowUp -> { selected = (selected - 1 + options.size() ) % options.size(); yield null; }
             case ArrowDown -> { selected = (selected + 1) % options.size(); yield null; }
             case Enter -> optionBehaviors.get(selected).get();
+            case Escape -> parent;
             default -> null;
         };
     }

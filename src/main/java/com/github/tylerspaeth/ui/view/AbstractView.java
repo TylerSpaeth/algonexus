@@ -6,18 +6,22 @@ import com.googlecode.lanterna.screen.Screen;
 
 public abstract class AbstractView {
 
+    protected final AbstractView parent;
+
     protected UIContext uiContext;
 
     // Number of columns to leave blank on top and left. These are for use in concrete Views.
     protected final int leftPadding;
     protected final int topPadding;
 
-    public AbstractView() {
+    public AbstractView(AbstractView parent) {
+        this.parent = parent;
         this.leftPadding = 0;
         this.topPadding = 0;
     }
 
-    public AbstractView(int leftPadding, int topPadding) {
+    public AbstractView(AbstractView parent, int leftPadding, int topPadding) {
+        this.parent = parent;
         this.leftPadding = leftPadding;
         this.topPadding  = topPadding;
     }

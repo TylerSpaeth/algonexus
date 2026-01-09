@@ -66,7 +66,7 @@ public class AppInitializer {
      */
     public static Thread launchUI(EngineCoordinator engineCoordinator) {
         Thread uiThread = new Thread(() -> {
-                new TUI(new UIContext(engineCoordinator)).run(new SignInMenu());
+                new TUI(new UIContext(engineCoordinator)).run(new SignInMenu(null));
         }, "UI-Thread");
         uiThread.start();
         return uiThread;
