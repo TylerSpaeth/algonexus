@@ -56,8 +56,8 @@ public abstract class AbstractMenuView extends AbstractView {
 
     @Override
     public void render(Screen screen) throws Exception {
-        int startRow = topPadding;
-        int col = leftPadding;
+        int startRow = mutableTopPadding;
+        int col = mutableLeftPadding;
 
         var textGraphics = screen.newTextGraphics();
 
@@ -67,7 +67,7 @@ public abstract class AbstractMenuView extends AbstractView {
             String[] topTextLines = topText.split("\n");
             for(String line : topTextLines) {
                 textGraphics.setForegroundColor(TextColor.ANSI.WHITE)
-                        .setForegroundColor(TextColor.ANSI.DEFAULT)
+                        .setBackgroundColor(TextColor.ANSI.DEFAULT)
                         .putString(col, startRow++, line);
             }
         }
@@ -78,11 +78,11 @@ public abstract class AbstractMenuView extends AbstractView {
                 if (i == selected) {
                     textGraphics.setForegroundColor(TextColor.ANSI.BLACK)
                             .setBackgroundColor(TextColor.ANSI.WHITE)
-                            .putString(col, startRow + i, "> " + options.get(i));
+                            .putString(col, startRow++, "> " + options.get(i));
                 } else {
                     textGraphics.setForegroundColor(TextColor.ANSI.WHITE)
                             .setBackgroundColor(TextColor.ANSI.DEFAULT)
-                            .putString(col, startRow + i, "  " + options.get(i));
+                            .putString(col, startRow++, "  " + options.get(i));
                 }
             }
         }
@@ -92,7 +92,7 @@ public abstract class AbstractMenuView extends AbstractView {
             String[] bottomTextLines = bottomText.split("\n");
             for(String line : bottomTextLines) {
                 textGraphics.setForegroundColor(TextColor.ANSI.WHITE)
-                        .setForegroundColor(TextColor.ANSI.DEFAULT)
+                        .setBackgroundColor(TextColor.ANSI.DEFAULT)
                         .putString(col, startRow++, line);
             }
         }

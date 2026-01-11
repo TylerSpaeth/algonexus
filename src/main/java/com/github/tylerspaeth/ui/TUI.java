@@ -47,13 +47,17 @@ public class TUI {
                         currentView.onExit();
                         currentView = nextView;
                         currentView.onEnter(uiContext);
-                        screen.clear();
                     }
+                    dirty = true;
+                }
 
+                // Trigger rerender when screen size changes in case the view has resizing logic
+                if(screen.doResizeIfNecessary() != null) {
                     dirty = true;
                 }
 
                 if(dirty) {
+                    screen.clear();
                     currentView.render(screen);
                     screen.refresh();
                     dirty = false;
