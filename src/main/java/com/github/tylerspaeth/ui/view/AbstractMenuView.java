@@ -1,6 +1,7 @@
 package com.github.tylerspaeth.ui.view;
 
 import com.googlecode.lanterna.TextColor;
+import com.googlecode.lanterna.graphics.TextGraphics;
 import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.screen.Screen;
 import org.slf4j.Logger;
@@ -24,7 +25,7 @@ public abstract class AbstractMenuView extends AbstractView {
         super(parent);
     }
 
-    public AbstractMenuView(AbstractMenuView parent, int leftPadding, int topPadding)  {
+    public AbstractMenuView(AbstractView parent, int leftPadding, int topPadding)  {
         super(parent, leftPadding, topPadding);
     }
 
@@ -59,7 +60,7 @@ public abstract class AbstractMenuView extends AbstractView {
         int startRow = mutableTopPadding;
         int col = mutableLeftPadding;
 
-        var textGraphics = screen.newTextGraphics();
+        TextGraphics textGraphics = screen.newTextGraphics();
 
         // Print top text, creating a new line when "\n" is seen
         if(topText != null) {
@@ -108,5 +109,13 @@ public abstract class AbstractMenuView extends AbstractView {
             case Escape -> parent;
             default -> null;
         };
+    }
+
+    /**
+     * Get the index of the selected menu item.
+     * @return Index of selected menu item.
+     */
+    public int getSelected() {
+        return selected;
     }
 }

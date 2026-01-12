@@ -103,4 +103,11 @@ public class HorizontalMultiView extends AbstractView {
         this.views = new ArrayList<>(views);
     }
 
+    /**
+     * Get the list of views that are displayed.
+     * @return List of AbstractView
+     */
+    public List<AbstractView> getViews() {
+        return views;
+    }
 }
