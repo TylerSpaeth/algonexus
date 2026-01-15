@@ -56,7 +56,7 @@ public abstract class AbstractMenuView extends AbstractView {
     }
 
     @Override
-    public void render(Screen screen) throws Exception {
+    public void render(Screen screen) {
         int startRow = mutableTopPadding;
         int col = mutableLeftPadding;
 
@@ -64,7 +64,6 @@ public abstract class AbstractMenuView extends AbstractView {
 
         // Print top text, creating a new line when "\n" is seen
         if(topText != null) {
-
             String[] topTextLines = topText.split("\n");
             for(String line : topTextLines) {
                 textGraphics.setForegroundColor(TextColor.ANSI.WHITE)
