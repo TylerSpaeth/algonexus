@@ -43,6 +43,14 @@ public class StrategyMenu extends AbstractMenuView {
             });
         }
 
+        // Option to open the form to create a new parameter set
+        options.add("--CREATE NEW STRATEGY--");
+        optionBehaviors.add(() -> {
+           NewParameterSetForm newParameterSetForm = new NewParameterSetForm(this);
+           newParameterSetForm.setStrategy(strategy);
+           return newParameterSetForm;
+        });
+
         setOptions(options, optionBehaviors);
     }
 
