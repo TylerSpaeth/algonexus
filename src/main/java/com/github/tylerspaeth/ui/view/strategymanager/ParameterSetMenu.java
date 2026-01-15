@@ -29,7 +29,7 @@ public class ParameterSetMenu extends AbstractMenuView {
     public void onEnter(UIContext uiContext) {
         super.onEnter(uiContext);
 
-        setTopText(parameterSet.toString() + "\n\nParameters:");
+        setTopText(parameterSet.toString() + "\n\nDescription: " + parameterSet.getDescription() + "\n\nParameters:");
 
         List<String> options = new ArrayList<>();
         List<Supplier<AbstractView>> optionBehaviors = new ArrayList<>();
