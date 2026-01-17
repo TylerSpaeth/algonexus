@@ -5,6 +5,8 @@ import com.googlecode.lanterna.TerminalSize;
 import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.input.KeyType;
 import com.googlecode.lanterna.screen.Screen;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,8 +16,11 @@ import java.util.List;
  */
 public class HorizontalMultiView extends AbstractView {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(HorizontalMultiView.class);
+
     private int selectedViewIndex = 0;
     private List<AbstractView> views;
+    private List<Boolean> childViewChangeTakesWholeScreen;
 
     public HorizontalMultiView(AbstractView parent) {
         super(parent);
@@ -85,6 +90,10 @@ public class HorizontalMultiView extends AbstractView {
                 return parent;
             }
             else if(newView != null) {
+                // If the new view the child provides should take the whole screen
+                if(childViewChangeTakesWholeScreen != null && childViewChangeTakesWholeScreen.get(selectedViewIndex) == true) {
+                    return newView;
+                }
                 views.get(selectedViewIndex).onExit();
                 views.set(selectedViewIndex, newView);
                 views.get(selectedViewIndex).onEnter(uiContext);
@@ -101,6 +110,23 @@ public class HorizontalMultiView extends AbstractView {
      */
     public void setViews(List<AbstractView> views) {
         this.views = new ArrayList<>(views);
+    }
+
+    /**
+     * Sets the list of views that are displayed.
+     * @param views List of AbstractView
+     */
+    public void setViews(List<AbstractView> views, List<Boolean> childViewChangeTakesWholeScreen) {
+        if(views == null || childViewChangeTakesWholeScreen == null) {
+            LOGGER.error("views and childViewChangeTakesWholeScreen must be set.");
+            return;
+        }
+        if(views.size() != childViewChangeTakesWholeScreen.size()) {
+            LOGGER.error("views and childViewChangeTakesWholeScreen must be the same size.");
+            return;
+        }
+        this.views = new ArrayList<>(views);
+        this.childViewChangeTakesWholeScreen = childViewChangeTakesWholeScreen;
     }
 
     /**
