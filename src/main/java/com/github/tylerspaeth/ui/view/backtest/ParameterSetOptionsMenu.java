@@ -25,6 +25,10 @@ public class ParameterSetOptionsMenu extends AbstractMenuView {
     public void onEnter(UIContext uiContext) {
         super.onEnter(uiContext);
 
+        if(strategyParameterSet == null) {
+            return;
+        }
+
         setTopText("Select an option:");
 
         List<String> options = new ArrayList<>();
@@ -43,7 +47,7 @@ public class ParameterSetOptionsMenu extends AbstractMenuView {
         optionBehaviors.add(() -> {
             HorizontalMultiView horizontalMultiView = new HorizontalMultiView(parent);
             BacktestDatasetSelectionMenu backtestDatasetSelectionMenu = new BacktestDatasetSelectionMenu(horizontalMultiView);
-            ParameterSetRunMenu parameterSetRunMenu= new ParameterSetRunMenu(horizontalMultiView);
+            ParameterSetRunMenu parameterSetRunMenu= new ParameterSetRunMenu(horizontalMultiView, strategyParameterSet);
             horizontalMultiView.setViews(List.of(backtestDatasetSelectionMenu, parameterSetRunMenu), List.of(true, true));
             return horizontalMultiView;
         });
