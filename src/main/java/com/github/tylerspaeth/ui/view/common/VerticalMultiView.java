@@ -1,4 +1,4 @@
-package com.github.tylerspaeth.ui.view;
+package com.github.tylerspaeth.ui.view.common;
 
 import com.github.tylerspaeth.ui.UIContext;
 import com.googlecode.lanterna.TerminalSize;

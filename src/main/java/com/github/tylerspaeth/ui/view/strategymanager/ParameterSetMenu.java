@@ -3,9 +3,9 @@ package com.github.tylerspaeth.ui.view.strategymanager;
 import com.github.tylerspaeth.common.data.entity.StrategyParameter;
 import com.github.tylerspaeth.common.data.entity.StrategyParameterSet;
 import com.github.tylerspaeth.ui.UIContext;
-import com.github.tylerspaeth.ui.view.AbstractMenuView;
-import com.github.tylerspaeth.ui.view.AbstractView;
-import com.github.tylerspaeth.ui.view.HorizontalMultiView;
+import com.github.tylerspaeth.ui.view.common.AbstractMenuView;
+import com.github.tylerspaeth.ui.view.common.AbstractView;
+import com.github.tylerspaeth.ui.view.common.HorizontalMultiView;
 import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.input.KeyType;
 

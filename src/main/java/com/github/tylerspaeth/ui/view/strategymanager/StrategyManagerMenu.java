@@ -3,8 +3,8 @@ package com.github.tylerspaeth.ui.view.strategymanager;
 import com.github.tylerspaeth.common.data.entity.Strategy;
 import com.github.tylerspaeth.ui.UIContext;
 import com.github.tylerspaeth.ui.controller.StrategyManagerController;
-import com.github.tylerspaeth.ui.view.AbstractMenuView;
-import com.github.tylerspaeth.ui.view.AbstractView;
+import com.github.tylerspaeth.ui.view.common.AbstractMenuView;
+import com.github.tylerspaeth.ui.view.common.AbstractView;
 
 import java.util.ArrayList;
 import java.util.List;

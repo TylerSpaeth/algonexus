@@ -3,9 +3,9 @@ package com.github.tylerspaeth.ui.view.backtest;
 import com.github.tylerspaeth.common.data.entity.Strategy;
 import com.github.tylerspaeth.ui.UIContext;
 import com.github.tylerspaeth.ui.controller.BacktestController;
-import com.github.tylerspaeth.ui.view.AbstractMenuView;
-import com.github.tylerspaeth.ui.view.AbstractView;
-import com.github.tylerspaeth.ui.view.HorizontalMultiView;
+import com.github.tylerspaeth.ui.view.common.AbstractMenuView;
+import com.github.tylerspaeth.ui.view.common.AbstractView;
+import com.github.tylerspaeth.ui.view.common.HorizontalMultiView;
 
 import java.util.ArrayList;
 import java.util.List;

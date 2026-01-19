@@ -81,4 +81,21 @@ public class SymbolDAO {
         return entityManager.createQuery(cq).getSingleResultOrNull();
     }
 
+    /**
+     * Find a symbol based on the provided ticker.
+     * @param tickerSymbol Ticker
+     * @return Symbol
+     */
+    public Symbol getSymbolByTicker(String tickerSymbol) {
+        EntityManager entityManager = DatasourceConfig.entityManagerFactory.createEntityManager();
+
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Symbol> cq = cb.createQuery(Symbol.class);
+        Root<Symbol> root = cq.from(Symbol.class);
+
+        cq.select(root).where(cb.equal(root.get(Symbol_.ticker), tickerSymbol));
+
+        return entityManager.createQuery(cq).getSingleResultOrNull();
+    }
+
 }

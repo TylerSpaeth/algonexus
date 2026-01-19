@@ -3,6 +3,9 @@ package com.github.tylerspaeth.ui.view;
 import com.github.tylerspaeth.common.enums.AccountTypeEnum;
 import com.github.tylerspaeth.ui.UIContext;
 import com.github.tylerspaeth.ui.view.backtest.BacktestMenu;
+import com.github.tylerspaeth.ui.view.common.AbstractMenuView;
+import com.github.tylerspaeth.ui.view.common.AbstractView;
+import com.github.tylerspaeth.ui.view.data.DataManagerMenu;
 import com.github.tylerspaeth.ui.view.livetrading.LiveTradingMenu;
 import com.github.tylerspaeth.ui.view.settings.SettingsMenu;
 import com.github.tylerspaeth.ui.view.signin.SignInMenu;
@@ -34,6 +37,8 @@ public class MainMenuView extends AbstractMenuView {
         if(uiContext.activeUser.getAccountType() == AccountTypeEnum.INTERNAL) {
             options.add("Backtesting");
             optionBehaviors.add(() -> new BacktestMenu(this));
+            options.add("Data Manager");
+            optionBehaviors.add(() -> new DataManagerMenu(this));
         } else {
             options.add("Live Trading");
             optionBehaviors.add(() -> new LiveTradingMenu(this));

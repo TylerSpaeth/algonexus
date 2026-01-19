@@ -1,8 +1,8 @@
-package com.github.tylerspaeth.ui.view.backtest;
+package com.github.tylerspaeth.ui.view.data;
 
 import com.github.tylerspaeth.common.data.entity.HistoricalDataset;
 import com.github.tylerspaeth.ui.UIContext;
-import com.github.tylerspaeth.ui.controller.BacktestController;
+import com.github.tylerspaeth.ui.controller.DataManagerController;
 import com.github.tylerspaeth.ui.view.common.AbstractMenuView;
 import com.github.tylerspaeth.ui.view.common.AbstractView;
 import com.github.tylerspaeth.ui.view.common.HorizontalMultiView;
@@ -12,40 +12,39 @@ import java.util.List;
 import java.util.function.Supplier;
 
 /**
- * Menu for selecting a dataset to run a backtest on.
+ * Menu to select a dataset to view in DatasetDetailView
  */
-public class BacktestDatasetSelectionMenu extends AbstractMenuView {
+public class DatasetsMenu extends AbstractMenuView {
 
-    private final BacktestController backtestController;
+    private final DataManagerController dataManagerController;
 
-    private ParameterSetRunMenu parameterSetRunMenu;
+    private DatasetDetailView datasetDetailView;
 
-    public BacktestDatasetSelectionMenu(AbstractView parent) {
+    public DatasetsMenu(AbstractView parent) {
         super(parent);
-        backtestController = new BacktestController();
+        dataManagerController = new DataManagerController();
     }
 
     @Override
     public void onEnter(UIContext uiContext) {
         super.onEnter(uiContext);
 
-        parameterSetRunMenu = (ParameterSetRunMenu) ((HorizontalMultiView)parent).getViews().getLast();
+        datasetDetailView = (DatasetDetailView) ((HorizontalMultiView)parent).getViews().getLast();
 
         setTopText("Select a dataset:\n ");
 
         List<String> options = new ArrayList<>();
         List<Supplier<AbstractView>> optionBehaviors = new ArrayList<>();
 
-        for(HistoricalDataset historicalDataset :  backtestController.getAllHistoricalDatasets()) {
+        for(HistoricalDataset historicalDataset : dataManagerController.getAllHistoricalDatasets()) {
             options.add(historicalDataset.toString());
             optionBehaviors.add(() -> {
-                parameterSetRunMenu.onExit();
-                parameterSetRunMenu.setHistoricalDataset(historicalDataset);
-                parameterSetRunMenu.onEnter(uiContext);
+                datasetDetailView.setHistoricalDataset(historicalDataset);
                 return null;
             });
         }
 
         setOptions(options, optionBehaviors);
     }
+
 }

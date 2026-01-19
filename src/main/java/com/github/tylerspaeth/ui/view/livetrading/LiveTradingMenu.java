@@ -1,8 +1,8 @@
 package com.github.tylerspaeth.ui.view.livetrading;
 
 import com.github.tylerspaeth.ui.UIContext;
-import com.github.tylerspaeth.ui.view.AbstractMenuView;
-import com.github.tylerspaeth.ui.view.AbstractView;
+import com.github.tylerspaeth.ui.view.common.AbstractMenuView;
+import com.github.tylerspaeth.ui.view.common.AbstractView;
 
 public class LiveTradingMenu extends AbstractMenuView {
 

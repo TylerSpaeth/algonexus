@@ -1,8 +1,8 @@
 package com.github.tylerspaeth.ui.view.backtest;
 
 import com.github.tylerspaeth.common.data.entity.BacktestResult;
-import com.github.tylerspaeth.ui.view.AbstractDetailView;
-import com.github.tylerspaeth.ui.view.AbstractView;
+import com.github.tylerspaeth.ui.view.common.AbstractDetailView;
+import com.github.tylerspaeth.ui.view.common.AbstractView;
 
 import java.text.MessageFormat;
 

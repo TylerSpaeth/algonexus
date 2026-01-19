@@ -1,6 +1,6 @@
 package com.github.tylerspaeth.ui;
 
-import com.github.tylerspaeth.ui.view.AbstractView;
+import com.github.tylerspaeth.ui.view.common.AbstractView;
 import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.screen.Screen;
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory;

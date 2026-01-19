@@ -1,4 +1,4 @@
-package com.github.tylerspaeth.ui.view;
+package com.github.tylerspaeth.ui.view.common;
 
 import com.googlecode.lanterna.TextColor;
 import com.googlecode.lanterna.graphics.TextGraphics;
