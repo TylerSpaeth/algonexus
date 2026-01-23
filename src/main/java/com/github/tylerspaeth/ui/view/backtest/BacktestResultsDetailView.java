@@ -1,10 +1,15 @@
 package com.github.tylerspaeth.ui.view.backtest;
 
 import com.github.tylerspaeth.common.data.entity.BacktestResult;
+import com.github.tylerspaeth.common.data.entity.Trade;
+import com.github.tylerspaeth.ui.controller.BacktestController;
 import com.github.tylerspaeth.ui.view.common.AbstractDetailView;
 import com.github.tylerspaeth.ui.view.common.AbstractView;
 
 import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * See detailed view of a backtest run.
@@ -16,25 +21,27 @@ public class BacktestResultsDetailView extends AbstractDetailView {
             Start Time: {0}
             End Time: {1}
             P/L (Including fees): {2}
-            Total Trade Count: {3}
-            Profitable Trade Count: {4}
-            Losing Trade Count: {5}
-            Win/Loss Ratio: {6}
+            Individual Trade Count: {3}
+            Number of Positions Taken: {4}
             """;
+
+    private final BacktestController backtestController;
 
     public BacktestResultsDetailView(AbstractView parent) {
         super(parent);
+        backtestController = new BacktestController();
     }
 
     public void setBacktestResult(BacktestResult backtestResult) {
+        List<Trade> trades = new ArrayList<>();
+        backtestResult.getOrders().forEach(order -> trades.addAll(order.getTrades()));
+        trades.sort(Comparator.comparing(Trade::getTimestamp));
         setText(MessageFormat.format(DETAIL_VIEW_TEXT,
                                      backtestResult.getStartTime(),
                                      backtestResult.getEndTime(),
-                                     null,
-                                     null,
-                                     null,
-                                     null,
-                                     null));
-        // TODO calculate the rest of the values
+                                     backtestController.calculatePnL(trades),
+                                     trades.size(),
+                                     backtestController.calculatePositionsTaken(trades)));
     }
+
 }
