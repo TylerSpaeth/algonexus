@@ -2,6 +2,7 @@ package com.github.tylerspaeth.ui.view.backtest;
 
 import com.github.tylerspaeth.common.data.entity.StrategyParameterSet;
 import com.github.tylerspaeth.ui.UIContext;
+import com.github.tylerspaeth.ui.controller.BacktestController;
 import com.github.tylerspaeth.ui.view.common.AbstractMenuView;
 import com.github.tylerspaeth.ui.view.common.AbstractView;
 import org.slf4j.Logger;
@@ -18,11 +19,14 @@ public class ParameterSetRunMenu extends AbstractMenuView {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ParameterSetRunMenu.class);
 
+    private final BacktestController backtestController;
+
     private final StrategyParameterSet strategyParameterSet;
 
     public ParameterSetRunMenu(AbstractView parent, StrategyParameterSet strategyParameterSet) {
         super(parent);
         this.strategyParameterSet = strategyParameterSet;
+        this.backtestController = new BacktestController();
     }
 
     @Override
@@ -40,8 +44,8 @@ public class ParameterSetRunMenu extends AbstractMenuView {
 
         options.add("Run Backtest");
         optionBehaviors.add(() -> {
-            // TODO implement this
             LOGGER.info("Running backtest for StrategyParameterSet {}", strategyParameterSet.getStrategyParameterSetID());
+            backtestController.runBacktest(uiContext.engineCoordinator, strategyParameterSet);
             return null;
         });
 

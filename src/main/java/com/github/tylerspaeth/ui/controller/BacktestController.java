@@ -1,16 +1,25 @@
 package com.github.tylerspaeth.ui.controller;
 
 import com.github.tylerspaeth.common.data.dao.StrategyDAO;
+import com.github.tylerspaeth.common.data.entity.BacktestResult;
 import com.github.tylerspaeth.common.data.entity.Strategy;
+import com.github.tylerspaeth.common.data.entity.StrategyParameterSet;
 import com.github.tylerspaeth.common.data.entity.Trade;
 import com.github.tylerspaeth.common.enums.SideEnum;
+import com.github.tylerspaeth.engine.EngineCoordinator;
+import com.github.tylerspaeth.strategy.AbstractStrategy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Constructor;
 import java.util.List;
 
 /**
  * Controller for the Backtest UI elements.
  */
 public class BacktestController {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(BacktestController.class);
 
     private final StrategyDAO strategyDAO;
 
@@ -110,5 +119,24 @@ public class BacktestController {
             return -quantity;
         }
         return quantity;
+    }
+
+    /**
+     * Run a backtest with the given StrategyParameterSet.
+     * @param engineCoordinator EngineCoordinator that the backtest should run through.
+     * @param strategyParameterSet StrategyParameterSet to run a backtest on.
+     */
+    public void runBacktest(EngineCoordinator engineCoordinator, StrategyParameterSet strategyParameterSet) {
+        Integer strategyID = strategyParameterSet.getStrategy().getStrategyID();
+        try {
+            Constructor<? extends AbstractStrategy> strategyClassConstructor = AbstractStrategy.getConstructorForClass(strategyID, true);
+            BacktestResult backtestResult = new BacktestResult();
+            backtestResult.setStrategyParameterSet(strategyParameterSet);
+            AbstractStrategy strategy = strategyClassConstructor.newInstance(strategyParameterSet, backtestResult);
+            strategy.setEngineCoordinator(engineCoordinator);
+            strategy.run();
+        } catch (Exception e) {
+            LOGGER.error("Failed to run backtest.", e);
+        }
     }
 }

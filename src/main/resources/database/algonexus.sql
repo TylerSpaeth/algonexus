@@ -61,7 +61,7 @@ COLLATE = utf8mb4_0900_ai_ci;
 -- Table `algonexus`.`backtestresults`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `algonexus`.`backtestresults` (
-  `BacktestResultID` INT NOT NULL,
+  `BacktestResultID` INT NOT NULL AUTO_INCREMENT,
   `StrategyParameterSetID` INT NOT NULL,
   `StartTime` TIMESTAMP(6) NOT NULL,
   `EndTime` TIMESTAMP(6) NULL DEFAULT NULL,
@@ -193,10 +193,10 @@ CREATE TABLE IF NOT EXISTS `algonexus`.`orders` (
   `Version` INT NOT NULL DEFAULT '0',
   PRIMARY KEY (`OrderID`),
   INDEX `fk_orders_symbols_SymbolID_idx` (`SymbolID` ASC) VISIBLE,
-  INDEX `fk_orders_backtestresults_BacktestResultID_idx` (`BacktestResultID` ASC) VISIBLE,
   INDEX `fk_orders_stratparamsets_StrategyParameterSetID_idx` (`StrategyParameterSetID` ASC) VISIBLE,
   INDEX `fk_orders_users_UserID_idx` (`UserID` ASC) VISIBLE,
   INDEX `fk_orders_orders_ParentUserID_idx` (`ParentOrderID` ASC) VISIBLE,
+  INDEX `fk_orders_backtestresults_BacktestResultID_idx` (`BacktestResultID` ASC) VISIBLE,
   CONSTRAINT `fk_orders_backtestresults_BacktestResultID`
     FOREIGN KEY (`BacktestResultID`)
     REFERENCES `algonexus`.`backtestresults` (`BacktestResultID`),

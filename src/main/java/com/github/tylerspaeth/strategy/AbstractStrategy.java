@@ -1,5 +1,6 @@
 package com.github.tylerspaeth.strategy;
 
+import com.github.tylerspaeth.common.data.dao.BacktestResultDAO;
 import com.github.tylerspaeth.common.data.dao.OrderDAO;
 import com.github.tylerspaeth.common.data.entity.BacktestResult;
 import com.github.tylerspaeth.common.data.entity.Order;
@@ -10,6 +11,7 @@ import com.github.tylerspaeth.strategy.annotation.StrategyParameterLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Constructor;
 import java.sql.Timestamp;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,9 +29,10 @@ public abstract class AbstractStrategy {
     /**
      * This maps concrete AbstractStrategy implementations to the ID of the entity in the database.
      */
-    private static final Map<Class<? extends AbstractStrategy>, Integer> STRATEGY_ENTITY_ID_MAP = new ConcurrentHashMap<>();
+    private static final Map<Integer, Class<? extends AbstractStrategy>> STRATEGY_ENTITY_ID_MAP = new ConcurrentHashMap<>();
 
     private final OrderDAO orderDAO;
+    private final BacktestResultDAO backtestResultDAO;
 
     private EngineCoordinator engineCoordinator;
 
@@ -40,16 +43,24 @@ public abstract class AbstractStrategy {
     private final AtomicBoolean running = new AtomicBoolean(false);
     private volatile Thread runningThread;
 
+    /**
+     * The child constructor must require the exact same arguments.
+     */
     public AbstractStrategy(StrategyParameterSet strategyParameterSet) {
         this.strategyParameterSet = strategyParameterSet;
         this.backtestResult = null;
         this.orderDAO = new OrderDAO();
+        this.backtestResultDAO = new BacktestResultDAO();
     }
 
+    /**
+     * The child constructor must require the exact same arguments.
+     */
     public AbstractStrategy(StrategyParameterSet strategyParameterSet, BacktestResult backtestResult) {
         this.strategyParameterSet = strategyParameterSet;
         this.backtestResult = new AtomicReference<>(backtestResult);
         this.orderDAO = new OrderDAO();
+        this.backtestResultDAO = new BacktestResultDAO();
     }
 
     /**
@@ -74,7 +85,7 @@ public abstract class AbstractStrategy {
                 if (backtestResult != null) {
                     backtestResult.updateAndGet(result -> {
                         result.setStartTime(new Timestamp(System.currentTimeMillis()));
-                        return result;
+                        return backtestResultDAO.update(result);
                     });
                 }
 
@@ -83,7 +94,7 @@ public abstract class AbstractStrategy {
                 if(backtestResult != null) {
                     backtestResult.updateAndGet(result -> {
                         result.setEndTime(new Timestamp(System.currentTimeMillis()));
-                        return result;
+                        return backtestResultDAO.update(result);
                     });
                 }
             }
@@ -156,12 +167,25 @@ public abstract class AbstractStrategy {
     }
 
     /**
-     * Set the strategyEntityID of a given concrete AbstractStrategy implementation.
+     * Set the strategyEntityID of a given concrete AbstractStrategy implementation. This will likely only be called through
+     * reflection.
      * @param strategyClass Concrete class that extends AbstractStrategy.
      * @param strategyEntityID ID of the corresponding strategy entity in the database.
      */
-    public static void setStrategyEntityID(Class<? extends AbstractStrategy> strategyClass, Integer strategyEntityID) {
-        AbstractStrategy.STRATEGY_ENTITY_ID_MAP.put(strategyClass, strategyEntityID);
+    public static void setStrategyEntityID(Integer strategyEntityID, Class<? extends AbstractStrategy> strategyClass) {
+        STRATEGY_ENTITY_ID_MAP.put(strategyEntityID, strategyClass);
+    }
+
+    public static Constructor<? extends AbstractStrategy> getConstructorForClass(Integer strategyEntityID, boolean useBacktestResults) throws NoSuchMethodException {
+        Class<? extends AbstractStrategy> strategyClass = STRATEGY_ENTITY_ID_MAP.get(strategyEntityID);
+        if(strategyClass == null) {
+            throw new RuntimeException("Failed to getConstructorForClass. " + strategyEntityID);
+        }
+        if(useBacktestResults) {
+            return strategyClass.getConstructor(StrategyParameterSet.class, BacktestResult.class);
+        } else {
+            return strategyClass.getConstructor(StrategyParameterSet.class);
+        }
     }
 
 }

@@ -76,7 +76,7 @@ public class StrategyRegistry {
 
                     strategy = strategyDAO.update(strategy);
 
-                    setStrategyEntityID.invoke(null, strategyClass, strategy.getStrategyID());
+                    setStrategyEntityID.invoke(null, strategy.getStrategyID(), strategyClass);
                 } else if (strategyVersion > possibleStrategies.getLast().getVersion()) {
                     // New Version of Existing Strategy
                     if (strategyVersion != possibleStrategies.getLast().getVersion() + 1) {
@@ -100,7 +100,7 @@ public class StrategyRegistry {
                     buildDefaultParameterSet(strategyClass, parameterSet);
                     strategy = strategyDAO.update(strategy);
 
-                    setStrategyEntityID.invoke(null, strategyClass, strategy.getStrategyID());
+                    setStrategyEntityID.invoke(null, strategy.getStrategyID(), strategyClass);
                 } else if (strategyVersion >= possibleStrategies.getFirst().getVersion() && strategyVersion <= possibleStrategies.getLast().getVersion()) {
                     // Existing Version of Existing Strategy
                     com.github.tylerspaeth.common.data.entity.Strategy matchedStrategy = possibleStrategies.stream().filter(strategy -> strategy.getVersion().equals(strategyVersion)).findFirst().get();
@@ -125,7 +125,7 @@ public class StrategyRegistry {
                         matchedStrategy.setActive(true);
                         matchedStrategy.setLastUpdated(Timestamp.from(Instant.now()));
                         matchedStrategy = strategyDAO.update(matchedStrategy);
-                        setStrategyEntityID.invoke(null, strategyClass, matchedStrategy.getStrategyID());
+                        setStrategyEntityID.invoke(null,  matchedStrategy.getStrategyID(), strategyClass);
                     }
                 } else {
                     throw new RuntimeException("Unable to initialize strategy: " + strategyName + " version " + strategyVersion + ".");
@@ -173,7 +173,7 @@ public class StrategyRegistry {
      * @throws NoSuchMethodException If the method does not exist on the class.
      */
     private Method getSetStrategyEntityIDMethod(Class<?> strategyClass) throws NoSuchMethodException {
-        return strategyClass.getMethod("setStrategyEntityID", Class.class, Integer.class);
+        return strategyClass.getMethod("setStrategyEntityID", Integer.class, Class.class);
     }
 
 }
