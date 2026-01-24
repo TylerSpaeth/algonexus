@@ -1,6 +1,5 @@
 package com.github.tylerspaeth.ui.view.backtest;
 
-import com.github.tylerspaeth.common.data.entity.HistoricalDataset;
 import com.github.tylerspaeth.common.data.entity.StrategyParameterSet;
 import com.github.tylerspaeth.ui.UIContext;
 import com.github.tylerspaeth.ui.view.common.AbstractMenuView;
@@ -21,8 +20,6 @@ public class ParameterSetRunMenu extends AbstractMenuView {
 
     private final StrategyParameterSet strategyParameterSet;
 
-    private HistoricalDataset historicalDataset;
-
     public ParameterSetRunMenu(AbstractView parent, StrategyParameterSet strategyParameterSet) {
         super(parent);
         this.strategyParameterSet = strategyParameterSet;
@@ -32,11 +29,11 @@ public class ParameterSetRunMenu extends AbstractMenuView {
     public void onEnter(UIContext uiContext) {
         super.onEnter(uiContext);
 
-        if(strategyParameterSet == null || historicalDataset == null) {
+        if(strategyParameterSet == null) {
             return;
         }
 
-        setTopText("Parameter Set: " + strategyParameterSet + "\n \n" + "Dataset: " + historicalDataset);
+        setTopText("Parameter Set: " + strategyParameterSet + "\n ");
 
         List<String> options = new ArrayList<>();
         List<Supplier<AbstractView>> optionBehaviors = new ArrayList<>();
@@ -44,14 +41,11 @@ public class ParameterSetRunMenu extends AbstractMenuView {
         options.add("Run Backtest");
         optionBehaviors.add(() -> {
             // TODO implement this
-            LOGGER.info("Running backtest for StrategyParameterSet {} with Dataset {}", strategyParameterSet.getStrategyParameterSetID(), historicalDataset.getHistoricalDatasetID());
+            LOGGER.info("Running backtest for StrategyParameterSet {}", strategyParameterSet.getStrategyParameterSetID());
             return null;
         });
 
         setOptions(options, optionBehaviors);
     }
 
-    public void setHistoricalDataset(HistoricalDataset historicalDataset) {
-        this.historicalDataset = historicalDataset;
-    }
 }

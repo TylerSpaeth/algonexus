@@ -44,13 +44,7 @@ public class ParameterSetOptionsMenu extends AbstractMenuView {
         });
 
         options.add("Run New Backtest");
-        optionBehaviors.add(() -> {
-            HorizontalMultiView horizontalMultiView = new HorizontalMultiView(parent);
-            BacktestDatasetSelectionMenu backtestDatasetSelectionMenu = new BacktestDatasetSelectionMenu(horizontalMultiView);
-            ParameterSetRunMenu parameterSetRunMenu= new ParameterSetRunMenu(horizontalMultiView, strategyParameterSet);
-            horizontalMultiView.setViews(List.of(backtestDatasetSelectionMenu, parameterSetRunMenu), List.of(true, true));
-            return horizontalMultiView;
-        });
+        optionBehaviors.add(() -> new ParameterSetRunMenu(this, strategyParameterSet));
 
         setOptions(options, optionBehaviors);
     }
