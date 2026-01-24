@@ -49,9 +49,9 @@ public class DataManagerService {
      * @param format Column format of the csv file with characters representing each column
      * @param metadataRows The number of metadata rows at the top of the file to skip
      * @param dateFormat The format that the date column of the file is in
-     * @return true if loading succeeds, false otherwise
+     * @return HistoricalDataset if successful, otherwise null
      */
-    public boolean loadDatasetFromCSV(HistoricalDataset historicalDataset, File file, String format, int metadataRows, SimpleDateFormat dateFormat) {
+    public HistoricalDataset loadDatasetFromCSV(HistoricalDataset historicalDataset, File file, String format, int metadataRows, SimpleDateFormat dateFormat) {
 
         // Find the locations for all the columns
         int dateCol = format.indexOf("D");
@@ -63,7 +63,7 @@ public class DataManagerService {
 
         if(dateCol == -1 || openCol == -1 || closeCol == -1 || highCol == -1 || lowCol == -1 || volumeCol == -1) {
             LOGGER.error("Missing definition for metadata column(s).");
-            return false;
+            return null;
         }
 
         try(BufferedReader reader = new BufferedReader(new FileReader(file))) {
@@ -82,7 +82,7 @@ public class DataManagerService {
                 String[] splitLine = line.split(CSV_DELIMITER);
                 if(splitLine.length < MIN_COLUMN_COUNT || splitLine.length != format.length()) {
                     LOGGER.error("Row does not meet expected criteria: {}", line);
-                    return false;
+                    return null;
                 }
 
                 // Calculate the timestamp and if it is the start or end of the data
@@ -117,13 +117,13 @@ public class DataManagerService {
 
         } catch (Exception e) {
             LOGGER.error("Loading from file failed: {}", file.getName());
-            return false;
+            return null;
         }
 
-        return true;
-
+        return historicalDataset;
     }
 
+    // TODO utilize this in the ui
     /**
      * Exports the given HistoricalDataset into the provided csvFile
      * @param historicalDataset HistoricalDataset

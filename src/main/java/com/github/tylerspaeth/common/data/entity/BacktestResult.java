@@ -3,6 +3,7 @@ package com.github.tylerspaeth.common.data.entity;
 import jakarta.persistence.*;
 
 import java.sql.Timestamp;
+import java.util.List;
 
 @Entity
 @Table(name = "backtestresults")
@@ -22,6 +23,9 @@ public class BacktestResult {
 
     @Column(name = "EndTime")
     private Timestamp endTime;
+
+    @OneToMany(mappedBy = "backtestResult", fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    private List<Order> orders;
 
     public Integer getBacktestResultID() {
         return backtestResultID;
@@ -49,5 +53,14 @@ public class BacktestResult {
 
     public void setEndTime(Timestamp endTime) {
         this.endTime = endTime;
+    }
+
+    public List<Order> getOrders() {
+        return orders;
+    }
+
+    @Override
+    public String toString() {
+        return backtestResultID + " - " + startTime.toString();
     }
 }

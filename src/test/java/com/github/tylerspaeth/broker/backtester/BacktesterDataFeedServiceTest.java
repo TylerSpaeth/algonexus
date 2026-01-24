@@ -64,22 +64,22 @@ public class BacktesterDataFeedServiceTest {
 
     @Test
     public void testSubscribeWithNullSymbolDoesNotThrowExceptions() {
-        Assertions.assertDoesNotThrow(() -> backtesterDataFeedService.subscribeToDataFeed(null));
+        Assertions.assertDoesNotThrow(() -> backtesterDataFeedService.subscribeToDataFeed(Thread.currentThread().threadId(), null));
     }
 
     @Test
     public void testSubscribeWithNonPersistedSymbolDoesNotThrowExceptions() {
-        Assertions.assertDoesNotThrow(() -> backtesterDataFeedService.subscribeToDataFeed(new Symbol()));
+        Assertions.assertDoesNotThrow(() -> backtesterDataFeedService.subscribeToDataFeed(Thread.currentThread().threadId(), new Symbol()));
     }
 
     @Test
     public void testUnsubscribeWithNullSymbolDoesNotThrowExceptions() {
-        Assertions.assertDoesNotThrow(() -> backtesterDataFeedService.unsubscribeFromDataFeed(null));
+        Assertions.assertDoesNotThrow(() -> backtesterDataFeedService.unsubscribeFromDataFeed(Thread.currentThread().threadId(), null));
     }
 
     @Test
     public void testUnsubscribeWithNonPersistedSymbolDoesNotThrowExceptions() {
-        Assertions.assertDoesNotThrow(() -> backtesterDataFeedService.unsubscribeFromDataFeed(new Symbol()));
+        Assertions.assertDoesNotThrow(() -> backtesterDataFeedService.unsubscribeFromDataFeed(Thread.currentThread().threadId(), new Symbol()));
     }
 
     @Test
@@ -91,18 +91,18 @@ public class BacktesterDataFeedServiceTest {
         symbol.setAssetType(AssetTypeEnum.OTHER);
         setSymbolIDOnSymbol(symbol, 1);
         when(symbolDAO.getPersistedVersionOfSymbol(Mockito.any(Symbol.class))).thenReturn(symbol);
-        backtesterDataFeedService.subscribeToDataFeed(symbol);
-        Assertions.assertDoesNotThrow(() -> backtesterDataFeedService.unsubscribeFromDataFeed(symbol));
+        backtesterDataFeedService.subscribeToDataFeed(Thread.currentThread().threadId(), symbol);
+        Assertions.assertDoesNotThrow(() -> backtesterDataFeedService.unsubscribeFromDataFeed(Thread.currentThread().threadId(), symbol));
     }
 
     @Test
     public void testReadWithoutSubscriptionReturnsEmptyList() {
-        Assertions.assertTrue(backtesterDataFeedService.readFromDataFeed(new Symbol(), 1, IntervalUnitEnum.SECOND).isEmpty());
+        Assertions.assertTrue(backtesterDataFeedService.readFromDataFeed(Thread.currentThread().threadId(), new Symbol(), 1, IntervalUnitEnum.SECOND).isEmpty());
     }
 
     @Test
     public void testReadFromNullSymbolReturnsEmptyList() {
-        Assertions.assertTrue(backtesterDataFeedService.readFromDataFeed(null, 2, IntervalUnitEnum.HOUR).isEmpty());
+        Assertions.assertTrue(backtesterDataFeedService.readFromDataFeed(Thread.currentThread().threadId(), null, 2, IntervalUnitEnum.HOUR).isEmpty());
     }
 
     @Test
@@ -114,8 +114,8 @@ public class BacktesterDataFeedServiceTest {
         symbol.setAssetType(AssetTypeEnum.OTHER);
         setSymbolIDOnSymbol(symbol, 1);
         when(symbolDAO.getPersistedVersionOfSymbol(Mockito.any(Symbol.class))).thenReturn(symbol);
-        backtesterDataFeedService.subscribeToDataFeed(symbol);
-        Assertions.assertTrue(backtesterDataFeedService.readFromDataFeed(symbol, 1, IntervalUnitEnum.SECOND).isEmpty());
+        backtesterDataFeedService.subscribeToDataFeed(Thread.currentThread().threadId(), symbol);
+        Assertions.assertTrue(backtesterDataFeedService.readFromDataFeed(Thread.currentThread().threadId(), symbol, 1, IntervalUnitEnum.SECOND).isEmpty());
     }
 
     @Test
@@ -139,8 +139,8 @@ public class BacktesterDataFeedServiceTest {
         symbol.getHistoricalDatasets().add(historicalDataset);
 
         when(symbolDAO.getPersistedVersionOfSymbol(Mockito.any(Symbol.class))).thenReturn(symbol);
-        backtesterDataFeedService.subscribeToDataFeed(symbol);
-        Assertions.assertTrue(backtesterDataFeedService.readFromDataFeed(symbol, 1, IntervalUnitEnum.SECOND).isEmpty());
+        backtesterDataFeedService.subscribeToDataFeed(Thread.currentThread().threadId(), symbol);
+        Assertions.assertTrue(backtesterDataFeedService.readFromDataFeed(Thread.currentThread().threadId(), symbol, 1, IntervalUnitEnum.SECOND).isEmpty());
     }
 
     @Test
@@ -174,8 +174,8 @@ public class BacktesterDataFeedServiceTest {
 
         when(symbolDAO.getPersistedVersionOfSymbol(Mockito.any(Symbol.class))).thenReturn(symbol);
         mockPaginatedCandlesticks();
-        backtesterDataFeedService.subscribeToDataFeed(symbol);
-        List<Candlestick> returnedCandlestick = backtesterDataFeedService.readFromDataFeed(symbol, 1, IntervalUnitEnum.SECOND);
+        backtesterDataFeedService.subscribeToDataFeed(Thread.currentThread().threadId(), symbol);
+        List<Candlestick> returnedCandlestick = backtesterDataFeedService.readFromDataFeed(Thread.currentThread().threadId(), symbol, 1, IntervalUnitEnum.SECOND);
         Assertions.assertEquals(1, returnedCandlestick.size());
         Assertions.assertEquals(50f, returnedCandlestick.getFirst().getOpen());
         Assertions.assertEquals(40f, returnedCandlestick.getFirst().getClose());
@@ -255,8 +255,8 @@ public class BacktesterDataFeedServiceTest {
 
         when(symbolDAO.getPersistedVersionOfSymbol(Mockito.any(Symbol.class))).thenReturn(symbol);
         mockPaginatedCandlesticks();
-        backtesterDataFeedService.subscribeToDataFeed(symbol);
-        List<Candlestick> returnedCandlestick = backtesterDataFeedService.readFromDataFeed(symbol, 5, IntervalUnitEnum.SECOND);
+        backtesterDataFeedService.subscribeToDataFeed(Thread.currentThread().threadId(), symbol);
+        List<Candlestick> returnedCandlestick = backtesterDataFeedService.readFromDataFeed(Thread.currentThread().threadId(), symbol, 5, IntervalUnitEnum.SECOND);
         Assertions.assertEquals(1, returnedCandlestick.size());
         Assertions.assertEquals(50f, returnedCandlestick.getFirst().getOpen());
         Assertions.assertEquals(70f, returnedCandlestick.getFirst().getClose());
@@ -316,8 +316,8 @@ public class BacktesterDataFeedServiceTest {
 
         when(symbolDAO.getPersistedVersionOfSymbol(Mockito.any(Symbol.class))).thenReturn(symbol);
         mockPaginatedCandlesticks();
-        backtesterDataFeedService.subscribeToDataFeed(symbol);
-        List<Candlestick> returnedCandlestick = backtesterDataFeedService.readFromDataFeed(symbol, 2, IntervalUnitEnum.SECOND);
+        backtesterDataFeedService.subscribeToDataFeed(Thread.currentThread().threadId(), symbol);
+        List<Candlestick> returnedCandlestick = backtesterDataFeedService.readFromDataFeed(Thread.currentThread().threadId(), symbol, 2, IntervalUnitEnum.SECOND);
         Assertions.assertEquals(1, returnedCandlestick.size());
         Assertions.assertEquals(40f, returnedCandlestick.getFirst().getOpen());
         Assertions.assertEquals(70f, returnedCandlestick.getFirst().getClose());
@@ -376,8 +376,8 @@ public class BacktesterDataFeedServiceTest {
         candlestick2.setHistoricalDataset(historicalDataset2);
 
         when(symbolDAO.getPersistedVersionOfSymbol(Mockito.any(Symbol.class))).thenReturn(symbol);
-        backtesterDataFeedService.subscribeToDataFeed(symbol);
-        Assertions.assertTrue(backtesterDataFeedService.readFromDataFeed(symbol, 4, IntervalUnitEnum.SECOND).isEmpty());
+        backtesterDataFeedService.subscribeToDataFeed(Thread.currentThread().threadId(), symbol);
+        Assertions.assertTrue(backtesterDataFeedService.readFromDataFeed(Thread.currentThread().threadId(), symbol, 4, IntervalUnitEnum.SECOND).isEmpty());
     }
 
     @Test
@@ -431,8 +431,8 @@ public class BacktesterDataFeedServiceTest {
 
         when(symbolDAO.getPersistedVersionOfSymbol(Mockito.any(Symbol.class))).thenReturn(symbol);
         mockPaginatedCandlesticks();
-        backtesterDataFeedService.subscribeToDataFeed(symbol);
-        List<Candlestick> candlestick = backtesterDataFeedService.readFromDataFeed(symbol, 1, IntervalUnitEnum.MINUTE);
+        backtesterDataFeedService.subscribeToDataFeed(Thread.currentThread().threadId(), symbol);
+        List<Candlestick> candlestick = backtesterDataFeedService.readFromDataFeed(Thread.currentThread().threadId(), symbol, 1, IntervalUnitEnum.MINUTE);
         Assertions.assertEquals(1, candlestick.size());
         Assertions.assertEquals(50f, candlestick.getFirst().getOpen());
         Assertions.assertEquals(20f, candlestick.getFirst().getClose());
@@ -502,8 +502,8 @@ public class BacktesterDataFeedServiceTest {
 
         when(symbolDAO.getPersistedVersionOfSymbol(Mockito.any(Symbol.class))).thenReturn(symbol);
         mockPaginatedCandlesticks();
-        backtesterDataFeedService.subscribeToDataFeed(symbol);
-        List<Candlestick> candlestick = backtesterDataFeedService.readFromDataFeed(symbol, 2, IntervalUnitEnum.SECOND);
+        backtesterDataFeedService.subscribeToDataFeed(Thread.currentThread().threadId(), symbol);
+        List<Candlestick> candlestick = backtesterDataFeedService.readFromDataFeed(Thread.currentThread().threadId(), symbol, 2, IntervalUnitEnum.SECOND);
         Assertions.assertEquals(1, candlestick.size());
         Assertions.assertEquals(50f, candlestick.getFirst().getOpen());
         Assertions.assertEquals(10f, candlestick.getFirst().getClose());
@@ -604,8 +604,8 @@ public class BacktesterDataFeedServiceTest {
 
         when(symbolDAO.getPersistedVersionOfSymbol(Mockito.any(Symbol.class))).thenReturn(symbol);
         mockPaginatedCandlesticks();
-        backtesterDataFeedService.subscribeToDataFeed(symbol);
-        List<Candlestick> candlestick = backtesterDataFeedService.readFromDataFeed(symbol, 4, IntervalUnitEnum.SECOND);
+        backtesterDataFeedService.subscribeToDataFeed(Thread.currentThread().threadId(), symbol);
+        List<Candlestick> candlestick = backtesterDataFeedService.readFromDataFeed(Thread.currentThread().threadId(), symbol, 4, IntervalUnitEnum.SECOND);
         Assertions.assertEquals(1, candlestick.size());
         Assertions.assertEquals(50f, candlestick.getFirst().getOpen());
         Assertions.assertEquals(10f, candlestick.getFirst().getClose());
@@ -685,20 +685,20 @@ public class BacktesterDataFeedServiceTest {
 
         when(symbolDAO.getPersistedVersionOfSymbol(Mockito.any(Symbol.class))).thenReturn(symbol);
         mockPaginatedCandlesticks();
-        backtesterDataFeedService.subscribeToDataFeed(symbol);
-        List<Candlestick> returnedCandlestick = backtesterDataFeedService.readFromDataFeed(symbol, 1, IntervalUnitEnum.SECOND);
+        backtesterDataFeedService.subscribeToDataFeed(Thread.currentThread().threadId(), symbol);
+        List<Candlestick> returnedCandlestick = backtesterDataFeedService.readFromDataFeed(Thread.currentThread().threadId(), symbol, 1, IntervalUnitEnum.SECOND);
         Assertions.assertEquals(1, returnedCandlestick.size());
         Assertions.assertEquals(Timestamp.from(Instant.ofEpochSecond(0)), returnedCandlestick.getFirst().getTimestamp());
-        returnedCandlestick = backtesterDataFeedService.readFromDataFeed(symbol, 1, IntervalUnitEnum.SECOND);
+        returnedCandlestick = backtesterDataFeedService.readFromDataFeed(Thread.currentThread().threadId(), symbol, 1, IntervalUnitEnum.SECOND);
         Assertions.assertEquals(1, returnedCandlestick.size());
         Assertions.assertEquals(Timestamp.from(Instant.ofEpochSecond(1)), returnedCandlestick.getFirst().getTimestamp());
-        returnedCandlestick = backtesterDataFeedService.readFromDataFeed(symbol, 1, IntervalUnitEnum.SECOND);
+        returnedCandlestick = backtesterDataFeedService.readFromDataFeed(Thread.currentThread().threadId(), symbol, 1, IntervalUnitEnum.SECOND);
         Assertions.assertEquals(1, returnedCandlestick.size());
         Assertions.assertEquals(Timestamp.from(Instant.ofEpochSecond(2)), returnedCandlestick.getFirst().getTimestamp());
-        returnedCandlestick = backtesterDataFeedService.readFromDataFeed(symbol, 1, IntervalUnitEnum.SECOND);
+        returnedCandlestick = backtesterDataFeedService.readFromDataFeed(Thread.currentThread().threadId(), symbol, 1, IntervalUnitEnum.SECOND);
         Assertions.assertEquals(1, returnedCandlestick.size());
         Assertions.assertEquals(Timestamp.from(Instant.ofEpochSecond(3)), returnedCandlestick.getFirst().getTimestamp());
-        returnedCandlestick = backtesterDataFeedService.readFromDataFeed(symbol, 1, IntervalUnitEnum.SECOND);
+        returnedCandlestick = backtesterDataFeedService.readFromDataFeed(Thread.currentThread().threadId(), symbol, 1, IntervalUnitEnum.SECOND);
         Assertions.assertEquals(1, returnedCandlestick.size());
         Assertions.assertEquals(Timestamp.from(Instant.ofEpochSecond(4)), returnedCandlestick.getFirst().getTimestamp());
     }

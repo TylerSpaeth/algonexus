@@ -204,9 +204,10 @@ public class IBSyncWrapper {
 
     /**
      * Creates a new subscription that matches the given datafeed.
+     * @param threadID long ID of the thread that this request originates from.
      * @param dataFeedKey Key defining the subscription.
      */
-    public void subscribeToDataFeed(IBDataFeedKey dataFeedKey) {
+    public void subscribeToDataFeed(long threadID, IBDataFeedKey dataFeedKey) {
 
         IBDataFeedKey dataFeedKeyCopy = dataFeedKey.copy();
 
@@ -232,17 +233,18 @@ public class IBSyncWrapper {
             ibConnection.client.reqRealTimeBars(reqId, contract, 5, "MIDPOINT", false, null);
         }
 
-        queue.subscribe();
+        queue.subscribe(threadID);
     }
 
     /**
      * Gathers all the data from the feed since it was last accessed.
+     * @param threadID long ID of the thread that this request originates from.
      * @param dataFeedKey Defines the datafeed subscription
      * @param intervalDuration used in determining the granularity of the data to retrieve
      * @param intervalUnit used in determining the granularity of the data to retrieve
      * @return List of all OHLCV data that has not been read yet.
      */
-    public List<RealtimeBar> readFromDataFeed(IBDataFeedKey dataFeedKey, int intervalDuration, IntervalUnitEnum intervalUnit) {
+    public List<RealtimeBar> readFromDataFeed(long threadID, IBDataFeedKey dataFeedKey, int intervalDuration, IntervalUnitEnum intervalUnit) {
         MultiReaderQueue<RealtimeBar> queue = ibConnection.datafeeds.get(dataFeedKey);
 
         if(queue == null) {
@@ -256,8 +258,8 @@ public class IBSyncWrapper {
         }
 
         // Align the data with the start of a boundary
-        while(queue.peek() != null && queue.peek().date() % ((long) intervalDuration * intervalUnit.secondsPer) != 0) {
-            queue.read();
+        while(queue.peek(threadID) != null && queue.peek(threadID).date() % ((long) intervalDuration * intervalUnit.secondsPer) != 0) {
+            queue.read(threadID);
         }
 
         // Build the list of candles to return, combining existing candles if need be
@@ -265,7 +267,7 @@ public class IBSyncWrapper {
         List<RealtimeBar> itemsToReturn = new ArrayList<>();
         List<RealtimeBar> itemsToCondense;
         do {
-            itemsToCondense = queue.read(numToCondense);
+            itemsToCondense = queue.read(threadID, numToCondense);
             if(!itemsToCondense.isEmpty()) {
                 // Aggregate data from all the bars that are being combined into one
                 long date = itemsToCondense.getFirst().date();
@@ -289,13 +291,14 @@ public class IBSyncWrapper {
 
     /**
      * Unsubscribes this subscriber from the data feed.
+     * @param threadID long ID of the thread that this request originates from.
      * @param dataFeedKey Defines the datafeed subscription
      */
-    public void unsubscribeFromDataFeed(IBDataFeedKey dataFeedKey) {
+    public void unsubscribeFromDataFeed(long threadID, IBDataFeedKey dataFeedKey) {
         MultiReaderQueue<RealtimeBar> queue = ibConnection.datafeeds.get(dataFeedKey);
 
         if(queue != null) {
-            queue.unsubscribe();
+            queue.unsubscribe(threadID);
 
             // If there are no more reader reading from the queue, cancel the IB request and delete the data feed
             if(queue.readerCount() == 0) {

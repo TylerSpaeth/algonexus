@@ -179,7 +179,7 @@ public class IBSyncWrapperTest {
 
     @Test
     public void testSubscribeToNewFeed() {
-        wrapper.subscribeToDataFeed(new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency"));
+        wrapper.subscribeToDataFeed(Thread.currentThread().threadId(), new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency"));
         Mockito.verify(client, Mockito.times(1)).reqRealTimeBars(Mockito.anyInt(), Mockito.any(Contract.class), Mockito.anyInt(), Mockito.anyString(), Mockito.anyBoolean(), Mockito.any());
         Assertions.assertEquals(1, connection.datafeeds.size());
     }
@@ -189,7 +189,7 @@ public class IBSyncWrapperTest {
 
         IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency");
 
-        wrapper.subscribeToDataFeed(dataFeedKey);
+        wrapper.subscribeToDataFeed(Thread.currentThread().threadId(), dataFeedKey);
         Mockito.verify(client, Mockito.times(1)).reqRealTimeBars(Mockito.anyInt(), Mockito.any(Contract.class), Mockito.anyInt(), Mockito.anyString(), Mockito.anyBoolean(), Mockito.any());
 
         Mockito.clearInvocations(client);
@@ -197,7 +197,7 @@ public class IBSyncWrapperTest {
         CountDownLatch latch = new CountDownLatch(1);
 
         new Thread(() -> {
-            wrapper.subscribeToDataFeed(dataFeedKey);
+            wrapper.subscribeToDataFeed(Thread.currentThread().threadId(), dataFeedKey);
             Mockito.verify(client, Mockito.times(0)).reqRealTimeBars(Mockito.anyInt(), Mockito.any(Contract.class), Mockito.anyInt(), Mockito.anyString(), Mockito.anyBoolean(), Mockito.any());
             latch.countDown();
         }, "OtherThread").start();
@@ -209,8 +209,8 @@ public class IBSyncWrapperTest {
 
     @Test
     public void testSubscribeToDifferentFeedsFromSingleThread() {
-        wrapper.subscribeToDataFeed(new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency"));
-        wrapper.subscribeToDataFeed(new IBDataFeedKey(null, "otherTicker", "secType", "exchange", "currency"));
+        wrapper.subscribeToDataFeed(Thread.currentThread().threadId(), new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency"));
+        wrapper.subscribeToDataFeed(Thread.currentThread().threadId(), new IBDataFeedKey(null, "otherTicker", "secType", "exchange", "currency"));
         Mockito.verify(client, Mockito.times(2)).reqRealTimeBars(Mockito.anyInt(), Mockito.any(Contract.class), Mockito.anyInt(), Mockito.anyString(), Mockito.anyBoolean(), Mockito.any());
         Assertions.assertEquals(2, connection.datafeeds.size());
     }
@@ -218,9 +218,9 @@ public class IBSyncWrapperTest {
     @Test
     public void testSubscribeAgainAfterUnsubscribing() {
         IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency");
-        wrapper.subscribeToDataFeed(dataFeedKey);
-        wrapper.unsubscribeFromDataFeed(dataFeedKey);
-        wrapper.subscribeToDataFeed(dataFeedKey);
+        wrapper.subscribeToDataFeed(Thread.currentThread().threadId(), dataFeedKey);
+        wrapper.unsubscribeFromDataFeed(Thread.currentThread().threadId(), dataFeedKey);
+        wrapper.subscribeToDataFeed(Thread.currentThread().threadId(), dataFeedKey);
 
         Mockito.verify(client, Mockito.times(2)).reqRealTimeBars(Mockito.anyInt(), Mockito.any(Contract.class), Mockito.anyInt(), Mockito.anyString(), Mockito.anyBoolean(), Mockito.any());
         Mockito.verify(client, Mockito.times(1)).cancelRealTimeBars(Mockito.anyInt());
@@ -229,7 +229,7 @@ public class IBSyncWrapperTest {
 
     @Test
     public void testReadFromUnsubscribedDatafeed() {
-        Assertions.assertTrue(wrapper.readFromDataFeed(new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency"), 1, IntervalUnitEnum.SECOND   ).isEmpty());
+        Assertions.assertTrue(wrapper.readFromDataFeed(Thread.currentThread().threadId(), new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency"), 1, IntervalUnitEnum.SECOND   ).isEmpty());
     }
 
     @Test
@@ -239,18 +239,18 @@ public class IBSyncWrapperTest {
 
         IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency");
 
-        wrapper.subscribeToDataFeed(dataFeedKey);
+        wrapper.subscribeToDataFeed(Thread.currentThread().threadId(), dataFeedKey);
 
         CountDownLatch latch = new CountDownLatch(1);
 
         new Thread(() -> {
-            wrapper.subscribeToDataFeed(dataFeedKey);
+            wrapper.subscribeToDataFeed(Thread.currentThread().threadId(), dataFeedKey);
             try {
                 latch.await();
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
-            List<RealtimeBar> realtimeBars = wrapper.readFromDataFeed(dataFeedKey, 5, IntervalUnitEnum.SECOND);
+            List<RealtimeBar> realtimeBars = wrapper.readFromDataFeed(Thread.currentThread().threadId(), dataFeedKey, 5, IntervalUnitEnum.SECOND);
             Assertions.assertEquals(1, realtimeBars.size());
         }, "OtherThread").start();
 
@@ -258,7 +258,7 @@ public class IBSyncWrapperTest {
 
         latch.countDown();
 
-        List<RealtimeBar> realtimeBars = wrapper.readFromDataFeed(dataFeedKey, 5, IntervalUnitEnum.SECOND);
+        List<RealtimeBar> realtimeBars = wrapper.readFromDataFeed(Thread.currentThread().threadId(), dataFeedKey, 5, IntervalUnitEnum.SECOND);
         Assertions.assertEquals(1, realtimeBars.size());
         Assertions.assertEquals(0, realtimeBars.getFirst().date());
         Assertions.assertEquals(1, realtimeBars.getFirst().open());
@@ -272,29 +272,29 @@ public class IBSyncWrapperTest {
     public void testReadAtSubFiveSecondGranularity() {
         int reqId = connection.nextValidId.get();
         IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency");
-        wrapper.subscribeToDataFeed(dataFeedKey);
+        wrapper.subscribeToDataFeed(Thread.currentThread().threadId(), dataFeedKey);
         connection.getWrapper().realtimeBar(reqId, 0, 1, 2, 3, 4, Decimal.ONE_HUNDRED, null, -1);
-        Assertions.assertTrue(wrapper.readFromDataFeed(dataFeedKey, 1, IntervalUnitEnum.SECOND).isEmpty());
+        Assertions.assertTrue(wrapper.readFromDataFeed(Thread.currentThread().threadId(), dataFeedKey, 1, IntervalUnitEnum.SECOND).isEmpty());
     }
 
     @Test
     public void testReadAtSevenSecondGranularity() {
         int reqId = connection.nextValidId.get();
         IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency");
-        wrapper.subscribeToDataFeed(dataFeedKey);
+        wrapper.subscribeToDataFeed(Thread.currentThread().threadId(), dataFeedKey);
         connection.getWrapper().realtimeBar(reqId, 0, 1, 2, 3, 4, Decimal.ONE_HUNDRED, null, -1);
         connection.getWrapper().realtimeBar(reqId, 5, 1, 2, 3, 4, Decimal.ONE_HUNDRED, null, -1);
-        Assertions.assertTrue(wrapper.readFromDataFeed(dataFeedKey, 7, IntervalUnitEnum.SECOND).isEmpty());
+        Assertions.assertTrue(wrapper.readFromDataFeed(Thread.currentThread().threadId(), dataFeedKey, 7, IntervalUnitEnum.SECOND).isEmpty());
     }
 
     @Test
     public void testReadFromDataFeedCondenseBars() {
         int reqId = connection.nextValidId.get();
         IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency");
-        wrapper.subscribeToDataFeed(dataFeedKey);
+        wrapper.subscribeToDataFeed(Thread.currentThread().threadId(), dataFeedKey);
         connection.getWrapper().realtimeBar(reqId, 0, 2, 2, 1, 1.5, Decimal.ONE_HUNDRED, null, -1);
         connection.getWrapper().realtimeBar(reqId, 5, 1.5, 5, 2, 4, Decimal.ONE_HUNDRED, null, -1);
-        List<RealtimeBar> realtimeBars = wrapper.readFromDataFeed(dataFeedKey, 10, IntervalUnitEnum.SECOND);
+        List<RealtimeBar> realtimeBars = wrapper.readFromDataFeed(Thread.currentThread().threadId(), dataFeedKey, 10, IntervalUnitEnum.SECOND);
         Assertions.assertEquals(1, realtimeBars.size());
         Assertions.assertEquals(0, realtimeBars.getFirst().date());
         Assertions.assertEquals(2, realtimeBars.getFirst().open());
@@ -308,33 +308,33 @@ public class IBSyncWrapperTest {
     @Test
     public void testUnsubscribeCancelsIBSubscription() {
         IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency");
-        wrapper.subscribeToDataFeed(dataFeedKey);
-        wrapper.unsubscribeFromDataFeed(dataFeedKey);
+        wrapper.subscribeToDataFeed(Thread.currentThread().threadId(), dataFeedKey);
+        wrapper.unsubscribeFromDataFeed(Thread.currentThread().threadId(), dataFeedKey);
         Mockito.verify(client, Mockito.times(1)).cancelRealTimeBars(Mockito.anyInt());
         Assertions.assertTrue(connection.datafeeds.isEmpty());
     }
 
     @Test
     public void testUnsubscribeDoesNotCancelIfNotSubscribed() {
-        wrapper.unsubscribeFromDataFeed(new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency"));
+        wrapper.unsubscribeFromDataFeed(Thread.currentThread().threadId(), new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency"));
         Mockito.verify(client, Mockito.times(0)).cancelRealTimeBars(Mockito.anyInt());
     }
 
     @Test
     public void testUnsubscribeDoesNotCancelIfThereIsAnotherSubscriber() throws InterruptedException {
         IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency");
-        wrapper.subscribeToDataFeed(dataFeedKey);
+        wrapper.subscribeToDataFeed(Thread.currentThread().threadId(), dataFeedKey);
 
         CountDownLatch latch = new CountDownLatch(1);
 
         new Thread(() -> {
-            wrapper.subscribeToDataFeed(dataFeedKey);
+            wrapper.subscribeToDataFeed(Thread.currentThread().threadId(), dataFeedKey);
             latch.countDown();
         }, "OtherThread").start();
 
         latch.await();
 
-        wrapper.unsubscribeFromDataFeed(dataFeedKey);
+        wrapper.unsubscribeFromDataFeed(Thread.currentThread().threadId(), dataFeedKey);
         Mockito.verify(client, Mockito.times(0)).cancelRealTimeBars(Mockito.anyInt());
     }
 
@@ -342,10 +342,10 @@ public class IBSyncWrapperTest {
     public void testReadAfterUnsubscribe() {
         int reqId = connection.nextValidId.get();
         IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency");
-        wrapper.subscribeToDataFeed(dataFeedKey);
+        wrapper.subscribeToDataFeed(Thread.currentThread().threadId(), dataFeedKey);
         connection.getWrapper().realtimeBar(reqId, 0, 2, 2, 1, 1.5, Decimal.ONE_HUNDRED, null, -1);
-        wrapper.unsubscribeFromDataFeed(dataFeedKey);
-        List<RealtimeBar> realtimeBars = wrapper.readFromDataFeed(dataFeedKey, 5, IntervalUnitEnum.SECOND);
+        wrapper.unsubscribeFromDataFeed(Thread.currentThread().threadId(), dataFeedKey);
+        List<RealtimeBar> realtimeBars = wrapper.readFromDataFeed(Thread.currentThread().threadId(), dataFeedKey, 5, IntervalUnitEnum.SECOND);
         Assertions.assertEquals(0, realtimeBars.size());
     }
 
@@ -353,11 +353,11 @@ public class IBSyncWrapperTest {
     public void testReadNeedsAligning() {
         int reqId = connection.nextValidId.get();
         IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency");
-        wrapper.subscribeToDataFeed(dataFeedKey);
+        wrapper.subscribeToDataFeed(Thread.currentThread().threadId(), dataFeedKey);
         connection.getWrapper().realtimeBar(reqId, 5, 2, 2, 1, 1.5, Decimal.get(1), null, -1);
         connection.getWrapper().realtimeBar(reqId, 10, 2, 2, 1, 1.5, Decimal.get(2), null, -1);
         connection.getWrapper().realtimeBar(reqId, 15, 2, 2, 1, 1.5, Decimal.get(3), null, -1);
-        List<RealtimeBar> realtimeBars = wrapper.readFromDataFeed(dataFeedKey, 10, IntervalUnitEnum.SECOND);
+        List<RealtimeBar> realtimeBars = wrapper.readFromDataFeed(Thread.currentThread().threadId(), dataFeedKey, 10, IntervalUnitEnum.SECOND);
         Assertions.assertEquals(1, realtimeBars.size());
         Assertions.assertEquals(Decimal.get(5), realtimeBars.getFirst().volume());
         Assertions.assertEquals(10, realtimeBars.getFirst().date());
