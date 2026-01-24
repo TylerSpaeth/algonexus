@@ -3,11 +3,14 @@ package com.github.tylerspaeth.broker.backtester;
 import com.github.tylerspaeth.broker.service.IOrderService;
 import com.github.tylerspaeth.common.data.dao.OrderDAO;
 import com.github.tylerspaeth.common.data.dao.SymbolDAO;
-import com.github.tylerspaeth.common.data.entity.*;
+import com.github.tylerspaeth.common.data.entity.Order;
+import com.github.tylerspaeth.common.data.entity.Symbol;
+import com.github.tylerspaeth.common.data.entity.User;
 import com.github.tylerspaeth.common.enums.OrderStatusEnum;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.Timestamp;
 import java.util.List;
 
 public class BacktesterOrderService implements IOrderService {
@@ -54,12 +57,11 @@ public class BacktesterOrderService implements IOrderService {
         }
 
         order.setStatus(OrderStatusEnum.PENDING_SUBMIT);
+        order.setTimePlaced(new Timestamp(System.currentTimeMillis()));
 
         Order mergedOrder = orderDAO.update(order);
 
-        backtesterSharedService.addOrder(mapKey, mergedOrder);
-
-        return mergedOrder;
+        return backtesterSharedService.addOrder(mapKey, mergedOrder);
     }
 
     @Override

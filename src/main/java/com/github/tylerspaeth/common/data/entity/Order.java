@@ -105,9 +105,6 @@ public class Order {
         if(externalOrderID != null) {
             throw new IllegalStateException("ExternalOrderID should be null.");
         }
-        if(timePlaced != null) {
-            throw new IllegalStateException("Place time should not be set.");
-        }
         if(timeClosed != null) {
             throw new IllegalStateException("Close time should not be set.");
         }
