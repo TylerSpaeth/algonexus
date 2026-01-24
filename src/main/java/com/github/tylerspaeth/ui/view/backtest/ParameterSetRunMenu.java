@@ -45,7 +45,7 @@ public class ParameterSetRunMenu extends AbstractMenuView {
         options.add("Run Backtest");
         optionBehaviors.add(() -> {
             LOGGER.info("Running backtest for StrategyParameterSet {}", strategyParameterSet.getStrategyParameterSetID());
-            backtestController.runBacktest(uiContext.engineCoordinator, strategyParameterSet);
+            backtestController.runBacktest(uiContext.engineCoordinator, uiContext.activeUser, strategyParameterSet);
             return null;
         });
 

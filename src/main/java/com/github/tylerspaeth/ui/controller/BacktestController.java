@@ -1,10 +1,7 @@
 package com.github.tylerspaeth.ui.controller;
 
 import com.github.tylerspaeth.common.data.dao.StrategyDAO;
-import com.github.tylerspaeth.common.data.entity.BacktestResult;
-import com.github.tylerspaeth.common.data.entity.Strategy;
-import com.github.tylerspaeth.common.data.entity.StrategyParameterSet;
-import com.github.tylerspaeth.common.data.entity.Trade;
+import com.github.tylerspaeth.common.data.entity.*;
 import com.github.tylerspaeth.common.enums.SideEnum;
 import com.github.tylerspaeth.engine.EngineCoordinator;
 import com.github.tylerspaeth.strategy.AbstractStrategy;
@@ -124,15 +121,16 @@ public class BacktestController {
     /**
      * Run a backtest with the given StrategyParameterSet.
      * @param engineCoordinator EngineCoordinator that the backtest should run through.
+     * @param user User that initiated the request.
      * @param strategyParameterSet StrategyParameterSet to run a backtest on.
      */
-    public void runBacktest(EngineCoordinator engineCoordinator, StrategyParameterSet strategyParameterSet) {
+    public void runBacktest(EngineCoordinator engineCoordinator, User user, StrategyParameterSet strategyParameterSet) {
         Integer strategyID = strategyParameterSet.getStrategy().getStrategyID();
         try {
             Constructor<? extends AbstractStrategy> strategyClassConstructor = AbstractStrategy.getConstructorForClass(strategyID, true);
             BacktestResult backtestResult = new BacktestResult();
             backtestResult.setStrategyParameterSet(strategyParameterSet);
-            AbstractStrategy strategy = strategyClassConstructor.newInstance(strategyParameterSet, backtestResult);
+            AbstractStrategy strategy = strategyClassConstructor.newInstance(strategyParameterSet, user, backtestResult);
             strategy.setEngineCoordinator(engineCoordinator);
             strategy.run();
         } catch (Exception e) {
