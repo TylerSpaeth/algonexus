@@ -26,7 +26,7 @@ public class BacktesterOrderService implements IOrderService {
     }
 
     @Override
-    public Order placeOrder(Order order) {
+    public Order placeOrder(long threadID, Order order) {
 
         if(order.getOrderID() != null) {
             LOGGER.error("This order already is persisted, unable to place a new order with it. {}", order);
@@ -39,7 +39,7 @@ public class BacktesterOrderService implements IOrderService {
             return null;
         }
 
-        BacktesterDataFeedKey mapKey = BacktesterDataFeedKey.createKeyForSymbol(persistedSymbol.getSymbolID());
+        BacktesterDataFeedKey mapKey = new BacktesterDataFeedKey(persistedSymbol.getSymbolID(), threadID);
 
         if(!backtesterSharedService.hasActiveDataFeed(mapKey)) {
             LOGGER.error("There must be an active data feed for this Symbol {} to be able to place an order.", order.getSymbol());
@@ -63,12 +63,12 @@ public class BacktesterOrderService implements IOrderService {
     }
 
     @Override
-    public void cancelOrder(Order order) {
+    public void cancelOrder(long threadID, Order order) {
         if(order.getOrderID() == null) {
             LOGGER.error("Unable to cancel order, it does not have an orderID.");
             return;
         }
-        backtesterSharedService.cancelOrder(BacktesterDataFeedKey.createKeyForSymbol(order.getSymbol().getSymbolID()), order.getOrderID());
+        backtesterSharedService.cancelOrder(new BacktesterDataFeedKey(order.getSymbol().getSymbolID(), threadID), order.getOrderID());
     }
 
     @Override

@@ -54,7 +54,7 @@ public class BacktesterDataFeedService implements IDataFeedService {
             return;
         }
 
-        BacktesterDataFeedKey mapKey = BacktesterDataFeedKey.createKeyForSymbol(persistedSymbol.getSymbolID());
+        BacktesterDataFeedKey mapKey = new BacktesterDataFeedKey(persistedSymbol.getSymbolID(), threadID);
 
         datafeeds.put(mapKey, historicalDatasets);
         lastSeenOffsets.put(mapKey, Timestamp.from(Instant.EPOCH));
@@ -72,7 +72,7 @@ public class BacktesterDataFeedService implements IDataFeedService {
             return List.of();
         }
 
-        BacktesterDataFeedKey mapKey = BacktesterDataFeedKey.createKeyForSymbol(persistedSymbol.getSymbolID());
+        BacktesterDataFeedKey mapKey = new BacktesterDataFeedKey(persistedSymbol.getSymbolID(), threadID);
 
         List<HistoricalDataset> datasets = datafeeds.get(mapKey);
         if(datasets == null || datasets.isEmpty()) {
@@ -175,7 +175,7 @@ public class BacktesterDataFeedService implements IDataFeedService {
             return;
         }
 
-        BacktesterDataFeedKey mapKey = BacktesterDataFeedKey.createKeyForSymbol(persistedSymbol.getSymbolID());
+        BacktesterDataFeedKey mapKey = new BacktesterDataFeedKey(persistedSymbol.getSymbolID(), threadID);
 
         datafeeds.remove(mapKey);
         lastSeenOffsets.remove(mapKey);

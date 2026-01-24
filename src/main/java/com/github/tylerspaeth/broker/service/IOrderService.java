@@ -12,16 +12,18 @@ public interface IOrderService {
 
     /**
      * Places an order with the provided Order.
+     * @param threadID ID of the calling thread.
      * @param order Order object describing the desired order.
      * @return Order that should only be read from.
      */
-    Order placeOrder(Order order);
+    Order placeOrder(long threadID, Order order);
 
     /**
      * Cancels the provided Order.
+     * @param threadID ID of the calling thread.
      * @param order The order that needs to be canceled.
      */
-    void cancelOrder(Order order);
+    void cancelOrder(long threadID, Order order);
 
     /**
      * Get open (non-finalized) orders for the provided user.

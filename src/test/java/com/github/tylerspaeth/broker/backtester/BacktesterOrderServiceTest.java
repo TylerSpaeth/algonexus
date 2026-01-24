@@ -14,7 +14,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -54,7 +53,7 @@ public class BacktesterOrderServiceTest {
         orderID.set(order, 1);
         order.setTimeInForce(TimeInForceEnum.GTC);
 
-        Assertions.assertNull(backtesterOrderService.placeOrder(order));
+        Assertions.assertNull(backtesterOrderService.placeOrder(Thread.currentThread().threadId(), order));
     }
 
     @Test
@@ -70,7 +69,7 @@ public class BacktesterOrderServiceTest {
 
         when(symbolDAO.getPersistedVersionOfSymbol(Mockito.any(Symbol.class))).thenReturn(null);
 
-        Assertions.assertNull(backtesterOrderService.placeOrder(order));
+        Assertions.assertNull(backtesterOrderService.placeOrder(Thread.currentThread().threadId(), order));
     }
 
     @Test
@@ -84,13 +83,10 @@ public class BacktesterOrderServiceTest {
         order.setSymbol(new Symbol());
         order.setTimeInForce(TimeInForceEnum.GTC);
 
-        try(MockedStatic<BacktesterDataFeedKey> mockedStatic = Mockito.mockStatic(BacktesterDataFeedKey.class)) {
-            mockedStatic.when(() -> BacktesterDataFeedKey.createKeyForSymbol(Mockito.isNull())).thenReturn(new BacktesterDataFeedKey(1,1));
-            when(symbolDAO.getPersistedVersionOfSymbol(Mockito.any(Symbol.class))).thenReturn(new Symbol());
-            when(backtesterSharedService.hasActiveDataFeed(Mockito.any(BacktesterDataFeedKey.class))).thenReturn(false);
+        when(symbolDAO.getPersistedVersionOfSymbol(Mockito.any(Symbol.class))).thenReturn(new Symbol());
+        when(backtesterSharedService.hasActiveDataFeed(Mockito.any(BacktesterDataFeedKey.class))).thenReturn(false);
 
-            Assertions.assertNull(backtesterOrderService.placeOrder(order));
-        }
+        Assertions.assertNull(backtesterOrderService.placeOrder(Thread.currentThread().threadId(), order));
     }
 
     @Test
@@ -102,13 +98,10 @@ public class BacktesterOrderServiceTest {
         order.setOrderType(OrderTypeEnum.LMT);
         order.setSymbol(new Symbol());
 
-        try(MockedStatic<BacktesterDataFeedKey> mockedStatic = Mockito.mockStatic(BacktesterDataFeedKey.class)) {
-            mockedStatic.when(() -> BacktesterDataFeedKey.createKeyForSymbol(Mockito.isNull())).thenReturn(new BacktesterDataFeedKey(1,1));
-            when(symbolDAO.getPersistedVersionOfSymbol(Mockito.any(Symbol.class))).thenReturn(new Symbol());
-            when(backtesterSharedService.hasActiveDataFeed(Mockito.any(BacktesterDataFeedKey.class))).thenReturn(true);
+        when(symbolDAO.getPersistedVersionOfSymbol(Mockito.any(Symbol.class))).thenReturn(new Symbol());
+        when(backtesterSharedService.hasActiveDataFeed(Mockito.any(BacktesterDataFeedKey.class))).thenReturn(true);
 
-            Assertions.assertNull(backtesterOrderService.placeOrder(order));
-        }
+        Assertions.assertNull(backtesterOrderService.placeOrder(Thread.currentThread().threadId(), order));
     }
 
     @Test
@@ -121,15 +114,12 @@ public class BacktesterOrderServiceTest {
         order.setSymbol(new Symbol());
         order.setTimeInForce(TimeInForceEnum.GTC);
 
-        try(MockedStatic<BacktesterDataFeedKey> mockedStatic = Mockito.mockStatic(BacktesterDataFeedKey.class)) {
-            mockedStatic.when(() -> BacktesterDataFeedKey.createKeyForSymbol(Mockito.isNull())).thenReturn(new BacktesterDataFeedKey(1,1));
-            when(symbolDAO.getPersistedVersionOfSymbol(Mockito.any(Symbol.class))).thenReturn(new Symbol());
-            when(backtesterSharedService.hasActiveDataFeed(Mockito.any(BacktesterDataFeedKey.class))).thenReturn(true);
-            when(orderDAO.update(Mockito.any(Order.class))).thenAnswer(i -> i.getArguments()[0]);
+        when(symbolDAO.getPersistedVersionOfSymbol(Mockito.any(Symbol.class))).thenReturn(new Symbol());
+        when(backtesterSharedService.hasActiveDataFeed(Mockito.any(BacktesterDataFeedKey.class))).thenReturn(true);
+        when(orderDAO.update(Mockito.any(Order.class))).thenAnswer(i -> i.getArguments()[0]);
 
-            Assertions.assertEquals(OrderStatusEnum.PENDING_SUBMIT, backtesterOrderService.placeOrder(order).getStatus());
-            verify(backtesterSharedService, Mockito.times(1)).addOrder(Mockito.any(), Mockito.any());
-        }
+        Assertions.assertEquals(OrderStatusEnum.PENDING_SUBMIT, backtesterOrderService.placeOrder(Thread.currentThread().threadId(), order).getStatus());
+        verify(backtesterSharedService, Mockito.times(1)).addOrder(Mockito.any(), Mockito.any());
     }
 
     @Test
@@ -142,7 +132,7 @@ public class BacktesterOrderServiceTest {
         order.setSymbol(new Symbol());
         order.setTimeInForce(TimeInForceEnum.GTC);
 
-        Assertions.assertDoesNotThrow(() -> backtesterOrderService.cancelOrder(order));
+        Assertions.assertDoesNotThrow(() -> backtesterOrderService.cancelOrder(Thread.currentThread().threadId(), order));
     }
 
     @Test
@@ -164,7 +154,7 @@ public class BacktesterOrderServiceTest {
         orderID.setAccessible(true);
         orderID.set(order, 1);
 
-        Assertions.assertDoesNotThrow(() -> backtesterOrderService.cancelOrder(order));
+        Assertions.assertDoesNotThrow(() -> backtesterOrderService.cancelOrder(Thread.currentThread().threadId(), order));
         verify(backtesterSharedService, Mockito.times(1)).cancelOrder(Mockito.any(), Mockito.any());
     }
 

@@ -6,14 +6,16 @@ import com.github.tylerspaeth.engine.request.AbstractEngineRequest;
 public class CancelOrderRequest extends AbstractEngineRequest<Void> {
 
     private final Order order;
+    private final long threadID;
 
     public CancelOrderRequest(Order order) {
         this.order = order;
+        this.threadID = Thread.currentThread().threadId();
     }
 
     @Override
     protected Void execute() {
-        orderService.cancelOrder(order);
+        orderService.cancelOrder(threadID, order);
         return null;
     }
 }

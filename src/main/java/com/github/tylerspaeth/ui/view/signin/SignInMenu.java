@@ -32,6 +32,7 @@ public class SignInMenu extends AbstractMenuView {
             optionBehaviors.add(() -> {
                 LOGGER.info("User {} selected", user.getExternalAccountID());
                 uiContext.activeUser = user;
+                uiContext.engineCoordinator.useBacktester();
                 return new MainMenuView(this);
             });
         });
@@ -49,6 +50,7 @@ public class SignInMenu extends AbstractMenuView {
                     user = userDAO.update(user);
                 }
                 uiContext.activeUser = user;
+                uiContext.engineCoordinator.useIB();
             } catch (Exception e) {
                 LOGGER.error("Failed to connect to IB Account.");
             }

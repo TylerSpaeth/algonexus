@@ -35,7 +35,7 @@ public class BacktesterSharedServiceTest {
 
 
     private Symbol loadDataAndCreateSymbol(int symbolID) throws Exception {
-        BacktesterDataFeedKey key = BacktesterDataFeedKey.createKeyForSymbol(1);
+        BacktesterDataFeedKey key = new BacktesterDataFeedKey(1, Thread.currentThread().threadId());
         Timestamp timestamp = new Timestamp(0);
         Candlestick candlestick = new Candlestick();
         candlestick.setOpen(1f);
@@ -50,7 +50,7 @@ public class BacktesterSharedServiceTest {
     }
 
     private Symbol loadDataAnddCreateSymbol(int symbolID, float open, float high, float low, float close, float volume) throws Exception {
-        BacktesterDataFeedKey key = BacktesterDataFeedKey.createKeyForSymbol(1);
+        BacktesterDataFeedKey key = new BacktesterDataFeedKey(1, Thread.currentThread().threadId());
         Timestamp timestamp = new Timestamp(0);
         Candlestick candlestick = new Candlestick();
         candlestick.setOpen(open);
@@ -80,28 +80,28 @@ public class BacktesterSharedServiceTest {
 
     @Test
     public void testUpdateDataFeedWithNullCandlestickDoesNotUpdate() {
-        backtesterSharedService.updateDataFeed(BacktesterDataFeedKey.createKeyForSymbol(1), null, new Timestamp(1));
+        backtesterSharedService.updateDataFeed(new BacktesterDataFeedKey(1, Thread.currentThread().threadId()), null, new Timestamp(1));
         Assertions.assertEquals(0, backtesterSharedService.lastSeenCandlesticks.size());
         Assertions.assertEquals(0, backtesterSharedService.currentTimestamps.size());
     }
 
     @Test
     public void testUpdateDataFeedWithNullTimestampDoesNotUpdate() {
-        backtesterSharedService.updateDataFeed(BacktesterDataFeedKey.createKeyForSymbol(1), new Candlestick(), null);
+        backtesterSharedService.updateDataFeed(new BacktesterDataFeedKey(1, Thread.currentThread().threadId()), new Candlestick(), null);
         Assertions.assertEquals(0, backtesterSharedService.lastSeenCandlesticks.size());
         Assertions.assertEquals(0, backtesterSharedService.currentTimestamps.size());
     }
 
     @Test
     public void testUpdateDataFeedWithNullCandlestickAndTimestampDoesNotUpdate() {
-        backtesterSharedService.updateDataFeed(BacktesterDataFeedKey.createKeyForSymbol(1), null, null);
+        backtesterSharedService.updateDataFeed(new BacktesterDataFeedKey(1, Thread.currentThread().threadId()), null, null);
         Assertions.assertEquals(0, backtesterSharedService.lastSeenCandlesticks.size());
         Assertions.assertEquals(0, backtesterSharedService.currentTimestamps.size());
     }
 
     @Test
     public void testUpdateDataFeedCreatesNewDataFeedIfNotExist() {
-        backtesterSharedService.updateDataFeed(BacktesterDataFeedKey.createKeyForSymbol(1), new Candlestick(), new Timestamp(1));
+        backtesterSharedService.updateDataFeed(new BacktesterDataFeedKey(1, Thread.currentThread().threadId()), new Candlestick(), new Timestamp(1));
         Assertions.assertEquals(1, backtesterSharedService.currentTimestamps.size());
         Assertions.assertEquals(1, backtesterSharedService.lastSeenCandlesticks.size());
     }
@@ -110,34 +110,34 @@ public class BacktesterSharedServiceTest {
     public void testUpdateDataFeedUpdatesDataFeedIfExists() {
         Candlestick updated = new Candlestick();
         updated.setHigh(100f);
-        backtesterSharedService.updateDataFeed(BacktesterDataFeedKey.createKeyForSymbol(1), new Candlestick(), new Timestamp(1));
-        backtesterSharedService.updateDataFeed(BacktesterDataFeedKey.createKeyForSymbol(1), updated, new Timestamp(5));
+        backtesterSharedService.updateDataFeed(new BacktesterDataFeedKey(1, Thread.currentThread().threadId()), new Candlestick(), new Timestamp(1));
+        backtesterSharedService.updateDataFeed(new BacktesterDataFeedKey(1, Thread.currentThread().threadId()), updated, new Timestamp(5));
         Assertions.assertEquals(1, backtesterSharedService.currentTimestamps.size());
         Assertions.assertEquals(1, backtesterSharedService.lastSeenCandlesticks.size());
-        Assertions.assertEquals(100, backtesterSharedService.lastSeenCandlesticks.get(BacktesterDataFeedKey.createKeyForSymbol(1)).getHigh());
-        Assertions.assertEquals(new Timestamp(5), backtesterSharedService.currentTimestamps.get(BacktesterDataFeedKey.createKeyForSymbol(1)));
+        Assertions.assertEquals(100, backtesterSharedService.lastSeenCandlesticks.get(new BacktesterDataFeedKey(1, Thread.currentThread().threadId())).getHigh());
+        Assertions.assertEquals(new Timestamp(5), backtesterSharedService.currentTimestamps.get(new BacktesterDataFeedKey(1, Thread.currentThread().threadId())));
     }
 
     @Test
     public void testUpdateOtherDataFeedDoesNotOverwrite() {
         Candlestick updated = new Candlestick();
         updated.setHigh(100f);
-        backtesterSharedService.updateDataFeed(BacktesterDataFeedKey.createKeyForSymbol(1), new Candlestick(), new Timestamp(1));
-        backtesterSharedService.updateDataFeed(BacktesterDataFeedKey.createKeyForSymbol(2), updated, new Timestamp(5));
+        backtesterSharedService.updateDataFeed(new BacktesterDataFeedKey(1, Thread.currentThread().threadId()), new Candlestick(), new Timestamp(1));
+        backtesterSharedService.updateDataFeed(new BacktesterDataFeedKey(2, Thread.currentThread().threadId()), updated, new Timestamp(5));
         Assertions.assertEquals(2, backtesterSharedService.currentTimestamps.size());
         Assertions.assertEquals(2, backtesterSharedService.lastSeenCandlesticks.size());
     }
 
     @Test
     public void testHasActiveDataFeedReturnsTrueWhenExpected() {
-        backtesterSharedService.updateDataFeed(BacktesterDataFeedKey.createKeyForSymbol(1), new Candlestick(), new Timestamp(1));
-        Assertions.assertTrue(backtesterSharedService.hasActiveDataFeed(BacktesterDataFeedKey.createKeyForSymbol(1)));
+        backtesterSharedService.updateDataFeed(new BacktesterDataFeedKey(1, Thread.currentThread().threadId()), new Candlestick(), new Timestamp(1));
+        Assertions.assertTrue(backtesterSharedService.hasActiveDataFeed(new BacktesterDataFeedKey(1, Thread.currentThread().threadId())));
     }
 
     @Test
     public void testHasActiveDataFeedReturnsFalseWhenExpected() {
-        backtesterSharedService.updateDataFeed(BacktesterDataFeedKey.createKeyForSymbol(1), new Candlestick(), new Timestamp(1));
-        Assertions.assertFalse(backtesterSharedService.hasActiveDataFeed(BacktesterDataFeedKey.createKeyForSymbol(2)));
+        backtesterSharedService.updateDataFeed(new BacktesterDataFeedKey(1, Thread.currentThread().threadId()), new Candlestick(), new Timestamp(1));
+        Assertions.assertFalse(backtesterSharedService.hasActiveDataFeed(new BacktesterDataFeedKey(2, Thread.currentThread().threadId())));
     }
 
     @Test
@@ -147,27 +147,27 @@ public class BacktesterSharedServiceTest {
 
     @Test
     public void tesAddOrderWithNullOrderDoesNotThrow() {
-        Assertions.assertDoesNotThrow(() -> backtesterSharedService.addOrder(BacktesterDataFeedKey.createKeyForSymbol(1), null));
+        Assertions.assertDoesNotThrow(() -> backtesterSharedService.addOrder(new BacktesterDataFeedKey(1, Thread.currentThread().threadId()), null));
     }
 
     @Test
     public void testAddOrderWithoutDataFeedDoesNothing() {
-        backtesterSharedService.addOrder(BacktesterDataFeedKey.createKeyForSymbol(1), new Order());
+        backtesterSharedService.addOrder(new BacktesterDataFeedKey(1, Thread.currentThread().threadId()), new Order());
         Assertions.assertEquals(0, backtesterSharedService.pendingOrders.size());
     }
 
     @Test
     public void testAddInvalidOrderDoesNothing() {
         Order order = new Order();
-        backtesterSharedService.updateDataFeed(BacktesterDataFeedKey.createKeyForSymbol(1), new Candlestick(), new Timestamp(1));
-        backtesterSharedService.addOrder(BacktesterDataFeedKey.createKeyForSymbol(1), order);
+        backtesterSharedService.updateDataFeed(new BacktesterDataFeedKey(1, Thread.currentThread().threadId()), new Candlestick(), new Timestamp(1));
+        backtesterSharedService.addOrder(new BacktesterDataFeedKey(1, Thread.currentThread().threadId()), order);
         Assertions.assertEquals(0, backtesterSharedService.pendingOrders.size());
         Assertions.assertNull(order.getStatus());
     }
 
     @Test
     public void testAddMarketOrderFills() throws Exception {
-        BacktesterDataFeedKey key = BacktesterDataFeedKey.createKeyForSymbol(1);
+        BacktesterDataFeedKey key = new BacktesterDataFeedKey(1, Thread.currentThread().threadId());
 
         Symbol symbol = loadDataAndCreateSymbol(1);
 
@@ -195,7 +195,7 @@ public class BacktesterSharedServiceTest {
 
     @Test
     public void testAddLimitOrderAsExactPriceFills() throws Exception {
-        BacktesterDataFeedKey key = BacktesterDataFeedKey.createKeyForSymbol(1);
+        BacktesterDataFeedKey key = new BacktesterDataFeedKey(1, Thread.currentThread().threadId());
         Symbol symbol = loadDataAndCreateSymbol(1);
 
         Order order = new Order();
@@ -223,7 +223,7 @@ public class BacktesterSharedServiceTest {
 
     @Test
     public void testAddLimitBuyBelowPriceDoesNotFill() throws Exception {
-        BacktesterDataFeedKey key = BacktesterDataFeedKey.createKeyForSymbol(1);
+        BacktesterDataFeedKey key = new BacktesterDataFeedKey(1, Thread.currentThread().threadId());
         Symbol symbol = loadDataAndCreateSymbol(1);
 
         Order order = new Order();
@@ -249,7 +249,7 @@ public class BacktesterSharedServiceTest {
 
     @Test
     public void testAddLimitBuyAbovePriceFills() throws Exception {
-        BacktesterDataFeedKey key = BacktesterDataFeedKey.createKeyForSymbol(1);
+        BacktesterDataFeedKey key = new BacktesterDataFeedKey(1, Thread.currentThread().threadId());
         Symbol symbol = loadDataAndCreateSymbol(1);
 
         Order order = new Order();
@@ -276,7 +276,7 @@ public class BacktesterSharedServiceTest {
 
     @Test
     public void testAddLimitSellBelowPriceFills() throws Exception {
-        BacktesterDataFeedKey key = BacktesterDataFeedKey.createKeyForSymbol(1);
+        BacktesterDataFeedKey key = new BacktesterDataFeedKey(1, Thread.currentThread().threadId());
         Symbol symbol = loadDataAndCreateSymbol(1);
 
         Order order = new Order();
@@ -303,7 +303,7 @@ public class BacktesterSharedServiceTest {
 
     @Test
     public void testAddLimitSellAbovePriceDoesNotFill() throws Exception {
-        BacktesterDataFeedKey key = BacktesterDataFeedKey.createKeyForSymbol(1);
+        BacktesterDataFeedKey key = new BacktesterDataFeedKey(1, Thread.currentThread().threadId());
         Symbol symbol = loadDataAndCreateSymbol(1);
 
         Order order = new Order();
@@ -329,7 +329,7 @@ public class BacktesterSharedServiceTest {
 
     @Test
     public void testAddStopBuyBelowPriceFills() throws Exception {
-        BacktesterDataFeedKey key = BacktesterDataFeedKey.createKeyForSymbol(1);
+        BacktesterDataFeedKey key = new BacktesterDataFeedKey(1, Thread.currentThread().threadId());
         Symbol symbol = loadDataAndCreateSymbol(1);
 
         Order order = new Order();
@@ -356,7 +356,7 @@ public class BacktesterSharedServiceTest {
 
     @Test
     public void testAddStopBuyAbovePriceDoesNotFill() throws Exception {
-        BacktesterDataFeedKey key = BacktesterDataFeedKey.createKeyForSymbol(1);
+        BacktesterDataFeedKey key = new BacktesterDataFeedKey(1, Thread.currentThread().threadId());
         Symbol symbol = loadDataAndCreateSymbol(1);
 
         Order order = new Order();
@@ -382,7 +382,7 @@ public class BacktesterSharedServiceTest {
 
     @Test
     public void testAddStopSellAbovePriceFills() throws Exception {
-        BacktesterDataFeedKey key = BacktesterDataFeedKey.createKeyForSymbol(1);
+        BacktesterDataFeedKey key = new BacktesterDataFeedKey(1, Thread.currentThread().threadId());
         Symbol symbol = loadDataAndCreateSymbol(1);
 
         Order order = new Order();
@@ -409,7 +409,7 @@ public class BacktesterSharedServiceTest {
 
     @Test
     public void testAddStopSellBelowPriceDoesNotFill() throws Exception {
-        BacktesterDataFeedKey key = BacktesterDataFeedKey.createKeyForSymbol(1);
+        BacktesterDataFeedKey key = new BacktesterDataFeedKey(1, Thread.currentThread().threadId());
         Symbol symbol = loadDataAndCreateSymbol(1);
 
         Order order = new Order();
@@ -435,7 +435,7 @@ public class BacktesterSharedServiceTest {
 
     @Test
     public void testAddTrailLimitOfZeroAmountFills() throws Exception {
-        BacktesterDataFeedKey key = BacktesterDataFeedKey.createKeyForSymbol(1);
+        BacktesterDataFeedKey key = new BacktesterDataFeedKey(1, Thread.currentThread().threadId());
         Symbol symbol = loadDataAndCreateSymbol(1);
 
         Order order = new Order();
@@ -462,7 +462,7 @@ public class BacktesterSharedServiceTest {
 
     @Test
     public void testAddTrailLimitOfZeroPercentFills() throws Exception {
-        BacktesterDataFeedKey key = BacktesterDataFeedKey.createKeyForSymbol(1);
+        BacktesterDataFeedKey key = new BacktesterDataFeedKey(1, Thread.currentThread().threadId());
         Symbol symbol = loadDataAndCreateSymbol(1);
 
         Order order = new Order();
@@ -489,7 +489,7 @@ public class BacktesterSharedServiceTest {
 
     @Test
     public void testAddTrailLimitAmountDoesNotFill() throws Exception {
-        BacktesterDataFeedKey key = BacktesterDataFeedKey.createKeyForSymbol(1);
+        BacktesterDataFeedKey key = new BacktesterDataFeedKey(1, Thread.currentThread().threadId());
         Symbol symbol = loadDataAndCreateSymbol(1);
 
         Order order = new Order();
@@ -515,7 +515,7 @@ public class BacktesterSharedServiceTest {
 
     @Test
     public void testAddTrailLimitPercentDoesNotFill() throws Exception {
-        BacktesterDataFeedKey key = BacktesterDataFeedKey.createKeyForSymbol(1);
+        BacktesterDataFeedKey key = new BacktesterDataFeedKey(1, Thread.currentThread().threadId());
         Symbol symbol = loadDataAndCreateSymbol(1);
 
         Order order = new Order();
@@ -541,7 +541,7 @@ public class BacktesterSharedServiceTest {
 
     @Test
     public void testAddNotTransmitMarketOrderDoesNotFill() throws Exception {
-        BacktesterDataFeedKey key = BacktesterDataFeedKey.createKeyForSymbol(1);
+        BacktesterDataFeedKey key = new BacktesterDataFeedKey(1, Thread.currentThread().threadId());
         Symbol symbol = loadDataAndCreateSymbol(1);
 
         Order order = new Order();
@@ -567,7 +567,7 @@ public class BacktesterSharedServiceTest {
 
     @Test
     public void testAddSingleTransmitOCAMarketOrderFills() throws Exception {
-        BacktesterDataFeedKey key = BacktesterDataFeedKey.createKeyForSymbol(1);
+        BacktesterDataFeedKey key = new BacktesterDataFeedKey(1, Thread.currentThread().threadId());
         Symbol symbol = loadDataAndCreateSymbol(1);
 
         Order order = new Order();
@@ -594,7 +594,7 @@ public class BacktesterSharedServiceTest {
 
     @Test
     public void testFillFirstMarketOrderInOCAGroupWhenSecondLastLimitOrderIsAdded() throws Exception {
-        BacktesterDataFeedKey key = BacktesterDataFeedKey.createKeyForSymbol(1);
+        BacktesterDataFeedKey key = new BacktesterDataFeedKey(1, Thread.currentThread().threadId());
         Symbol symbol = loadDataAndCreateSymbol(1);
 
         Order filledOrder = new Order();
@@ -645,7 +645,7 @@ public class BacktesterSharedServiceTest {
 
     @Test
     public void testFillSecondMarketOrderInOCAGroupWhenAdded() throws Exception {
-        BacktesterDataFeedKey key = BacktesterDataFeedKey.createKeyForSymbol(1);
+        BacktesterDataFeedKey key = new BacktesterDataFeedKey(1, Thread.currentThread().threadId());
         Symbol symbol = loadDataAndCreateSymbol(1);
 
         Order filledOrder = new Order();
@@ -695,7 +695,7 @@ public class BacktesterSharedServiceTest {
 
     @Test
     public void testFillOneOCAGroupDoesNotAffectAnother() throws Exception{
-        BacktesterDataFeedKey key = BacktesterDataFeedKey.createKeyForSymbol(1);
+        BacktesterDataFeedKey key = new BacktesterDataFeedKey(1, Thread.currentThread().threadId());
         Symbol symbol = loadDataAndCreateSymbol(1);
 
         Order otherOrder = new Order();
@@ -742,7 +742,7 @@ public class BacktesterSharedServiceTest {
 
     @Test
     public void testParentLimitChildMarketBothBlocked() throws Exception {
-        BacktesterDataFeedKey key = BacktesterDataFeedKey.createKeyForSymbol(1);
+        BacktesterDataFeedKey key = new BacktesterDataFeedKey(1, Thread.currentThread().threadId());
         Symbol symbol = loadDataAndCreateSymbol(1);
 
         Order parentOrder = new Order();
@@ -786,7 +786,7 @@ public class BacktesterSharedServiceTest {
 
     @Test
     public void testParentMarketChildLimitDoesNotFillChild() throws Exception {
-        BacktesterDataFeedKey key = BacktesterDataFeedKey.createKeyForSymbol(1);
+        BacktesterDataFeedKey key = new BacktesterDataFeedKey(1, Thread.currentThread().threadId());
         Symbol symbol = loadDataAndCreateSymbol(1);
 
         Order parentOrder = new Order();
@@ -830,7 +830,7 @@ public class BacktesterSharedServiceTest {
 
     @Test
     public void testParentAndChildMarketBothFill() throws Exception {
-        BacktesterDataFeedKey key = BacktesterDataFeedKey.createKeyForSymbol(1);
+        BacktesterDataFeedKey key = new BacktesterDataFeedKey(1, Thread.currentThread().threadId());
         Symbol symbol = loadDataAndCreateSymbol(1);
 
         Order parentOrder = new Order();
@@ -873,7 +873,7 @@ public class BacktesterSharedServiceTest {
 
     @Test
     public void testParentFillsBeforeChildMarketChildStillFills() throws Exception {
-        BacktesterDataFeedKey key = BacktesterDataFeedKey.createKeyForSymbol(1);
+        BacktesterDataFeedKey key = new BacktesterDataFeedKey(1, Thread.currentThread().threadId());
         Symbol symbol = loadDataAndCreateSymbol(1);
 
         Order parentOrder = new Order();
@@ -916,7 +916,7 @@ public class BacktesterSharedServiceTest {
 
     @Test
     public void testUpdateDataFeedLimitOrderFillsAtCorrectPriceBuy() throws Exception {
-        BacktesterDataFeedKey key = BacktesterDataFeedKey.createKeyForSymbol(1);
+        BacktesterDataFeedKey key = new BacktesterDataFeedKey(1, Thread.currentThread().threadId());
         Symbol symbol = loadDataAnddCreateSymbol(1, 100, 200, 50, 100, 1000);
 
         Order order = new Order();
@@ -943,7 +943,7 @@ public class BacktesterSharedServiceTest {
 
     @Test
     public void testUpdateDataFeedLimitOrderFillsAtCorrectPriceSell() throws Exception {
-        BacktesterDataFeedKey key = BacktesterDataFeedKey.createKeyForSymbol(1);
+        BacktesterDataFeedKey key = new BacktesterDataFeedKey(1, Thread.currentThread().threadId());
         Symbol symbol = loadDataAnddCreateSymbol(1, 100, 200, 50, 100, 1000);
 
         Order order = new Order();
@@ -970,7 +970,7 @@ public class BacktesterSharedServiceTest {
 
     @Test
     public void testUpdateDataFeedStopOrderFillsAtCorrectPriceBuy() throws Exception {
-        BacktesterDataFeedKey key = BacktesterDataFeedKey.createKeyForSymbol(1);
+        BacktesterDataFeedKey key = new BacktesterDataFeedKey(1, Thread.currentThread().threadId());
         Symbol symbol = loadDataAnddCreateSymbol(1, 100, 200, 50, 100, 1000);
 
         Order order = new Order();
@@ -997,7 +997,7 @@ public class BacktesterSharedServiceTest {
 
     @Test
     public void testUpdateDataFeedStopOrderFillsAtCorrectPriceSell() throws Exception {
-        BacktesterDataFeedKey key = BacktesterDataFeedKey.createKeyForSymbol(1);
+        BacktesterDataFeedKey key = new BacktesterDataFeedKey(1, Thread.currentThread().threadId());
         Symbol symbol = loadDataAnddCreateSymbol(1, 100, 200, 50, 100, 1000);
 
         Order order = new Order();
@@ -1023,7 +1023,7 @@ public class BacktesterSharedServiceTest {
     }
     @Test
     public void testUpdateDataFeedTrailOrderFillsAtCorrectPriceBuy() throws Exception {
-        BacktesterDataFeedKey key = BacktesterDataFeedKey.createKeyForSymbol(1);
+        BacktesterDataFeedKey key = new BacktesterDataFeedKey(1, Thread.currentThread().threadId());
         Symbol symbol = loadDataAnddCreateSymbol(1, 100, 200, 50, 100, 1000);
 
         Order order = new Order();
@@ -1050,7 +1050,7 @@ public class BacktesterSharedServiceTest {
 
     @Test
     public void testUpdateDataFeedTrailOrderFillsAtCorrectPriceSell() throws Exception {
-        BacktesterDataFeedKey key = BacktesterDataFeedKey.createKeyForSymbol(1);
+        BacktesterDataFeedKey key = new BacktesterDataFeedKey(1, Thread.currentThread().threadId());
         Symbol symbol = loadDataAnddCreateSymbol(1, 100, 200, 50, 100, 1000);
 
         Order order = new Order();
@@ -1077,7 +1077,7 @@ public class BacktesterSharedServiceTest {
 
     @Test
     public void testUpdateDataFeedTriggersOCA() throws Exception {
-        BacktesterDataFeedKey key = BacktesterDataFeedKey.createKeyForSymbol(1);
+        BacktesterDataFeedKey key = new BacktesterDataFeedKey(1, Thread.currentThread().threadId());
         Symbol symbol = loadDataAndCreateSymbol(1);
 
         Order parentOrder = new Order();
@@ -1126,18 +1126,18 @@ public class BacktesterSharedServiceTest {
 
     @Test
     public void testCancelOnKeyWithoutOrdersDoesNothing() {
-        Assertions.assertDoesNotThrow(() -> backtesterSharedService.cancelOrder(BacktesterDataFeedKey.createKeyForSymbol(1), 1));
+        Assertions.assertDoesNotThrow(() -> backtesterSharedService.cancelOrder(new BacktesterDataFeedKey(1, Thread.currentThread().threadId()), 1));
     }
 
     @Test
     public void testCancelOrderThatDoesNotExistDoesNothing() throws Exception {
         Symbol symbol = loadDataAndCreateSymbol(1);
-        Assertions.assertDoesNotThrow(() -> backtesterSharedService.cancelOrder(BacktesterDataFeedKey.createKeyForSymbol(1), 1));
+        Assertions.assertDoesNotThrow(() -> backtesterSharedService.cancelOrder(new BacktesterDataFeedKey(1, Thread.currentThread().threadId()), 1));
     }
 
     @Test
     public void testCancelParentCancelsChildren() throws Exception {
-        BacktesterDataFeedKey key = BacktesterDataFeedKey.createKeyForSymbol(1);
+        BacktesterDataFeedKey key = new BacktesterDataFeedKey(1, Thread.currentThread().threadId());
         Symbol symbol = loadDataAndCreateSymbol(1);
 
         Order parentOrder = new Order();

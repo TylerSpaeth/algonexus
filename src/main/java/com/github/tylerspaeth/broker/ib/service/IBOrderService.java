@@ -25,7 +25,7 @@ public class IBOrderService implements IOrderService {
     }
 
     @Override
-    public Order placeOrder(Order order) {
+    public Order placeOrder(long threadId, Order order) {
         Contract contract = new Contract();
         com.ib.client.Order ibOrder = new com.ib.client.Order();
         IBMapper.mapOrderToIBContractAndOrder(order, contract, ibOrder);
@@ -35,7 +35,7 @@ public class IBOrderService implements IOrderService {
     }
 
     @Override
-    public void cancelOrder(Order order) {
+    public void cancelOrder(long threadID, Order order) {
         wrapper.cancelOrder(Integer.parseInt(order.getExternalOrderID()));
     }
 
