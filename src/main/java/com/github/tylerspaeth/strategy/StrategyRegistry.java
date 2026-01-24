@@ -9,6 +9,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Arrays;
@@ -36,83 +38,100 @@ public class StrategyRegistry {
 
         List<Class<?>> strategyClasses = ClasspathScanner.getClassesWithAnnotation(Strategy.class);
         for (Class<?> strategyClass : strategyClasses) {
-            Strategy annotation = strategyClass.getAnnotation(Strategy.class);
 
-            String strategyName = annotation.name().isEmpty() ? strategyClass.getName() : annotation.name();
-            Integer strategyVersion = annotation.version();
+            if(!AbstractStrategy.class.isAssignableFrom(strategyClass)) {
+                LOGGER.error("Failed to initialize strategy registry. Class found with Strategy annotation that does not extend AbstractStrategy. {}", strategyClass);
+                throw new RuntimeException("Failed to initialize strategy registry. Class found with Strategy annotation that does not extend AbstractStrategy. " + strategyClass);
+            }
 
-            List<com.github.tylerspaeth.common.data.entity.Strategy> possibleStrategies = strategyDAO.getStrategiesByName(strategyName);
+            try {
+                Method setStrategyEntityID = getSetStrategyEntityIDMethod(strategyClass);
 
-            if (possibleStrategies.isEmpty()) {
-                // New Strategy
-                if (strategyVersion != 0) {
-                    LOGGER.error("Unable to initialize strategy: {}. First version of strategy must be version 0.", strategyName);
-                    throw new RuntimeException("Unable to initialize strategy: " + strategyName + ". First version of strategy must be version 0.");
-                }
-                com.github.tylerspaeth.common.data.entity.Strategy strategy = new com.github.tylerspaeth.common.data.entity.Strategy();
-                strategy.setName(strategyName);
-                strategy.setVersion(strategyVersion);
-                strategy.setCreatedAt(Timestamp.from(Instant.now()));
-                strategy.setActive(true);
-                strategy.setLastUpdated(Timestamp.from(Instant.now()));
+                Strategy annotation = strategyClass.getAnnotation(Strategy.class);
 
-                StrategyParameterSet parameterSet = new StrategyParameterSet();
-                strategy.getStrategyParameterSets().add(parameterSet);
-                parameterSet.setStrategy(strategy);
-                parameterSet.setName("Default");
+                String strategyName = annotation.name().isEmpty() ? strategyClass.getName() : annotation.name();
+                Integer strategyVersion = annotation.version();
 
-                buildDefaultParameterSet(strategyClass, parameterSet);
+                List<com.github.tylerspaeth.common.data.entity.Strategy> possibleStrategies = strategyDAO.getStrategiesByName(strategyName);
 
-                strategyDAO.update(strategy);
-            } else if (strategyVersion > possibleStrategies.getLast().getVersion()) {
-                // New Version of Existing Strategy
-                if(strategyVersion != possibleStrategies.getLast().getVersion()+1) {
-                    LOGGER.error("Unable to initialize strategy: {}. Strategy version should be incremented by one. Current version: {}. Provided Version: {}.", strategyName, possibleStrategies.getLast().getVersion(), strategyVersion);
-                    throw new RuntimeException("Unable to initialize strategy: "+ strategyName +". Strategy version should be incremented by one. Current version: " + possibleStrategies.getLast().getVersion() + ". Provided Version: " + strategyVersion + ".");
-                }
-
-                com.github.tylerspaeth.common.data.entity.Strategy strategy = new com.github.tylerspaeth.common.data.entity.Strategy();
-                strategy.setName(strategyName);
-                strategy.setVersion(strategyVersion);
-                strategy.setCreatedAt(Timestamp.from(Instant.now()));
-                strategy.setActive(true);
-                strategy.setLastUpdated(Timestamp.from(Instant.now()));
-                strategy.setParentStrategy(possibleStrategies.getLast());
-
-                StrategyParameterSet parameterSet = new StrategyParameterSet();
-                strategy.getStrategyParameterSets().add(parameterSet);
-                parameterSet.setStrategy(strategy);
-                parameterSet.setName("Default");
-
-                buildDefaultParameterSet(strategyClass, parameterSet);
-                strategyDAO.update(strategy);
-            } else if (strategyVersion >= possibleStrategies.getFirst().getVersion() && strategyVersion <= possibleStrategies.getLast().getVersion()) {
-                // Existing Version of Existing Strategy
-                com.github.tylerspaeth.common.data.entity.Strategy matchedStrategy = possibleStrategies.stream().filter(strategy -> strategy.getVersion().equals(strategyVersion)).findFirst().get();
-                StrategyParameterSet parameterSet = matchedStrategy.getStrategyParameterSets().getFirst();
-                Set<String> parameterNames = parameterSet.getStrategyParameters().stream().map(com.github.tylerspaeth.common.data.entity.StrategyParameter::getName).collect(Collectors.toSet());
-
-                List<Field> annotatedFields = Arrays.stream(strategyClass.getDeclaredFields()).filter(field -> field.getAnnotation(StrategyParameter.class) != null).toList();
-                for(Field field : annotatedFields)  {
-                    if(!parameterNames.removeIf(name -> name.equals(field.getName()))) {
-                        throw new RuntimeException("StrategyParameter " + field.getName() + " exists in the database but is missing from strategy " + strategyName + " version " + strategyVersion);
+                if (possibleStrategies.isEmpty()) {
+                    // New Strategy
+                    if (strategyVersion != 0) {
+                        LOGGER.error("Unable to initialize strategy: {}. First version of strategy must be version 0.", strategyName);
+                        throw new RuntimeException("Unable to initialize strategy: " + strategyName + ". First version of strategy must be version 0.");
                     }
-                }
-                if(!parameterNames.isEmpty()) {
-                    throw new RuntimeException("StrategyParameter(s) " + parameterNames + " existing in the strategy " + strategyName + " version " + strategyVersion + " but are not in the database.");
-                }
+                    com.github.tylerspaeth.common.data.entity.Strategy strategy = new com.github.tylerspaeth.common.data.entity.Strategy();
+                    strategy.setName(strategyName);
+                    strategy.setVersion(strategyVersion);
+                    strategy.setCreatedAt(Timestamp.from(Instant.now()));
+                    strategy.setActive(true);
+                    strategy.setLastUpdated(Timestamp.from(Instant.now()));
 
-                // We mark all strategies as inactive before starting to process any of them. If we find a match we can reactivate it
-                // unless it is already active. If it is already active it means a different strategy already activated it.
-                if(matchedStrategy.isActive()) {
-                    throw new RuntimeException("More than one strategy exists with the name " + strategyName + " and version " + strategyVersion);
+                    StrategyParameterSet parameterSet = new StrategyParameterSet();
+                    strategy.getStrategyParameterSets().add(parameterSet);
+                    parameterSet.setStrategy(strategy);
+                    parameterSet.setName("Default");
+
+                    buildDefaultParameterSet(strategyClass, parameterSet);
+
+                    strategy = strategyDAO.update(strategy);
+
+                    setStrategyEntityID.invoke(null, strategyClass, strategy.getStrategyID());
+                } else if (strategyVersion > possibleStrategies.getLast().getVersion()) {
+                    // New Version of Existing Strategy
+                    if (strategyVersion != possibleStrategies.getLast().getVersion() + 1) {
+                        LOGGER.error("Unable to initialize strategy: {}. Strategy version should be incremented by one. Current version: {}. Provided Version: {}.", strategyName, possibleStrategies.getLast().getVersion(), strategyVersion);
+                        throw new RuntimeException("Unable to initialize strategy: " + strategyName + ". Strategy version should be incremented by one. Current version: " + possibleStrategies.getLast().getVersion() + ". Provided Version: " + strategyVersion + ".");
+                    }
+
+                    com.github.tylerspaeth.common.data.entity.Strategy strategy = new com.github.tylerspaeth.common.data.entity.Strategy();
+                    strategy.setName(strategyName);
+                    strategy.setVersion(strategyVersion);
+                    strategy.setCreatedAt(Timestamp.from(Instant.now()));
+                    strategy.setActive(true);
+                    strategy.setLastUpdated(Timestamp.from(Instant.now()));
+                    strategy.setParentStrategy(possibleStrategies.getLast());
+
+                    StrategyParameterSet parameterSet = new StrategyParameterSet();
+                    strategy.getStrategyParameterSets().add(parameterSet);
+                    parameterSet.setStrategy(strategy);
+                    parameterSet.setName("Default");
+
+                    buildDefaultParameterSet(strategyClass, parameterSet);
+                    strategy = strategyDAO.update(strategy);
+
+                    setStrategyEntityID.invoke(null, strategyClass, strategy.getStrategyID());
+                } else if (strategyVersion >= possibleStrategies.getFirst().getVersion() && strategyVersion <= possibleStrategies.getLast().getVersion()) {
+                    // Existing Version of Existing Strategy
+                    com.github.tylerspaeth.common.data.entity.Strategy matchedStrategy = possibleStrategies.stream().filter(strategy -> strategy.getVersion().equals(strategyVersion)).findFirst().get();
+                    StrategyParameterSet parameterSet = matchedStrategy.getStrategyParameterSets().getFirst();
+                    Set<String> parameterNames = parameterSet.getStrategyParameters().stream().map(com.github.tylerspaeth.common.data.entity.StrategyParameter::getName).collect(Collectors.toSet());
+
+                    List<Field> annotatedFields = Arrays.stream(strategyClass.getDeclaredFields()).filter(field -> field.getAnnotation(StrategyParameter.class) != null).toList();
+                    for (Field field : annotatedFields) {
+                        if (!parameterNames.removeIf(name -> name.equals(field.getName()))) {
+                            throw new RuntimeException("StrategyParameter " + field.getName() + " exists in the database but is missing from strategy " + strategyName + " version " + strategyVersion);
+                        }
+                    }
+                    if (!parameterNames.isEmpty()) {
+                        throw new RuntimeException("StrategyParameter(s) " + parameterNames + " existing in the strategy " + strategyName + " version " + strategyVersion + " but are not in the database.");
+                    }
+
+                    // We mark all strategies as inactive before starting to process any of them. If we find a match we can reactivate it
+                    // unless it is already active. If it is already active it means a different strategy already activated it.
+                    if (matchedStrategy.isActive()) {
+                        throw new RuntimeException("More than one strategy exists with the name " + strategyName + " and version " + strategyVersion);
+                    } else {
+                        matchedStrategy.setActive(true);
+                        matchedStrategy.setLastUpdated(Timestamp.from(Instant.now()));
+                        matchedStrategy = strategyDAO.update(matchedStrategy);
+                        setStrategyEntityID.invoke(null, strategyClass, matchedStrategy.getStrategyID());
+                    }
                 } else {
-                    matchedStrategy.setActive(true);
-                    matchedStrategy.setLastUpdated(Timestamp.from(Instant.now()));
-                    strategyDAO.update(matchedStrategy);
+                    throw new RuntimeException("Unable to initialize strategy: " + strategyName + " version " + strategyVersion + ".");
                 }
-            } else {
-                throw new RuntimeException("Unable to initialize strategy: " + strategyName + " version " + strategyVersion + ".");
+            } catch (InvocationTargetException | IllegalArgumentException | NoSuchMethodException | IllegalAccessException e) {
+                throw new RuntimeException("Failed to set strategyEntityID", e);
             }
         }
     }
@@ -145,6 +164,16 @@ public class StrategyRegistry {
             strategy.setLastUpdated(Timestamp.from(Instant.now()));
             strategyDAO.update(strategy);
         }
+    }
+
+    /**
+     * Get the static setStrategyEntityID method from the strategy class.
+     * @param strategyClass Class that extends AbstractStrategy
+     * @return setStrategyEntityID method.
+     * @throws NoSuchMethodException If the method does not exist on the class.
+     */
+    private Method getSetStrategyEntityIDMethod(Class<?> strategyClass) throws NoSuchMethodException {
+        return strategyClass.getMethod("setStrategyEntityID", Class.class, Integer.class);
     }
 
 }

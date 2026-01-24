@@ -11,6 +11,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Timestamp;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -21,6 +23,11 @@ import java.util.concurrent.atomic.AtomicReference;
 public abstract class AbstractStrategy {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractStrategy.class);
+
+    /**
+     * This maps concrete AbstractStrategy implementations to the ID of the entity in the database.
+     */
+    private static final Map<Class<? extends AbstractStrategy>, Integer> STRATEGY_ENTITY_ID_MAP = new ConcurrentHashMap<>();
 
     private final OrderDAO orderDAO;
 
@@ -146,6 +153,15 @@ public abstract class AbstractStrategy {
         } else {
             LOGGER.error("Failed to set EngineCoordinator");
         }
+    }
+
+    /**
+     * Set the strategyEntityID of a given concrete AbstractStrategy implementation.
+     * @param strategyClass Concrete class that extends AbstractStrategy.
+     * @param strategyEntityID ID of the corresponding strategy entity in the database.
+     */
+    public static void setStrategyEntityID(Class<? extends AbstractStrategy> strategyClass, Integer strategyEntityID) {
+        AbstractStrategy.STRATEGY_ENTITY_ID_MAP.put(strategyClass, strategyEntityID);
     }
 
 }
