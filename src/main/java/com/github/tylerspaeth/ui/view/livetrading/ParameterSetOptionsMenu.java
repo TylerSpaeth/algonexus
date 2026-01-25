@@ -43,7 +43,6 @@ public class ParameterSetOptionsMenu extends AbstractMenuView {
 
         options.add("Run Strategy");
         optionBehaviors.add(() -> {
-            System.out.println("Run strategy");
             LOGGER.info("Running live strategy for StrategyParameterSet {}", strategyParameterSet.getStrategyParameterSetID());
             liveTradingController.runStrategy(uiContext.engineCoordinator, uiContext.activeUser, strategyParameterSet);
             return null;
