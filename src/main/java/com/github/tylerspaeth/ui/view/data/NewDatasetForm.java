@@ -34,15 +34,15 @@ public class NewDatasetForm extends AbstractFormView {
         setTopText("Create new Dataset");
 
         List<String> labels = new ArrayList<>();
-        labels.add("Name: ");
-        labels.add("Source: ");
-        labels.add("Ticker Symbol: ");
-        labels.add("Time Interval: ");
-        labels.add("Interval Unit: ");
-        labels.add("Source File Location: ");
-        labels.add("Source File Metadata Rows: ");
-        labels.add("Source File Column Order: ");
-        labels.add("Source File Date Format: ");
+        labels.add("Name");
+        labels.add("Source");
+        labels.add("Ticker Symbol");
+        labels.add("Time Interval");
+        labels.add("Interval Unit");
+        labels.add("Source File Location");
+        labels.add("Source File Metadata Rows");
+        labels.add("Source File Column Order");
+        labels.add("Source File Date Format");
         List<String> formFields = labels.stream().map(_ -> "").collect(Collectors.toList());
         setFormFields(labels, formFields);
 

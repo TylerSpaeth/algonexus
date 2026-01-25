@@ -30,8 +30,8 @@ public class NewParameterSetForm extends AbstractFormView {
         setTopText("Create new parameter set:\n");
 
         List<String> labels = new ArrayList<>();
-        labels.add("Name: ");
-        labels.add("Description: ");
+        labels.add("Name");
+        labels.add("Description");
         List<String> formFields = new ArrayList<>(List.of("", ""));
         setFormFields(labels, formFields);
 
