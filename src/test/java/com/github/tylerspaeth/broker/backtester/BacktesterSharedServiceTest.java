@@ -183,6 +183,8 @@ public class BacktesterSharedServiceTest {
         orderID.setAccessible(true);
         orderID.set(order, 1);
 
+        Mockito.when(orderDAO.update(Mockito.any(Order.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
+
         backtesterSharedService.addOrder(key, order);
 
         Assertions.assertEquals(OrderStatusEnum.FILLED, order.getStatus());
@@ -210,6 +212,8 @@ public class BacktesterSharedServiceTest {
         Field orderID = order.getClass().getDeclaredField("orderID");
         orderID.setAccessible(true);
         orderID.set(order, 1);
+
+        Mockito.when(orderDAO.update(Mockito.any(Order.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
 
         backtesterSharedService.addOrder(key, order);
 
@@ -239,6 +243,8 @@ public class BacktesterSharedServiceTest {
         orderID.setAccessible(true);
         orderID.set(order, 1);
 
+        Mockito.when(orderDAO.update(Mockito.any(Order.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
+
         backtesterSharedService.addOrder(key, order);
 
         Assertions.assertEquals(OrderStatusEnum.SUBMITTED, order.getStatus());
@@ -264,6 +270,8 @@ public class BacktesterSharedServiceTest {
         Field orderID = order.getClass().getDeclaredField("orderID");
         orderID.setAccessible(true);
         orderID.set(order, 1);
+
+        Mockito.when(orderDAO.update(Mockito.any(Order.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
 
         backtesterSharedService.addOrder(key, order);
 
@@ -292,6 +300,8 @@ public class BacktesterSharedServiceTest {
         orderID.setAccessible(true);
         orderID.set(order, 1);
 
+        Mockito.when(orderDAO.update(Mockito.any(Order.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
+
         backtesterSharedService.addOrder(key, order);
 
         Assertions.assertEquals(OrderStatusEnum.FILLED, order.getStatus());
@@ -319,6 +329,8 @@ public class BacktesterSharedServiceTest {
         orderID.setAccessible(true);
         orderID.set(order, 1);
 
+        Mockito.when(orderDAO.update(Mockito.any(Order.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
+
         backtesterSharedService.addOrder(key, order);
 
         Assertions.assertEquals(OrderStatusEnum.SUBMITTED, order.getStatus());
@@ -344,6 +356,8 @@ public class BacktesterSharedServiceTest {
         Field orderID = order.getClass().getDeclaredField("orderID");
         orderID.setAccessible(true);
         orderID.set(order, 1);
+
+        Mockito.when(orderDAO.update(Mockito.any(Order.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
 
         backtesterSharedService.addOrder(key, order);
 
@@ -372,6 +386,8 @@ public class BacktesterSharedServiceTest {
         orderID.setAccessible(true);
         orderID.set(order, 1);
 
+        Mockito.when(orderDAO.update(Mockito.any(Order.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
+
         backtesterSharedService.addOrder(key, order);
 
         Assertions.assertEquals(OrderStatusEnum.SUBMITTED, order.getStatus());
@@ -397,6 +413,8 @@ public class BacktesterSharedServiceTest {
         Field orderID = order.getClass().getDeclaredField("orderID");
         orderID.setAccessible(true);
         orderID.set(order, 1);
+
+        Mockito.when(orderDAO.update(Mockito.any(Order.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
 
         backtesterSharedService.addOrder(key, order);
 
@@ -425,6 +443,8 @@ public class BacktesterSharedServiceTest {
         orderID.setAccessible(true);
         orderID.set(order, 1);
 
+        Mockito.when(orderDAO.update(Mockito.any(Order.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
+
         backtesterSharedService.addOrder(key, order);
 
         Assertions.assertEquals(OrderStatusEnum.SUBMITTED, order.getStatus());
@@ -450,6 +470,8 @@ public class BacktesterSharedServiceTest {
         Field orderID = order.getClass().getDeclaredField("orderID");
         orderID.setAccessible(true);
         orderID.set(order, 1);
+
+        Mockito.when(orderDAO.update(Mockito.any(Order.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
 
         backtesterSharedService.addOrder(key, order);
 
@@ -478,6 +500,8 @@ public class BacktesterSharedServiceTest {
         orderID.setAccessible(true);
         orderID.set(order, 1);
 
+        Mockito.when(orderDAO.update(Mockito.any(Order.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
+
         backtesterSharedService.addOrder(key, order);
 
         Assertions.assertEquals(OrderStatusEnum.FILLED, order.getStatus());
@@ -505,6 +529,8 @@ public class BacktesterSharedServiceTest {
         orderID.setAccessible(true);
         orderID.set(order, 1);
 
+        Mockito.when(orderDAO.update(Mockito.any(Order.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
+
         backtesterSharedService.addOrder(key, order);
 
         Assertions.assertEquals(OrderStatusEnum.SUBMITTED, order.getStatus());
@@ -530,6 +556,8 @@ public class BacktesterSharedServiceTest {
         Field orderID = order.getClass().getDeclaredField("orderID");
         orderID.setAccessible(true);
         orderID.set(order, 1);
+
+        Mockito.when(orderDAO.update(Mockito.any(Order.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
 
         backtesterSharedService.addOrder(key, order);
 
@@ -557,6 +585,8 @@ public class BacktesterSharedServiceTest {
         orderID.setAccessible(true);
         orderID.set(order, 1);
 
+        Mockito.when(orderDAO.update(Mockito.any(Order.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
+
         backtesterSharedService.addOrder(key, order);
 
         Assertions.assertEquals(OrderStatusEnum.SUBMITTED, order.getStatus());
@@ -582,6 +612,8 @@ public class BacktesterSharedServiceTest {
         Field orderID = order.getClass().getDeclaredField("orderID");
         orderID.setAccessible(true);
         orderID.set(order, 1);
+
+        Mockito.when(orderDAO.update(Mockito.any(Order.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
 
         backtesterSharedService.addOrder(key, order);
 
@@ -609,6 +641,8 @@ public class BacktesterSharedServiceTest {
         Field orderID = filledOrder.getClass().getDeclaredField("orderID");
         orderID.setAccessible(true);
         orderID.set(filledOrder, 1);
+
+        Mockito.when(orderDAO.update(Mockito.any(Order.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
 
         backtesterSharedService.addOrder(key, filledOrder);
 
@@ -661,6 +695,8 @@ public class BacktesterSharedServiceTest {
         orderID.setAccessible(true);
         orderID.set(filledOrder, 1);
 
+        Mockito.when(orderDAO.update(Mockito.any(Order.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
+
         backtesterSharedService.addOrder(key, filledOrder);
 
         Assertions.assertEquals(OrderStatusEnum.SUBMITTED, filledOrder.getStatus());
@@ -711,6 +747,8 @@ public class BacktesterSharedServiceTest {
         otherOrderID.setAccessible(true);
         otherOrderID.set(otherOrder, 2);
 
+        Mockito.when(orderDAO.update(Mockito.any(Order.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
+
         backtesterSharedService.addOrder(key, otherOrder);
 
         Order filledOrder = new Order();
@@ -758,6 +796,8 @@ public class BacktesterSharedServiceTest {
         parentOrderID.setAccessible(true);
         parentOrderID.set(parentOrder, 1);
 
+        Mockito.when(orderDAO.update(Mockito.any(Order.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
+
         backtesterSharedService.addOrder(key, parentOrder);
 
         Order childOrder = new Order();
@@ -800,6 +840,8 @@ public class BacktesterSharedServiceTest {
         Field parentOrderID = parentOrder.getClass().getDeclaredField("orderID");
         parentOrderID.setAccessible(true);
         parentOrderID.set(parentOrder, 1);
+
+        Mockito.when(orderDAO.update(Mockito.any(Order.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
 
         backtesterSharedService.addOrder(key, parentOrder);
 
@@ -845,6 +887,8 @@ public class BacktesterSharedServiceTest {
         parentOrderID.setAccessible(true);
         parentOrderID.set(parentOrder, 1);
 
+        Mockito.when(orderDAO.update(Mockito.any(Order.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
+
         backtesterSharedService.addOrder(key, parentOrder);
 
         Order childOrder = new Order();
@@ -887,6 +931,8 @@ public class BacktesterSharedServiceTest {
         Field parentOrderID = parentOrder.getClass().getDeclaredField("orderID");
         parentOrderID.setAccessible(true);
         parentOrderID.set(parentOrder, 1);
+
+        Mockito.when(orderDAO.update(Mockito.any(Order.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
 
         backtesterSharedService.addOrder(key, parentOrder);
 
@@ -932,6 +978,8 @@ public class BacktesterSharedServiceTest {
         parentOrderID.setAccessible(true);
         parentOrderID.set(order, 1);
 
+        Mockito.when(orderDAO.update(Mockito.any(Order.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
+
         backtesterSharedService.addOrder(key, order);
 
         backtesterSharedService.updateDataFeed(key, new Candlestick(100f, 110f, 30f, 50f, 100f, new Timestamp(1)), new Timestamp(1));
@@ -958,6 +1006,8 @@ public class BacktesterSharedServiceTest {
         Field parentOrderID = order.getClass().getDeclaredField("orderID");
         parentOrderID.setAccessible(true);
         parentOrderID.set(order, 1);
+
+        Mockito.when(orderDAO.update(Mockito.any(Order.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
 
         backtesterSharedService.addOrder(key, order);
 
@@ -986,6 +1036,8 @@ public class BacktesterSharedServiceTest {
         parentOrderID.setAccessible(true);
         parentOrderID.set(order, 1);
 
+        Mockito.when(orderDAO.update(Mockito.any(Order.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
+
         backtesterSharedService.addOrder(key, order);
 
         backtesterSharedService.updateDataFeed(key, new Candlestick(100f, 350f, 30f, 50f, 100f, new Timestamp(1)), new Timestamp(1));
@@ -1013,6 +1065,8 @@ public class BacktesterSharedServiceTest {
         parentOrderID.setAccessible(true);
         parentOrderID.set(order, 1);
 
+        Mockito.when(orderDAO.update(Mockito.any(Order.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
+
         backtesterSharedService.addOrder(key, order);
 
         backtesterSharedService.updateDataFeed(key, new Candlestick(100f, 110f, 30f, 50f, 100f, new Timestamp(1)), new Timestamp(1));
@@ -1038,6 +1092,8 @@ public class BacktesterSharedServiceTest {
         Field parentOrderID = order.getClass().getDeclaredField("orderID");
         parentOrderID.setAccessible(true);
         parentOrderID.set(order, 1);
+
+        Mockito.when(orderDAO.update(Mockito.any(Order.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
 
         backtesterSharedService.addOrder(key, order);
 
@@ -1066,6 +1122,8 @@ public class BacktesterSharedServiceTest {
         parentOrderID.setAccessible(true);
         parentOrderID.set(order, 1);
 
+        Mockito.when(orderDAO.update(Mockito.any(Order.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
+
         backtesterSharedService.addOrder(key, order);
 
         backtesterSharedService.updateDataFeed(key, new Candlestick(100f, 100f, 1f, 30f, 100f, new Timestamp(1)), new Timestamp(1));
@@ -1093,6 +1151,9 @@ public class BacktesterSharedServiceTest {
         Field parentOrderID = parentOrder.getClass().getDeclaredField("orderID");
         parentOrderID.setAccessible(true);
         parentOrderID.set(parentOrder, 1);
+
+        Mockito.when(orderDAO.update(Mockito.any(Order.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
+
         backtesterSharedService.addOrder(key, parentOrder);
 
         Order childOrder = new Order();
@@ -1152,6 +1213,9 @@ public class BacktesterSharedServiceTest {
         Field parentOrderID = parentOrder.getClass().getDeclaredField("orderID");
         parentOrderID.setAccessible(true);
         parentOrderID.set(parentOrder, 1);
+
+        Mockito.when(orderDAO.update(Mockito.any(Order.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
+
         backtesterSharedService.addOrder(key, parentOrder);
 
         Order childOrder = new Order();
