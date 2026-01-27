@@ -28,7 +28,7 @@ public class DataManagerController {
     public DataManagerController() {
         symbolDAO = new SymbolDAO();
         historicalDatasetDAO = new HistoricalDatasetDAO();
-        dataManagerService = new DataManagerService();
+        dataManagerService = new DataManagerService(historicalDatasetDAO);
     }
 
     public List<HistoricalDataset> getAllHistoricalDatasets() {

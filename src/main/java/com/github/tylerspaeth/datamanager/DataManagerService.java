@@ -11,8 +11,10 @@ import java.sql.Timestamp;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
-import java.util.ArrayList;
 
+/**
+ * Service class for data management.
+ */
 public class DataManagerService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DataManagerService.class);
@@ -37,8 +39,8 @@ public class DataManagerService {
 
     private static final String EXPORT_FORMAT = "Date,Open,Close,High,Low,Volume\n";
 
-    public DataManagerService() {
-        this.historicalDatasetDAO = new HistoricalDatasetDAO();
+    public DataManagerService(HistoricalDatasetDAO historicalDatasetDAO) {
+        this.historicalDatasetDAO = historicalDatasetDAO;
     }
 
     /**
@@ -53,6 +55,16 @@ public class DataManagerService {
      */
     public HistoricalDataset loadDatasetFromCSV(HistoricalDataset historicalDataset, File file, String format, int metadataRows, SimpleDateFormat dateFormat) {
 
+        if(file == null) {
+            LOGGER.error("Unable to upload file that is null.");
+            return null;
+        }
+
+        if(format == null) {
+            LOGGER.error("Unable to upload with a null format.");
+            return null;
+        }
+
         // Find the locations for all the columns
         int dateCol = format.indexOf("D");
         int openCol = format.indexOf("O");
@@ -63,6 +75,15 @@ public class DataManagerService {
 
         if(dateCol == -1 || openCol == -1 || closeCol == -1 || highCol == -1 || lowCol == -1 || volumeCol == -1) {
             LOGGER.error("Missing definition for metadata column(s).");
+            return null;
+        }
+
+        if(metadataRows < 0) {
+            LOGGER.error("Metadata rows must be non-negative.");
+            return null;
+        }
+
+        if(dateFormat == null) {
             return null;
         }
 
@@ -102,9 +123,6 @@ public class DataManagerService {
                 candlestick.setLow(Float.parseFloat(splitLine[lowCol]));
                 candlestick.setVolume(Float.parseFloat(splitLine[volumeCol]));
                 candlestick.setHistoricalDataset(historicalDataset);
-                if(historicalDataset.getCandlesticks() == null) {
-                    historicalDataset.setCandlesticks(new ArrayList<>());
-                }
                 historicalDataset.getCandlesticks().add(candlestick);
 
             }
@@ -116,7 +134,7 @@ public class DataManagerService {
             historicalDatasetDAO.insert(historicalDataset);
 
         } catch (Exception e) {
-            LOGGER.error("Loading from file failed: {}", file.getName());
+            LOGGER.error("Loading from file failed: {}", file.getName(), e);
             return null;
         }
 
@@ -130,6 +148,12 @@ public class DataManagerService {
      * @param csvFile File
      */
     public void exportDatasetToCSV(HistoricalDataset historicalDataset, File csvFile) {
+
+        if(csvFile == null) {
+            LOGGER.error("Unable to export dataset into null file.");
+            return;
+        }
+
         try(BufferedWriter writer = new BufferedWriter(new FileWriter(csvFile))) {
 
             writer.write(MessageFormat.format(EXPORT_METADATA,

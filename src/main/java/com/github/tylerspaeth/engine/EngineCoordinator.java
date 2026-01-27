@@ -114,12 +114,18 @@ public class EngineCoordinator {
         }
     }
 
+    /**
+     * Enable use of the Backtester services.
+     */
     public void useBacktester() {
         activeAccountService = null;
         activeDataFeedService = backtesterDataFeedService;
         activeOrderService = backtesterOrderService;
     }
 
+    /**
+     * Enable use of the IB services.
+     */
     public void useIB() {
         activeAccountService = ibAccountService;
         activeDataFeedService = ibDataFeedService;
