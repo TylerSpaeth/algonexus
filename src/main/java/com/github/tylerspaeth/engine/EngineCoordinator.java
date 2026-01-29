@@ -9,6 +9,8 @@ import com.github.tylerspaeth.broker.service.IAccountService;
 import com.github.tylerspaeth.broker.service.IDataFeedService;
 import com.github.tylerspaeth.broker.service.IOrderService;
 import com.github.tylerspaeth.engine.request.AbstractEngineRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.*;
 
@@ -16,6 +18,8 @@ import java.util.concurrent.*;
  * The engine that handles coordination between strategies, UI, IB, and backtesting.
  */
 public class EngineCoordinator {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(EngineCoordinator.class);
 
     private static final int MAX_SHUTDOWN_TIME_SEC = 10;
 
@@ -60,6 +64,12 @@ public class EngineCoordinator {
      * @throws ExecutionException ExecutionException
      */
     public <T> T submitRequest(AbstractEngineRequest<T> request) throws InterruptedException, ExecutionException {
+
+        if(request == null) {
+            LOGGER.warn("Request is null, nothing to process.");
+            return null;
+        }
+
         request.setServices(activeAccountService, activeDataFeedService, activeOrderService);
         requestQueue.put(request);
         return request.get();
