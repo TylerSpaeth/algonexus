@@ -24,7 +24,7 @@ public class EngineCoordinator {
     private static final int MAX_SHUTDOWN_TIME_SEC = 10;
 
     private final ExecutorService executorService;
-    private final BlockingQueue<AbstractEngineRequest<?>> requestQueue = new LinkedBlockingQueue<>();
+    private final BlockingQueue<AbstractEngineRequest<?>> requestQueue = new LinkedBlockingQueue<>(1000);
     private volatile boolean running = false;
 
     private final IBAccountService ibAccountService;

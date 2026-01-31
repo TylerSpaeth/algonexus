@@ -32,4 +32,20 @@ public class OrderDAO extends AbstractDAO<Order> {
         return entityManager.createQuery(cq).getResultList();
     }
 
+    @Override
+    public Order update(Order order) {
+        EntityManager em = DatasourceConfig.entityManagerFactory.createEntityManager();
+        em.getTransaction().begin();
+        Order managed = em.merge(order);
+        em.getTransaction().commit();
+        em.close();
+
+        if(order.getOrderID() == null) {
+            order.setOrderID(managed.getOrderID());
+        }
+        // Update the version so that the existing order can be reused
+        order.setVersion(managed.getVersion());
+        return managed;
+    }
+
 }

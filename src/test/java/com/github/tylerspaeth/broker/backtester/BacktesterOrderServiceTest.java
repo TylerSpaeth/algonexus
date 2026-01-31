@@ -18,6 +18,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.lang.reflect.Field;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -36,7 +37,7 @@ public class BacktesterOrderServiceTest {
 
     @BeforeEach
     public void setup() {
-        backtesterOrderService = new BacktesterOrderService(backtesterSharedService, orderDAO, symbolDAO);
+        backtesterOrderService = new BacktesterOrderService(backtesterSharedService, orderDAO, symbolDAO, new ConcurrentHashMap<>());
     }
 
     @Test
@@ -117,7 +118,7 @@ public class BacktesterOrderServiceTest {
         when(symbolDAO.getPersistedVersionOfSymbol(Mockito.any(Symbol.class))).thenReturn(new Symbol());
         when(backtesterSharedService.hasActiveDataFeed(Mockito.any(BacktesterDataFeedKey.class))).thenReturn(true);
         when(orderDAO.update(Mockito.any(Order.class))).thenAnswer(i -> i.getArguments()[0]);
-        when(backtesterSharedService.addOrder(Mockito.any(BacktesterDataFeedKey.class), Mockito.any(Order.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArgument(1));
+        //when(backtesterSharedService.addOrder(Mockito.any(BacktesterDataFeedKey.class), Mockito.any(Order.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArgument(1));
 
         Assertions.assertEquals(OrderStatusEnum.PENDING_SUBMIT, backtesterOrderService.placeOrder(Thread.currentThread().threadId(), order).getStatus());
         verify(backtesterSharedService, Mockito.times(1)).addOrder(Mockito.any(), Mockito.any());

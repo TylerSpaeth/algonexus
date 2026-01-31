@@ -13,7 +13,10 @@ import org.slf4j.LoggerFactory;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class BacktesterDataFeedService implements IDataFeedService {
@@ -30,18 +33,19 @@ public class BacktesterDataFeedService implements IDataFeedService {
     private final Map<BacktesterDataFeedKey, Integer> datafeedIntervalMap = new ConcurrentHashMap<>(); // Map of the interval duration being read by each data feed
     private final Map<BacktesterDataFeedKey, IntervalUnitEnum> dataFeedIntervalUnitMap = new ConcurrentHashMap<>(); // Map of the interval unit being read by each data feed
     private final Map<BacktesterDataFeedKey, List<Candlestick>> candlesticksPendingReturn = new ConcurrentHashMap<>(); // Map of candlesticks that have already been built for each data feed
+    private final Map<BacktesterDataFeedKey, Object> datafeedLocks;
 
     private final BacktesterSharedService backtesterSharedService;
 
-    public BacktesterDataFeedService(BacktesterSharedService backtesterSharedService, SymbolDAO symbolDAO, CandlestickDAO candlestickDAO) {
+    public BacktesterDataFeedService(BacktesterSharedService backtesterSharedService, SymbolDAO symbolDAO, CandlestickDAO candlestickDAO, ConcurrentHashMap<BacktesterDataFeedKey, Object> datafeedLocks) {
         this.backtesterSharedService = backtesterSharedService;
         this.symbolDAO = symbolDAO;
         this.candlestickDAO = candlestickDAO;
+        this.datafeedLocks = datafeedLocks;
     }
 
     @Override
     public void subscribeToDataFeed(long threadID, Symbol symbol) {
-
         Symbol persistedSymbol = symbolDAO.getPersistedVersionOfSymbol(symbol);
         if(persistedSymbol == null) {
             LOGGER.error("Symbol {} is not persisted, therefore no data feed can be subscribed to.", symbol);
@@ -67,7 +71,7 @@ public class BacktesterDataFeedService implements IDataFeedService {
         // it will take the least granular.
 
         Symbol persistedSymbol = symbolDAO.getPersistedVersionOfSymbol(symbol);
-        if(persistedSymbol == null) {
+        if (persistedSymbol == null) {
             LOGGER.error("Symbol {} is not persisted, therefore no data feed can be read from.", symbol);
             return List.of();
         }
@@ -75,11 +79,10 @@ public class BacktesterDataFeedService implements IDataFeedService {
         BacktesterDataFeedKey mapKey = new BacktesterDataFeedKey(persistedSymbol.getSymbolID(), threadID);
 
         List<HistoricalDataset> datasets = datafeeds.get(mapKey);
-        if(datasets == null || datasets.isEmpty()) {
+        if (datasets == null || datasets.isEmpty()) {
             LOGGER.error("Symbol {} has no available data feeds.", symbol);
             return List.of();
-        }
-        else if(datasets.size() > 1) {
+        } else if (datasets.size() > 1) {
             // Find the best available dataset which will be used for this and any subsequent reads
             datafeeds.put(mapKey, new ArrayList<>(Collections.singletonList(findBestHistoricalDataset(datasets, intervalDuration, intervalUnit))));
         }
@@ -87,7 +90,7 @@ public class BacktesterDataFeedService implements IDataFeedService {
         HistoricalDataset dataset = datafeeds.get(mapKey).getFirst();
         Timestamp lastSeenTime = lastSeenOffsets.get(mapKey);
 
-        if(dataset == null) {
+        if (dataset == null) {
             return List.of();
         }
 
@@ -97,15 +100,15 @@ public class BacktesterDataFeedService implements IDataFeedService {
 
         List<Candlestick> dataFeedToReturn = new ArrayList<>();
 
-        if(expectedDuration != null && expectedUnit != null && (expectedDuration != intervalDuration || expectedUnit != intervalUnit)) {
+        if (expectedDuration != null && expectedUnit != null && (expectedDuration != intervalDuration || expectedUnit != intervalUnit)) {
             throw new IllegalStateException("Can not modify the interval duration and units after the first read.");
-        } else if(prebuiltCandlesticks != null && prebuiltCandlesticks.size() > 1) {
+        } else if (prebuiltCandlesticks != null && prebuiltCandlesticks.size() > 1) {
             // If we already have built candlesticks for this, then just grab the first one
             return new ArrayList<>(List.of(prebuiltCandlesticks.removeFirst()));
-        } else if(prebuiltCandlesticks != null && prebuiltCandlesticks.size() == 1) {
+        } else if (prebuiltCandlesticks != null && prebuiltCandlesticks.size() == 1) {
             // If we will be removing the last prebuild candlestick do not return it right away, we need to build some more.
             dataFeedToReturn.add(prebuiltCandlesticks.removeFirst());
-        } else if(prebuiltCandlesticks == null) {
+        } else if (prebuiltCandlesticks == null) {
             // If we have not read from the datafeed yet then initialize values in the maps
             prebuiltCandlesticks = new ArrayList<>();
             candlesticksPendingReturn.put(mapKey, prebuiltCandlesticks);
@@ -115,19 +118,19 @@ public class BacktesterDataFeedService implements IDataFeedService {
 
         // Align the first Candlestick
         Candlestick firstCandlestick = null;
-        while(true) {
+        while (true) {
             List<Candlestick> candlesticks = candlestickDAO.getPaginatedCandlesticksFromHistoricalDataset(dataset, lastSeenTime, 1);
-            if(candlesticks.isEmpty()) {
+            if (candlesticks.isEmpty()) {
                 break;
             }
             firstCandlestick = candlesticks.getFirst();
             lastSeenTime = firstCandlestick.getTimestamp();
-            if(firstCandlestick.getTimestamp().toInstant().getEpochSecond() % ((long) intervalDuration * intervalUnit.secondsPer) == 0) {
+            if (firstCandlestick.getTimestamp().toInstant().getEpochSecond() % ((long) intervalDuration * intervalUnit.secondsPer) == 0) {
                 break;
             }
         }
 
-        if(firstCandlestick == null) {
+        if (firstCandlestick == null) {
             lastSeenOffsets.put(mapKey, lastSeenTime);
             return dataFeedToReturn;
         }
@@ -137,7 +140,7 @@ public class BacktesterDataFeedService implements IDataFeedService {
 
         // Determine how many Candlesticks we will pull in this run.
         int numCandlestickToQuery = MAX_CANDLESTICKS;
-        while(numCandlestickToQuery % numCandlesToCondense != 0 && numCandlestickToQuery > 0) {
+        while (numCandlestickToQuery % numCandlesToCondense != 0 && numCandlestickToQuery > 0) {
             numCandlestickToQuery--;
         }
 
@@ -145,32 +148,40 @@ public class BacktesterDataFeedService implements IDataFeedService {
         candlesticksToCondense.addFirst(firstCandlestick);
         lastSeenTime = candlesticksToCondense.getLast().getTimestamp();
 
-        // Build Candlesticks of desired size
-        while(candlesticksToCondense.size() >= numCandlesToCondense) {
-            List<Candlestick> singleCandlestickList = new ArrayList<>();
-            for(int i = 0; i < numCandlesToCondense; i++) {
-                singleCandlestickList.add(candlesticksToCondense.removeFirst());
+        Object datafeedLock = datafeedLocks.computeIfAbsent(mapKey, _ -> new Object());
+
+        synchronized (datafeedLock) {
+
+            // Build Candlesticks of desired size
+            while (candlesticksToCondense.size() >= numCandlesToCondense) {
+                List<Candlestick> singleCandlestickList = new ArrayList<>();
+                for (int i = 0; i < numCandlesToCondense; i++) {
+                    singleCandlestickList.add(candlesticksToCondense.removeFirst());
+                }
+
+                Candlestick condensed = condenseCandlesticks(singleCandlestickList);
+
+                prebuiltCandlesticks.add(condensed);
+
+                backtesterSharedService.updateDataFeed(mapKey, condensed, Timestamp.from(condensed.getTimestamp().toInstant()
+                        .plus((long) intervalDuration * intervalUnit.secondsPer, ChronoUnit.SECONDS)));
+
             }
-            prebuiltCandlesticks.add(condenseCandlesticks(singleCandlestickList));
-        }
 
-        if(dataFeedToReturn.isEmpty() && !prebuiltCandlesticks.isEmpty()) {
-            dataFeedToReturn.add(prebuiltCandlesticks.removeFirst());
-        }
+            if (dataFeedToReturn.isEmpty() && !prebuiltCandlesticks.isEmpty()) {
+                dataFeedToReturn.add(prebuiltCandlesticks.removeFirst());
+            }
 
-        lastSeenOffsets.put(mapKey, lastSeenTime);
-        if(!dataFeedToReturn.isEmpty()) {
-            backtesterSharedService.updateDataFeed(mapKey, dataFeedToReturn.getLast(), Timestamp.from(dataFeedToReturn.getLast().getTimestamp().toInstant()
-                    .plus((long) intervalDuration * intervalUnit.secondsPer, ChronoUnit.SECONDS)));
-        }
+            lastSeenOffsets.put(mapKey, lastSeenTime);
 
-        return dataFeedToReturn;
+            return dataFeedToReturn;
+        }
     }
 
     @Override
     public void unsubscribeFromDataFeed(long threadID, Symbol symbol) {
         Symbol persistedSymbol = symbolDAO.getPersistedVersionOfSymbol(symbol);
-        if(persistedSymbol == null) {
+        if (persistedSymbol == null) {
             LOGGER.error("Symbol {} is not persisted, therefore can not unsubscribe.", symbol);
             return;
         }

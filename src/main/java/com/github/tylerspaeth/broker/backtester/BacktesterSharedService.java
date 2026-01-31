@@ -1,6 +1,7 @@
 package com.github.tylerspaeth.broker.backtester;
 
 import com.github.tylerspaeth.common.data.dao.OrderDAO;
+import com.github.tylerspaeth.common.data.dao.TradeDAO;
 import com.github.tylerspaeth.common.data.entity.Candlestick;
 import com.github.tylerspaeth.common.data.entity.Order;
 import com.github.tylerspaeth.common.data.entity.Trade;
@@ -26,13 +27,15 @@ public class BacktesterSharedService {
     private static final Logger LOGGER = LoggerFactory.getLogger(BacktesterSharedService.class);
 
     private final OrderDAO orderDAO;
+    private final TradeDAO tradeDAO;
 
     final Map<BacktesterDataFeedKey, Candlestick> lastSeenCandlesticks = new ConcurrentHashMap<>();
     final Map<BacktesterDataFeedKey, Timestamp> currentTimestamps = new ConcurrentHashMap<>();
     final Map<BacktesterDataFeedKey, Map<Integer, Order>> pendingOrders = new ConcurrentHashMap<>();
 
-    public BacktesterSharedService(OrderDAO orderDAO) {
+    public BacktesterSharedService(OrderDAO orderDAO, TradeDAO tradeDAO) {
         this.orderDAO = orderDAO;
+        this.tradeDAO = tradeDAO;
     }
 
     /**
@@ -101,8 +104,8 @@ public class BacktesterSharedService {
 
             for(Iterator<Order> it = pendingOrdersForMapKey.values().iterator(); it.hasNext();) {
                 Order order = it.next();
-                order = tryToFillOrder(mapKey, order, false);
-                if(order != null && order.getOCAGroup() != null && !order.getOCAGroup().isBlank()) {
+                boolean orderFilled = tryToFillOrder(mapKey, order, false);
+                if(orderFilled && order.getOCAGroup() != null && !order.getOCAGroup().isBlank()) {
                     ocaGroupTriggered(mapKey, order.getOCAGroup());
                 }
             }
@@ -125,25 +128,24 @@ public class BacktesterSharedService {
      * Places an order off of the data feed corresponding to the provided key.
      * @param mapKey BacktesterDataFeedKey for the data feed.
      * @param order Order to be placed.
-     * @return The Order with updates applied
      */
-    public Order addOrder(BacktesterDataFeedKey mapKey, Order order) {
+    public void addOrder(BacktesterDataFeedKey mapKey, Order order) {
 
         if(mapKey == null) {
             LOGGER.error("Can not add order when key is null.");
-            return order;
+            return;
         }
 
         if(order == null) {
             LOGGER.error("Can not add order when it is null");
-            return order;
+            return;
         }
 
         try {
             order.validatePlaceable();
         } catch(IllegalStateException e) {
             LOGGER.error("Unable to place order as it is invalid.", e);
-            return order;
+            return;
         }
 
 
@@ -152,12 +154,12 @@ public class BacktesterSharedService {
 
         if(currentTimestamp == null || lastSeenCandlestick == null) {
             LOGGER.error("Unable to add order, mapKey does not exist.");
-            return order;
+            return;
         }
 
         order.setStatus(OrderStatusEnum.SUBMITTED);
         order.setTimePlaced(currentTimestamps.get(mapKey));
-        order = orderDAO.update(order);
+        orderDAO.update(order);
 
         // If the trail is supposed to act like a market order then set its price to the current price so it fills right away
         if(order.getOrderType() == OrderTypeEnum.TRL_LMT) {
@@ -182,34 +184,30 @@ public class BacktesterSharedService {
         Map<Integer, Order> pendingOrdersForMapKey = pendingOrders.computeIfAbsent(mapKey, _ -> new ConcurrentHashMap<>());
         pendingOrdersForMapKey.put(order.getOrderID(), order);
 
-        Order finalOrder = order;
-
-        Order result  = tryToFillOrder(mapKey, order, true);
-        if(result != null) {
-            order = result;
+        boolean orderFilled = tryToFillOrder(mapKey, order, true);
+        if(orderFilled) {
             if(order.getOCAGroup() != null && !order.getOCAGroup().isBlank()) {
                 ocaGroupTriggered(mapKey, order.getOCAGroup());
             }
             pendingOrdersForMapKey.values().stream()
-                    .filter(childOrder -> childOrder.getParentOrder() != null && childOrder.getParentOrder().equals(finalOrder))
+                    .filter(childOrder -> childOrder.getParentOrder() != null && childOrder.getParentOrder().equals(order))
                     .forEach(childOrder -> tryToFillOrder(mapKey, childOrder, true));
         }
 
         // Once a transmit flag is seen all other pending orders should have their flags updated
         if(order.isTransmit()) {
             pendingOrdersForMapKey.values().forEach(pendingOrder -> {
-                if(!pendingOrder.isTransmit() && !finalOrder.isFinalized()) {
+                if(!pendingOrder.isTransmit() && !order.isFinalized()) {
                     pendingOrder.setTransmit(true);
-                    pendingOrder = orderDAO.update(pendingOrder);
+                    orderDAO.update(pendingOrder);
 
-                    pendingOrder = tryToFillOrder(mapKey, pendingOrder, true);
-                    if(pendingOrder != null) {
+                    boolean pendingOrderFilled = tryToFillOrder(mapKey, pendingOrder, true);
+                    if(pendingOrderFilled) {
                         if(pendingOrder.getOCAGroup() != null && !pendingOrder.getOCAGroup().isBlank()) {
                             ocaGroupTriggered(mapKey, pendingOrder.getOCAGroup());
                         }
-                        Order finalPendingOrder = pendingOrder;
                         pendingOrdersForMapKey.values().stream()
-                                .filter(childOrder -> childOrder.getParentOrder() != null && childOrder.getParentOrder().equals(finalPendingOrder))
+                                .filter(childOrder -> childOrder.getParentOrder() != null && childOrder.getParentOrder().equals(pendingOrder))
                                 .forEach(childOrder -> tryToFillOrder(mapKey, childOrder, true));
                     }
 
@@ -218,8 +216,6 @@ public class BacktesterSharedService {
         }
 
         pendingOrdersForMapKey.entrySet().removeIf(e -> e.getValue().isFinalized());
-
-        return order;
     }
 
     /**
@@ -277,23 +273,27 @@ public class BacktesterSharedService {
      * @param mapKey BacktesterDataFeedKey
      * @param order Order to try filling.
      * @param newOrder If this is a new order that was just added, rather than trying to fill from a data feed update
-     * @return The updated order if successful, null otherwise
      */
-    private Order tryToFillOrder(BacktesterDataFeedKey mapKey, Order order, boolean newOrder) {
+    private boolean tryToFillOrder(BacktesterDataFeedKey mapKey, Order order, boolean newOrder) {
 
         if(mapKey == null) {
             LOGGER.error("Can not try to fill order when key is null.");
-            return null;
+            return false;
         }
 
         // Orders that can only be filled if they have transmit set to true
         if(!order.isTransmit()) {
-            return null;
+            return false;
         }
 
         // Orders can not be filled until the parent order is filled
         if(order.getParentOrder() != null && order.getParentOrder().getStatus() != OrderStatusEnum.FILLED) {
-            return null;
+            return false;
+        }
+
+        // Do not fill an order that has already been filled
+        if (order.isFinalized() || order.getStatus() == OrderStatusEnum.FILLED) {
+            return false;
         }
 
         Candlestick lastSeenCandlestick = lastSeenCandlesticks.get(mapKey);
@@ -308,19 +308,24 @@ public class BacktesterSharedService {
         // If this is a new order then the only price with will be considered for filling is close price
         switch (order.getOrderType()) {
             case MKT:
-                return fillOrder(order, lastSeenCandlestick.getClose(), currentTimestamp);
+                fillOrder(order, lastSeenCandlestick.getClose(), currentTimestamp);
+                return true;
             case LMT:
                 if(order.getSide() == SideEnum.BUY && candlestickLow <= order.getPrice()) {
-                    return fillOrder(order, limitFillPriceLow, currentTimestamp);
+                    fillOrder(order, limitFillPriceLow, currentTimestamp);
+                    return true;
                 } else if(order.getSide() == SideEnum.SELL && candlestickHigh >= order.getPrice()) {
-                    return fillOrder(order, limitFillPriceHigh, currentTimestamp);
+                    fillOrder(order, limitFillPriceHigh, currentTimestamp);
+                    return true;
                 }
                 break;
             case STP, STP_LMT:
                 if(order.getSide() == SideEnum.BUY && candlestickHigh >= order.getPrice()) {
-                    return fillOrder(order, limitFillPriceHigh, currentTimestamp);
+                    fillOrder(order, limitFillPriceHigh, currentTimestamp);
+                    return true;
                 } else if(order.getSide() == SideEnum.SELL && candlestickLow <= order.getPrice()) {
-                    return fillOrder(order, limitFillPriceLow, currentTimestamp);
+                    fillOrder(order, limitFillPriceLow, currentTimestamp);
+                    return true;
                 }
                 break;
             case TRL_LMT:
@@ -328,11 +333,13 @@ public class BacktesterSharedService {
                 if(order.getSide() == SideEnum.BUY && candlestickHigh >= order.getPrice()) {
                     float fillPrice = order.getPrice();
                     order.setPrice(null);
-                    return fillOrder(order, fillPrice, currentTimestamp);
+                    fillOrder(order, fillPrice, currentTimestamp);
+                    return true;
                 } else if(order.getSide() == SideEnum.SELL && candlestickLow <= order.getPrice()) {
                     float fillPrice = order.getPrice();
                     order.setPrice(null);
-                    return fillOrder(order, fillPrice, currentTimestamp);
+                    fillOrder(order, fillPrice, currentTimestamp);
+                    return true;
                 }
                 break;
             case MOC:
@@ -341,7 +348,7 @@ public class BacktesterSharedService {
                 throw new RuntimeException("LOC orders are not currently supported for backtesting.");
         }
 
-        return null;
+        return false;
     }
 
     /**
@@ -349,9 +356,8 @@ public class BacktesterSharedService {
      * @param order Order that needs to be filled.
      * @param price Price to fill the order at.
      * @param timestamp Time in which the order is filled.
-     * @return The filled order.
      */
-    private Order fillOrder(Order order, float price, Timestamp timestamp) {
+    private void fillOrder(Order order, float price, Timestamp timestamp) {
         Trade trade = new Trade();
         trade.setSide(order.getSide());
         trade.setFillPrice(price);
@@ -363,7 +369,8 @@ public class BacktesterSharedService {
         order.setStatus(OrderStatusEnum.FILLED);
         order.setTimeClosed(timestamp);
         order.setFinalized(true);
-        return orderDAO.update(order);
+        orderDAO.update(order);
+        tradeDAO.insert(trade);
     }
 
     /**

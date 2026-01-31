@@ -3,6 +3,7 @@ package com.github.tylerspaeth.broker.backtester;
 import com.github.tylerspaeth.common.data.dao.CandlestickDAO;
 import com.github.tylerspaeth.common.data.dao.OrderDAO;
 import com.github.tylerspaeth.common.data.dao.SymbolDAO;
+import com.github.tylerspaeth.common.data.dao.TradeDAO;
 import com.github.tylerspaeth.common.data.entity.Candlestick;
 import com.github.tylerspaeth.common.data.entity.Exchange;
 import com.github.tylerspaeth.common.data.entity.HistoricalDataset;
@@ -22,6 +23,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.mockito.Mockito.when;
 
@@ -34,11 +36,13 @@ public class BacktesterDataFeedServiceTest {
     private CandlestickDAO candlestickDAO;
     @Mock
     private OrderDAO orderDAO;
+    @Mock
+    private TradeDAO tradeDAO;
     private BacktesterDataFeedService backtesterDataFeedService;
 
     @BeforeEach
     public void setup() {
-        backtesterDataFeedService = new BacktesterDataFeedService(new BacktesterSharedService(orderDAO), symbolDAO, candlestickDAO);
+        backtesterDataFeedService = new BacktesterDataFeedService(new BacktesterSharedService(orderDAO, tradeDAO), symbolDAO, candlestickDAO, new ConcurrentHashMap<>());
     }
 
     private void mockPaginatedCandlesticks() {

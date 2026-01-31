@@ -70,7 +70,7 @@ public class Order {
     @JoinColumn(name = "UserID", referencedColumnName = "UserID", nullable = false)
     private User user;
 
-    @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @OneToMany(mappedBy = "order", fetch = FetchType.LAZY)
     private List<Trade> trades;
 
     @Column(name = "OCAGroup")
@@ -147,8 +147,20 @@ public class Order {
         }
     }
 
+    public Integer getVersion() {
+        return version;
+    }
+
+    public void setVersion(Integer version) {
+        this.version = version;
+    }
+
     public Integer getOrderID() {
         return orderID;
+    }
+
+    public void setOrderID(Integer orderID) {
+        this.orderID = orderID;
     }
 
     public Symbol getSymbol() {

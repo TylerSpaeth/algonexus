@@ -1,22 +1,20 @@
 package com.github.tylerspaeth;
 
+import com.github.tylerspaeth.broker.backtester.BacktesterDataFeedKey;
 import com.github.tylerspaeth.broker.backtester.BacktesterDataFeedService;
 import com.github.tylerspaeth.broker.backtester.BacktesterOrderService;
 import com.github.tylerspaeth.broker.backtester.BacktesterSharedService;
 import com.github.tylerspaeth.broker.ib.service.IBAccountService;
 import com.github.tylerspaeth.broker.ib.service.IBDataFeedService;
 import com.github.tylerspaeth.broker.ib.service.IBOrderService;
-import com.github.tylerspaeth.common.data.dao.CandlestickDAO;
-import com.github.tylerspaeth.common.data.dao.OrderDAO;
-import com.github.tylerspaeth.common.data.dao.StrategyDAO;
-import com.github.tylerspaeth.common.data.dao.SymbolDAO;
+import com.github.tylerspaeth.common.data.dao.*;
 import com.github.tylerspaeth.engine.EngineCoordinator;
 import com.github.tylerspaeth.strategy.StrategyRegistry;
 import com.github.tylerspaeth.ui.TUI;
 import com.github.tylerspaeth.ui.UIContext;
 import com.github.tylerspaeth.ui.view.signin.SignInMenu;
 
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 
 /**
  * Utility class for initialization/wiring logic that should be kept out of the main class.
@@ -39,13 +37,15 @@ public class AppInitializer {
         OrderDAO orderDAO = new OrderDAO();
         SymbolDAO symbolDAO = new SymbolDAO();
         CandlestickDAO candlestickDAO = new CandlestickDAO();
-        BacktesterSharedService backtesterSharedService = new BacktesterSharedService(orderDAO);
-        return new EngineCoordinator(Executors.newCachedThreadPool(),
+        TradeDAO tradeDAO = new TradeDAO();
+        BacktesterSharedService backtesterSharedService = new BacktesterSharedService(orderDAO, tradeDAO);
+        ConcurrentHashMap<BacktesterDataFeedKey, Object> datafeedLocks = new ConcurrentHashMap<>();
+        return new EngineCoordinator(createEngineExecutorService(),
                 new IBAccountService(),
                 new IBDataFeedService(),
                 new IBOrderService(orderDAO),
-                new BacktesterDataFeedService(backtesterSharedService, symbolDAO, candlestickDAO),
-                new BacktesterOrderService(backtesterSharedService, orderDAO, symbolDAO));
+                new BacktesterDataFeedService(backtesterSharedService, symbolDAO, candlestickDAO, datafeedLocks),
+                new BacktesterOrderService(backtesterSharedService, orderDAO, symbolDAO, datafeedLocks));
     }
 
     /**
@@ -70,6 +70,19 @@ public class AppInitializer {
         }, "UI-Thread");
         uiThread.start();
         return uiThread;
+    }
+
+    /**
+     * Creates the ExecutorService that the engine will use for request processing.
+     * @return ExecutorService
+     */
+    private static ExecutorService createEngineExecutorService() {
+        return new ThreadPoolExecutor(10,
+                10,
+                0L,
+                TimeUnit.MILLISECONDS,
+                new LinkedBlockingQueue<>(1000),
+                new ThreadPoolExecutor.CallerRunsPolicy());
     }
 
 

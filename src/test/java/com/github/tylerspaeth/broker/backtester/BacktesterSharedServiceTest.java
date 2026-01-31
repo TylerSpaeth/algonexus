@@ -1,6 +1,7 @@
 package com.github.tylerspaeth.broker.backtester;
 
 import com.github.tylerspaeth.common.data.dao.OrderDAO;
+import com.github.tylerspaeth.common.data.dao.TradeDAO;
 import com.github.tylerspaeth.common.data.entity.Candlestick;
 import com.github.tylerspaeth.common.data.entity.Order;
 import com.github.tylerspaeth.common.data.entity.Symbol;
@@ -25,12 +26,14 @@ public class BacktesterSharedServiceTest {
 
     @Mock
     private OrderDAO orderDAO;
+    @Mock
+    private TradeDAO tradeDAO;
 
     private BacktesterSharedService backtesterSharedService;
 
     @BeforeEach
     public void setup() {
-        backtesterSharedService = new BacktesterSharedService(orderDAO);
+        backtesterSharedService = new BacktesterSharedService(orderDAO, tradeDAO);
     }
 
 

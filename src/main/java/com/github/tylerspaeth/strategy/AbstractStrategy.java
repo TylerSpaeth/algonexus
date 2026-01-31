@@ -102,6 +102,7 @@ public abstract class AbstractStrategy {
                         return backtestResultDAO.update(result);
                     });
                 }
+                LOGGER.info("{} finished running with {} parameter set.", strategyParameterSet.getStrategy(), strategyParameterSet);
             }
         }, strategyParameterSet.toString() + "-Thread");
         thread.start();
@@ -153,8 +154,9 @@ public abstract class AbstractStrategy {
         }
         T result = engineCoordinator.submitRequest(engineRequest);
         if(result instanceof Order && backtestResult != null) {
-            ((Order)result).setBacktestResult(backtestResult.get());
-            result = (T) orderDAO.update(((Order)result));
+            Order resultAsOrder = (Order) result;
+            resultAsOrder.setBacktestResult(backtestResult.get());
+            orderDAO.update(resultAsOrder);
         }
         return result;
     }
