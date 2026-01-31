@@ -38,7 +38,7 @@ public class BacktestMenu extends AbstractMenuView {
                 HorizontalMultiView horizontalMultiView = new HorizontalMultiView(this);
                 StrategyMenu strategyMenu = new StrategyMenu(horizontalMultiView, strategy);
                 ParameterSetOptionsMenu parameterSetOptionsMenu = new ParameterSetOptionsMenu(horizontalMultiView);
-                horizontalMultiView.setViews(List.of(strategyMenu, parameterSetOptionsMenu));
+                horizontalMultiView.setViews(List.of(strategyMenu, parameterSetOptionsMenu), List.of(false, true));
                 return horizontalMultiView;
             });
         }
