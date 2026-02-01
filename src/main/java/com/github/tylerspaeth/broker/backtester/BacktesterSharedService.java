@@ -105,6 +105,9 @@ public class BacktesterSharedService {
 
             for(Iterator<Order> it = pendingOrdersForMapKey.values().iterator(); it.hasNext();) {
                 Order order = it.next();
+                if(order.isFinalized()) {
+                    continue;
+                }
                 boolean orderFilled = tryToFillOrder(mapKey, order, false);
                 if(orderFilled && order.getOCAGroup() != null && !order.getOCAGroup().isBlank()) {
                     ocaGroupTriggered(mapKey, order.getOCAGroup());
@@ -257,7 +260,7 @@ public class BacktesterSharedService {
 
         // If a parent is cancelled, cancel the children
         pendingOrdersForMapKey.values().stream()
-                .filter(order1 -> order1.getParentOrder() == order)
+                .filter(order1 -> order1.getParentOrder().equals(order))
                 .forEach(order1 -> {
                     order1.setStatus(OrderStatusEnum.CANCELLED);
                     order1.setTimeClosed(currentTimestamps.get(mapKey));
