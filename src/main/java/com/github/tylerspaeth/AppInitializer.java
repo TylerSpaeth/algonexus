@@ -38,7 +38,8 @@ public class AppInitializer {
         SymbolDAO symbolDAO = new SymbolDAO();
         CandlestickDAO candlestickDAO = new CandlestickDAO();
         TradeDAO tradeDAO = new TradeDAO();
-        BacktesterSharedService backtesterSharedService = new BacktesterSharedService(orderDAO, tradeDAO);
+        CommissionDAO commissionDAO = new CommissionDAO();
+        BacktesterSharedService backtesterSharedService = new BacktesterSharedService(orderDAO, tradeDAO, commissionDAO);
         ConcurrentHashMap<BacktesterDataFeedKey, Object> datafeedLocks = new ConcurrentHashMap<>();
         return new EngineCoordinator(createEngineExecutorService(),
                 new IBAccountService(),

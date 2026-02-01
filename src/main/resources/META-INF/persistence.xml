@@ -17,6 +17,7 @@
         <class>com.github.tylerspaeth.common.data.entity.User</class>
         <class>com.github.tylerspaeth.common.data.entity.Trade</class>
         <class>com.github.tylerspaeth.common.data.entity.BacktestResult</class>
+        <class>com.github.tylerspaeth.common.data.entity.Commission</class>
 
         <properties>
             <property name="jakarta.persistence.jdbc.driver" value="com.mysql.cj.jdbc.Driver"/>

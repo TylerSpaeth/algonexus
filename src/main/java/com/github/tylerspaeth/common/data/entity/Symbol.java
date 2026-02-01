@@ -41,6 +41,9 @@ public class Symbol {
     @OneToMany(mappedBy = "symbol", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private List<HistoricalDataset> historicalDatasets;
 
+    @OneToOne(mappedBy = "symbol", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    private Commission commission;
+
     @Override
     public String toString() {
         return ticker;
@@ -113,4 +116,11 @@ public class Symbol {
         return historicalDatasets;
     }
 
+    public Commission getCommission() {
+        return commission;
+    }
+
+    public void setCommission(Commission commission) {
+        this.commission = commission;
+    }
 }

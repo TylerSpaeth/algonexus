@@ -155,6 +155,24 @@ COLLATE = utf8mb4_0900_ai_ci;
 
 
 -- -----------------------------------------------------
+-- Table `algonexus`.`commissions`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `algonexus`.`commissions` (
+  `CommissionID` INT NOT NULL AUTO_INCREMENT,
+  `SymbolID` INT NULL DEFAULT NULL,
+  `AssetType` VARCHAR(20) NOT NULL,
+  `CommissionAmount` FLOAT NOT NULL,
+  PRIMARY KEY (`FeeID`),
+  INDEX `fk_commissions_symbols_SymbolID_idx` (`SymbolID` ASC) VISIBLE,
+  CONSTRAINT `fk_commissions_symbols_SymbolID`
+    FOREIGN KEY (`SymbolID`)
+    REFERENCES `algonexus`.`symbols` (`SymbolID`))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_0900_ai_ci;
+
+
+-- -----------------------------------------------------
 -- Table `algonexus`.`users`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `algonexus`.`users` (

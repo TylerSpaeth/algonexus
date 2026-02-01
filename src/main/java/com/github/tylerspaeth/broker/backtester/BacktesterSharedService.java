@@ -1,10 +1,9 @@
 package com.github.tylerspaeth.broker.backtester;
 
+import com.github.tylerspaeth.common.data.dao.CommissionDAO;
 import com.github.tylerspaeth.common.data.dao.OrderDAO;
 import com.github.tylerspaeth.common.data.dao.TradeDAO;
-import com.github.tylerspaeth.common.data.entity.Candlestick;
-import com.github.tylerspaeth.common.data.entity.Order;
-import com.github.tylerspaeth.common.data.entity.Trade;
+import com.github.tylerspaeth.common.data.entity.*;
 import com.github.tylerspaeth.common.enums.OrderStatusEnum;
 import com.github.tylerspaeth.common.enums.OrderTypeEnum;
 import com.github.tylerspaeth.common.enums.SideEnum;
@@ -28,14 +27,16 @@ public class BacktesterSharedService {
 
     private final OrderDAO orderDAO;
     private final TradeDAO tradeDAO;
+    private final CommissionDAO commissionDAO;
 
     final Map<BacktesterDataFeedKey, Candlestick> lastSeenCandlesticks = new ConcurrentHashMap<>();
     final Map<BacktesterDataFeedKey, Timestamp> currentTimestamps = new ConcurrentHashMap<>();
     final Map<BacktesterDataFeedKey, Map<Integer, Order>> pendingOrders = new ConcurrentHashMap<>();
 
-    public BacktesterSharedService(OrderDAO orderDAO, TradeDAO tradeDAO) {
+    public BacktesterSharedService(OrderDAO orderDAO, TradeDAO tradeDAO, CommissionDAO commissionDAO) {
         this.orderDAO = orderDAO;
         this.tradeDAO = tradeDAO;
+        this.commissionDAO = commissionDAO;
     }
 
     /**
@@ -363,7 +364,22 @@ public class BacktesterSharedService {
         trade.setFillPrice(price);
         trade.setFillQuantity(order.getQuantity());
         trade.setTimestamp(timestamp);
-        trade.setFees(0f);
+
+        try {
+            Symbol symbol = order.getSymbol();
+            if(symbol.getCommission() != null) {
+                // Using symbol specific commissions
+                trade.setFees(symbol.getCommission().getCommissionAmount());
+            } else {
+                // Using default commissions for the asset type
+                Commission commission = commissionDAO.findDefaultCommissionForAssetType(symbol.getAssetType());
+                trade.setFees(commission.getCommissionAmount());
+            }
+        } catch (NullPointerException e) {
+            LOGGER.warn("Failed to get commission and fees when filling order. Defaulting to 0.", e);
+            trade.setFees(0f);
+        }
+
         trade.setOrder(order);
         order.getTrades().add(trade);
         order.setStatus(OrderStatusEnum.FILLED);

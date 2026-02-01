@@ -1,9 +1,6 @@
 package com.github.tylerspaeth.broker.backtester;
 
-import com.github.tylerspaeth.common.data.dao.CandlestickDAO;
-import com.github.tylerspaeth.common.data.dao.OrderDAO;
-import com.github.tylerspaeth.common.data.dao.SymbolDAO;
-import com.github.tylerspaeth.common.data.dao.TradeDAO;
+import com.github.tylerspaeth.common.data.dao.*;
 import com.github.tylerspaeth.common.data.entity.Candlestick;
 import com.github.tylerspaeth.common.data.entity.Exchange;
 import com.github.tylerspaeth.common.data.entity.HistoricalDataset;
@@ -38,11 +35,13 @@ public class BacktesterDataFeedServiceTest {
     private OrderDAO orderDAO;
     @Mock
     private TradeDAO tradeDAO;
+    @Mock
+    private CommissionDAO commissionDAO;
     private BacktesterDataFeedService backtesterDataFeedService;
 
     @BeforeEach
     public void setup() {
-        backtesterDataFeedService = new BacktesterDataFeedService(new BacktesterSharedService(orderDAO, tradeDAO), symbolDAO, candlestickDAO, new ConcurrentHashMap<>());
+        backtesterDataFeedService = new BacktesterDataFeedService(new BacktesterSharedService(orderDAO, tradeDAO, commissionDAO), symbolDAO, candlestickDAO, new ConcurrentHashMap<>());
     }
 
     private void mockPaginatedCandlesticks() {
