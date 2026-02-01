@@ -33,7 +33,7 @@ public class BacktesterDataFeedService implements IDataFeedService {
     private final Map<BacktesterDataFeedKey, Integer> datafeedIntervalMap = new ConcurrentHashMap<>(); // Map of the interval duration being read by each data feed
     private final Map<BacktesterDataFeedKey, IntervalUnitEnum> dataFeedIntervalUnitMap = new ConcurrentHashMap<>(); // Map of the interval unit being read by each data feed
     private final Map<BacktesterDataFeedKey, List<Candlestick>> candlesticksPendingReturn = new ConcurrentHashMap<>(); // Map of candlesticks that have already been built for each data feed
-    private final Map<BacktesterDataFeedKey, Object> datafeedLocks;
+    private final Map<BacktesterDataFeedKey, Object> datafeedLocks; // Locks for accessing the shared service
 
     private final BacktesterSharedService backtesterSharedService;
 

@@ -73,6 +73,13 @@ public class BacktestController {
             totalFees += trade.getFees();
         }
 
+        // Apply the tick value if appropriate
+        try {
+            Symbol symbol = trades.getFirst().getOrder().getSymbol();
+            realizedPnL = realizedPnL / symbol.getTickSize() * symbol.getTickValue();
+            LOGGER.info("PnL calculated using tick size and value.");
+        } catch (NullPointerException _) {}
+
         return realizedPnL - totalFees;
     }
 

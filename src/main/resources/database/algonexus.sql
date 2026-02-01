@@ -97,6 +97,8 @@ CREATE TABLE IF NOT EXISTS `algonexus`.`symbols` (
   `ExchangeID` INT NOT NULL,
   `AssetType` VARCHAR(20) NOT NULL,
   `Currency` VARCHAR(3) NULL DEFAULT NULL,
+  `TickSize` FLOAT NULL DEFAULT NULL,
+  `TickValue` FLOAT NULL DEFAULT NULL,
   PRIMARY KEY (`SymbolID`),
   INDEX `ExchangeID_idx` (`ExchangeID` ASC) VISIBLE,
   CONSTRAINT `fk_symbols_exchanges_ExchangeID`

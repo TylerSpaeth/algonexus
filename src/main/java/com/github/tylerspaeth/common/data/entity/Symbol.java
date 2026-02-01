@@ -32,6 +32,12 @@ public class Symbol {
     @Column(name = "Currency", length = 3)
     private String currency;
 
+    @Column(name = "TickSize")
+    private Float tickSize;
+
+    @Column(name = "TickValue")
+    private Float tickValue;
+
     @OneToMany(mappedBy = "symbol", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private List<HistoricalDataset> historicalDatasets;
 
@@ -82,6 +88,22 @@ public class Symbol {
 
     public void setCurrency(String currency) {
         this.currency = currency;
+    }
+
+    public Float getTickSize() {
+        return tickSize;
+    }
+
+    public void setTickSize(Float tickSize) {
+        this.tickSize = tickSize;
+    }
+
+    public Float getTickValue() {
+        return tickValue;
+    }
+
+    public void setTickValue(Float tickValue) {
+        this.tickValue = tickValue;
     }
 
     public List<HistoricalDataset> getHistoricalDatasets() {

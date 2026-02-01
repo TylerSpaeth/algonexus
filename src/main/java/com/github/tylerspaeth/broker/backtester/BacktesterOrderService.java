@@ -24,6 +24,7 @@ public class BacktesterOrderService implements IOrderService {
     private final OrderDAO orderDAO;
     private final SymbolDAO symbolDAO;
 
+    // Locks for accessing the shared service
     private final Map<BacktesterDataFeedKey, Object> datafeedLocks;
 
     public BacktesterOrderService(BacktesterSharedService backtesterSharedService, OrderDAO orderDAO, SymbolDAO symbolDAO, Map<BacktesterDataFeedKey, Object> datafeedLocks) {
