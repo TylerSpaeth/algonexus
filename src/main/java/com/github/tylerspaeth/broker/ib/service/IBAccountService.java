@@ -98,7 +98,10 @@ public class IBAccountService implements IAccountService {
                 }
                 accountID = newAccountID;
             }
-            return IBMapper.mapPositionPnL(wrapper.getPositionPnL(accountID, "", getConIdFromSymbol(position.symbol())));
+
+            Integer conId = position.symbol().getIbConID() == null ? getConIdFromSymbol(position.symbol()) : position.symbol().getIbConID();
+
+            return IBMapper.mapPositionPnL(wrapper.getPositionPnL(accountID, "", conId));
         } catch(Exception e) {
             LOGGER.error("Failed to getPositionPnL", e);
             return null;
