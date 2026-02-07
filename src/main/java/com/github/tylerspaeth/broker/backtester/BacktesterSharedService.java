@@ -367,7 +367,9 @@ public class BacktesterSharedService {
         Trade trade = new Trade();
         trade.setSide(order.getSide());
 
-        setTradeFillPrice(trade, order.getSide(), order.getSymbol(), order.getSymbol().getTickSize(), price, lastSeenCandlestick);
+        // Default tick size to 0.01 if not set
+        float tickSize = order.getSymbol().getTickSize() == null ? 0.01f : order.getSymbol().getTickSize();
+        setTradeFillPrice(trade, order.getSide(), order.getSymbol(), tickSize, price, lastSeenCandlestick);
 
         trade.setFillQuantity(order.getQuantity());
         trade.setTimestamp(timestamp);

@@ -1,6 +1,7 @@
 package com.github.tylerspaeth.broker.ib.service;
 
 import com.github.tylerspaeth.broker.ib.IBDataFeedKey;
+import com.github.tylerspaeth.broker.ib.response.ContractDetails;
 import com.github.tylerspaeth.broker.service.IDataFeedService;
 import com.github.tylerspaeth.broker.ib.IBMapper;
 import com.github.tylerspaeth.broker.ib.IBSyncWrapper;
@@ -8,6 +9,7 @@ import com.github.tylerspaeth.broker.ib.response.RealtimeBar;
 import com.github.tylerspaeth.common.data.entity.Candlestick;
 import com.github.tylerspaeth.common.data.entity.Symbol;
 import com.github.tylerspaeth.common.enums.IntervalUnitEnum;
+import com.ib.client.Contract;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +41,22 @@ public class IBDataFeedService implements IDataFeedService {
     @Override
     public void unsubscribeFromDataFeed(long threadID, Symbol symbol) {
         wrapper.unsubscribeFromDataFeed(threadID, getDataFeedKeyFromSymbol(symbol));
+    }
+
+    @Override
+    public List<ContractDetails> getContractDetailsForSymbol(Symbol symbol) {
+        Contract contract = new Contract();
+        contract.symbol(symbol.getTicker());
+        contract.exchange(symbol.getExchange().getName());
+        contract.secType(IBMapper.mapAssetTypeToSecType(symbol.getAssetType()));
+        contract.currency("USD");
+        try {
+            List<com.ib.client.ContractDetails> ibcontractDetails = wrapper.getContractDetails(contract);
+            return ibcontractDetails.stream().map(IBMapper::mapIBContractDetails).collect(Collectors.toList());
+        } catch (Exception e) {
+            LOGGER.error("Error getting contract details for symbol: {}", symbol);
+            return List.of();
+        }
     }
 
     /**

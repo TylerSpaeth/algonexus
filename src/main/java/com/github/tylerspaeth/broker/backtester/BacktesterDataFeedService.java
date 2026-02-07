@@ -1,5 +1,6 @@
 package com.github.tylerspaeth.broker.backtester;
 
+import com.github.tylerspaeth.broker.ib.response.ContractDetails;
 import com.github.tylerspaeth.broker.service.IDataFeedService;
 import com.github.tylerspaeth.common.data.dao.CandlestickDAO;
 import com.github.tylerspaeth.common.data.dao.SymbolDAO;
@@ -193,6 +194,12 @@ public class BacktesterDataFeedService implements IDataFeedService {
         datafeedIntervalMap.remove(mapKey);
         dataFeedIntervalUnitMap.remove(mapKey);
         candlesticksPendingReturn.remove(mapKey);
+    }
+
+    @Override
+    public List<ContractDetails> getContractDetailsForSymbol(Symbol symbol) {
+        LOGGER.error("getContractDetailsForSymbol is not supported by the backtester.");
+        return List.of();
     }
 
     /**

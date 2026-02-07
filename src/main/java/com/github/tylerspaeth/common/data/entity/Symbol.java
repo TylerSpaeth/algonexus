@@ -38,6 +38,9 @@ public class Symbol {
     @Column(name = "TickValue")
     private Float tickValue;
 
+    @Column(name = "IBConID")
+    private Integer ibConID;
+
     @OneToMany(mappedBy = "symbol", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private List<HistoricalDataset> historicalDatasets;
 
@@ -107,6 +110,14 @@ public class Symbol {
 
     public void setTickValue(Float tickValue) {
         this.tickValue = tickValue;
+    }
+
+    public Integer getIbConID() {
+        return ibConID;
+    }
+
+    public void setIbConID(Integer ibConID) {
+        this.ibConID = ibConID;
     }
 
     public List<HistoricalDataset> getHistoricalDatasets() {

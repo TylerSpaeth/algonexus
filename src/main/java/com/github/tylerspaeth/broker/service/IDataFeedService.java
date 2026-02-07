@@ -1,5 +1,6 @@
 package com.github.tylerspaeth.broker.service;
 
+import com.github.tylerspaeth.broker.ib.response.ContractDetails;
 import com.github.tylerspaeth.common.data.entity.Candlestick;
 import com.github.tylerspaeth.common.data.entity.Symbol;
 import com.github.tylerspaeth.common.enums.IntervalUnitEnum;
@@ -34,5 +35,12 @@ public interface IDataFeedService {
      * @param symbol Symbol to get data for.
      */
     void unsubscribeFromDataFeed(long threadID, Symbol symbol);
+
+    /**
+     * Get the Contract details for the provided Symbol. This will only be supported by IB implementations.
+     * @param symbol Symbol to find contract details for.
+     * @return List of ContractDetails
+     */
+    List<ContractDetails> getContractDetailsForSymbol(Symbol symbol);
 
 }

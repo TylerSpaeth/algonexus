@@ -99,7 +99,9 @@ CREATE TABLE IF NOT EXISTS `algonexus`.`symbols` (
   `Currency` VARCHAR(3) NULL DEFAULT NULL,
   `TickSize` FLOAT NULL DEFAULT NULL,
   `TickValue` FLOAT NULL DEFAULT NULL,
+  `IBConID` INT NULL DEFAULT NULL,
   PRIMARY KEY (`SymbolID`),
+  UNIQUE INDEX `IBConID_UNIQUE` (`IBConID` ASC) VISIBLE,
   INDEX `ExchangeID_idx` (`ExchangeID` ASC) VISIBLE,
   CONSTRAINT `fk_symbols_exchanges_ExchangeID`
     FOREIGN KEY (`ExchangeID`)
@@ -162,7 +164,7 @@ CREATE TABLE IF NOT EXISTS `algonexus`.`commissions` (
   `SymbolID` INT NULL DEFAULT NULL,
   `AssetType` VARCHAR(20) NOT NULL,
   `CommissionAmount` FLOAT NOT NULL,
-  PRIMARY KEY (`FeeID`),
+  PRIMARY KEY (`CommissionID`),
   INDEX `fk_commissions_symbols_SymbolID_idx` (`SymbolID` ASC) VISIBLE,
   CONSTRAINT `fk_commissions_symbols_SymbolID`
     FOREIGN KEY (`SymbolID`)

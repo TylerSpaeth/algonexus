@@ -11,7 +11,7 @@ import jakarta.persistence.criteria.*;
 
 import java.util.List;
 
-public class SymbolDAO {
+public class SymbolDAO extends AbstractDAO<Symbol> {
 
     /**
      * Gets all the Symbols that exist.

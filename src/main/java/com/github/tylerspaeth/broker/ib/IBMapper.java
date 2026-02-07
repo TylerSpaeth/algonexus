@@ -1,5 +1,6 @@
 package com.github.tylerspaeth.broker.ib;
 
+import com.github.tylerspaeth.broker.ib.response.ContractDetails;
 import com.github.tylerspaeth.broker.ib.response.RealtimeBar;
 import com.github.tylerspaeth.broker.response.AccountPnL;
 import com.github.tylerspaeth.broker.response.PositionPnL;
@@ -179,8 +180,35 @@ public class IBMapper {
         if(order.getParentOrder() != null) {
             ibOrder.parentId(Integer.parseInt(order.getParentOrder().getExternalOrderID()));
         }
+    }
 
+    /**
+     * Map IB ContractDetails to ContractDetails.
+     * @param ibContractDetails IB ContractDetails
+     * @return ContractDetails
+     */
+    public static ContractDetails mapIBContractDetails(com.ib.client.ContractDetails ibContractDetails) {
+        ContractDetails contractDetails = new ContractDetails();
+        contractDetails.setContract(mapIBContract(ibContractDetails.contract()));
+        return contractDetails;
+    }
 
+    /**
+     * Map IB Contract to Contract
+     * @param ibContract IB Contract
+     * @return Contract
+     */
+    public static com.github.tylerspaeth.broker.ib.response.Contract mapIBContract(Contract ibContract) {
+        com.github.tylerspaeth.broker.ib.response.Contract contract = new com.github.tylerspaeth.broker.ib.response.Contract();
+        contract.setConid(ibContract.conid());
+        contract.setSymbol(ibContract.symbol());
+        contract.setSecType(ibContract.secType().name());
+        contract.setLastTradeDateOrContractMonth(ibContract.lastTradeDateOrContractMonth());
+        contract.setLastTradeDate(ibContract.lastTradeDate());
+        contract.setExchange(ibContract.exchange());
+        contract.setPrimaryExch(ibContract.primaryExch());
+        contract.setCurrency(ibContract.currency());
+        return contract;
     }
 
 }

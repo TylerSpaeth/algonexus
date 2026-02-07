@@ -41,7 +41,7 @@ public class SignInMenu extends AbstractMenuView {
         accountOptions.add("IB Account");
         optionBehaviors.add(() -> {
             try {
-                uiContext.engineCoordinator.submitRequest(new IBConnectionRequest());
+                uiContext.engineCoordinator.submitRequest(new IBConnectionRequest(uiContext.engineCoordinator));
                 String accountID = uiContext.engineCoordinator.submitRequest(new AccountSummaryRequest()).accountID();
                 User user = userDAO.findUserByExternalAccountID(accountID);
                 if(user == null) {
@@ -52,7 +52,8 @@ public class SignInMenu extends AbstractMenuView {
                 uiContext.activeUser = user;
                 uiContext.engineCoordinator.useIB();
             } catch (Exception e) {
-                LOGGER.error("Failed to connect to IB Account.");
+                LOGGER.error("Failed to connect to IB Account, try again later.", e);
+                return null;
             }
             return new MainMenuView(this);
         });

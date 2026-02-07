@@ -3,6 +3,8 @@ package com.github.tylerspaeth.broker.ib;
 import com.github.tylerspaeth.broker.ib.response.*;
 import com.github.tylerspaeth.common.enums.IntervalUnitEnum;
 import com.ib.client.*;
+import com.ib.client.Contract;
+import com.ib.client.ContractDetails;
 import com.ib.controller.AccountSummaryTag;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;

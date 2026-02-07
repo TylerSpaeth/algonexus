@@ -1,7 +1,11 @@
 package com.github.tylerspaeth.broker.ib.response;
 
 import com.github.tylerspaeth.broker.ib.IIBOrderResponseListener;
-import com.ib.client.*;
+import com.ib.client.CommissionAndFeesReport;
+import com.ib.client.Contract;
+import com.ib.client.Execution;
+import com.ib.client.Order;
+import com.ib.client.OrderStatus;
 
 import java.sql.Timestamp;
 import java.time.Instant;
