@@ -6,7 +6,6 @@ import com.github.tylerspaeth.broker.response.AccountPnL;
 import com.github.tylerspaeth.broker.response.PositionPnL;
 import com.github.tylerspaeth.common.data.entity.Candlestick;
 import com.github.tylerspaeth.common.data.entity.Order;
-import com.github.tylerspaeth.common.data.entity.Symbol;
 import com.github.tylerspaeth.common.enums.*;
 import com.ib.client.*;
 
@@ -146,20 +145,11 @@ public class IBMapper {
     }
 
     /**
-     * Maps a standard domain Order into an IB Contract and Order
+     * Maps a standard domain Order into an IB Order
      * @param order Order containing contents to be mapped.
-     * @param contract Contract that will be populated with data from the domain Order
      * @param ibOrder IB Order object that will be populated from the domain Order.
      */
-    public static void mapOrderToIBContractAndOrder(Order order, Contract contract, com.ib.client.Order ibOrder) {
-
-        // Map Order to IB Contract
-        Symbol symbol = order.getSymbol();
-        contract.symbol(symbol.getTicker());
-        String currency = symbol.getCurrency() == null ? "USD" : symbol.getCurrency();
-        contract.currency(currency);
-        contract.secType(mapAssetTypeToSecType(symbol.getAssetType()));
-        contract.exchange(symbol.getExchange().getName());
+    public static void mapOrderToIBOrder(Order order, com.ib.client.Order ibOrder) {
 
         // Map Order to IB Order
         ibOrder.action(mapSideEnumToAction(order.getSide()));

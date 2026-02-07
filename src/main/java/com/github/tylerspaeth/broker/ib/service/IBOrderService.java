@@ -10,10 +10,14 @@ import com.github.tylerspaeth.common.data.dao.OrderDAO;
 import com.github.tylerspaeth.common.data.entity.Order;
 import com.github.tylerspaeth.common.data.entity.User;
 import com.ib.client.Contract;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
 public class IBOrderService implements IOrderService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(IBOrderService.class);
 
     private final IBSyncWrapper wrapper;
 
@@ -26,9 +30,16 @@ public class IBOrderService implements IOrderService {
 
     @Override
     public Order placeOrder(long threadId, Order order) {
+
+        if(order.getSymbol().getIbConID() == null) {
+            LOGGER.error("Unable to place order with a symbol that does not have an IBConID. Symbol: {}", order.getSymbol());
+            return null;
+        }
+
         Contract contract = new Contract();
+        contract.conid(order.getSymbol().getIbConID());
         com.ib.client.Order ibOrder = new com.ib.client.Order();
-        IBMapper.mapOrderToIBContractAndOrder(order, contract, ibOrder);
+        IBMapper.mapOrderToIBOrder(order, ibOrder);
         OrderResponse orderResponse = wrapper.placeOrder(contract, ibOrder);
         orderResponse.setOrderResponseListener(new IBOrderResponseProjector(order, new OrderPersistor()));
         return order;
