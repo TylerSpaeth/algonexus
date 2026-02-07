@@ -1,15 +1,14 @@
 package com.github.tylerspaeth.broker.ib;
 
-import com.github.tylerspaeth.broker.ib.response.AccountPnL;
-import com.github.tylerspaeth.broker.ib.response.AccountSummary;
-import com.github.tylerspaeth.broker.ib.response.OrderResponse;
-import com.github.tylerspaeth.broker.ib.response.Position;
-import com.github.tylerspaeth.broker.ib.response.PositionPnL;
-import com.github.tylerspaeth.broker.ib.response.RealtimeBar;
-import com.github.tylerspaeth.common.MultiReaderQueue;
+import com.github.tylerspaeth.broker.ib.response.*;
 import com.github.tylerspaeth.common.BuildableFuture;
+import com.github.tylerspaeth.common.MultiReaderQueue;
+import com.github.tylerspaeth.common.data.dao.SymbolDAO;
+import com.github.tylerspaeth.common.data.entity.Symbol;
 import com.github.tylerspaeth.common.enums.IntervalUnitEnum;
 import com.ib.client.*;
+import com.ib.client.Contract;
+import com.ib.client.ContractDetails;
 import com.ib.controller.AccountSummaryTag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,10 +29,13 @@ public class IBSyncWrapper {
 
     private final IBConnection ibConnection;
 
+    private final SymbolDAO symbolDAO;
+
     private static final int REQ_TIMEOUT_MS = 5000;
 
-    private IBSyncWrapper(IBConnection ibConnection) {
+    private IBSyncWrapper(IBConnection ibConnection, SymbolDAO symbolDAO) {
         this.ibConnection = ibConnection;
+        this.symbolDAO = symbolDAO;
     }
 
     /**
@@ -43,7 +45,7 @@ public class IBSyncWrapper {
      */
     public static IBSyncWrapper getInstance() {
         if(instance == null) {
-            instance = new IBSyncWrapper(new IBConnection());
+            instance = new IBSyncWrapper(new IBConnection(), new SymbolDAO());
         }
         return instance;
     }
@@ -52,8 +54,8 @@ public class IBSyncWrapper {
      * For getting a new IBService instance to use for testing. This should NOT be used for anything other than testing.
      * @return IBService
      */
-    public static IBSyncWrapper getInstanceTest(IBConnection ibConnection) {
-        return new IBSyncWrapper(ibConnection);
+    public static IBSyncWrapper getInstanceTest(IBConnection ibConnection, SymbolDAO symbolDAO) {
+        return new IBSyncWrapper(ibConnection, symbolDAO);
     }
 
     public void connect() {
@@ -223,13 +225,16 @@ public class IBSyncWrapper {
             ibConnection.datafeedReqIdMap.put(reqId, newQueue);
             queue = newQueue;
 
+            Symbol symbol = symbolDAO.getSymbolByCriteria(dataFeedKeyCopy.getTicker(), dataFeedKeyCopy.getExchange(), IBMapper.mapSecTypeToAssetType(Types.SecType.valueOf(dataFeedKeyCopy.getSecType())));
+
+            if(symbol == null || symbol.getIbConID() == null) {
+                LOGGER.error("Unable to subscribe to datafeed without a conid. Symbol: {} ", symbol);
+                return;
+            }
+
             // Make IB request
             Contract contract = new Contract();
-            contract.symbol(dataFeedKeyCopy.getTicker());
-            contract.secType(dataFeedKeyCopy.getSecType());
-            contract.exchange(dataFeedKeyCopy.getExchange());
-            contract.currency(dataFeedKeyCopy.getCurrency());
-            // TODO we should be getting the conid from ib before placing this order to ensure there is no ambiguity
+            contract.conid(symbol.getIbConID());
             ibConnection.client.reqRealTimeBars(reqId, contract, 5, "MIDPOINT", false, null);
         }
 

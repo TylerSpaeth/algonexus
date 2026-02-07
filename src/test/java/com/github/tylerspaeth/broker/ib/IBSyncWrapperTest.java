@@ -1,6 +1,9 @@
 package com.github.tylerspaeth.broker.ib;
 
 import com.github.tylerspaeth.broker.ib.response.*;
+import com.github.tylerspaeth.common.data.dao.SymbolDAO;
+import com.github.tylerspaeth.common.data.entity.Symbol;
+import com.github.tylerspaeth.common.enums.AssetTypeEnum;
 import com.github.tylerspaeth.common.enums.IntervalUnitEnum;
 import com.ib.client.*;
 import com.ib.client.Contract;
@@ -25,6 +28,9 @@ public class IBSyncWrapperTest {
     @Mock
     private EClientSocket client; // Mock client so real tws requests are not made
 
+    @Mock
+    private SymbolDAO symbolDAO;
+
     private IBConnection connection;
     private IBSyncWrapper wrapper;
 
@@ -32,7 +38,7 @@ public class IBSyncWrapperTest {
     public void setup() {
         connection = new IBConnection();
         connection.client = client;
-        wrapper = IBSyncWrapper.getInstanceTest(connection);
+        wrapper = IBSyncWrapper.getInstanceTest(connection, symbolDAO);
     }
 
     @Test
@@ -181,7 +187,10 @@ public class IBSyncWrapperTest {
 
     @Test
     public void testSubscribeToNewFeed() {
-        wrapper.subscribeToDataFeed(Thread.currentThread().threadId(), new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency"));
+        Symbol symbol = new Symbol();
+        symbol.setIbConID(1);
+        Mockito.when(symbolDAO.getSymbolByCriteria(Mockito.anyString(), Mockito.anyString(), Mockito.any(AssetTypeEnum.class))).thenReturn(symbol);
+        wrapper.subscribeToDataFeed(Thread.currentThread().threadId(), new IBDataFeedKey(null, "ticker", "STK", "exchange", "currency"));
         Mockito.verify(client, Mockito.times(1)).reqRealTimeBars(Mockito.anyInt(), Mockito.any(Contract.class), Mockito.anyInt(), Mockito.anyString(), Mockito.anyBoolean(), Mockito.any());
         Assertions.assertEquals(1, connection.datafeeds.size());
     }
@@ -189,8 +198,10 @@ public class IBSyncWrapperTest {
     @Test
     public void testSubscribeToSameFeedFromDifferentThreads() throws InterruptedException {
 
-        IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency");
-
+        IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "STK", "exchange", "currency");
+        Symbol symbol = new Symbol();
+        symbol.setIbConID(1);
+        Mockito.when(symbolDAO.getSymbolByCriteria(Mockito.anyString(), Mockito.anyString(), Mockito.any(AssetTypeEnum.class))).thenReturn(symbol);
         wrapper.subscribeToDataFeed(Thread.currentThread().threadId(), dataFeedKey);
         Mockito.verify(client, Mockito.times(1)).reqRealTimeBars(Mockito.anyInt(), Mockito.any(Contract.class), Mockito.anyInt(), Mockito.anyString(), Mockito.anyBoolean(), Mockito.any());
 
@@ -211,15 +222,21 @@ public class IBSyncWrapperTest {
 
     @Test
     public void testSubscribeToDifferentFeedsFromSingleThread() {
-        wrapper.subscribeToDataFeed(Thread.currentThread().threadId(), new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency"));
-        wrapper.subscribeToDataFeed(Thread.currentThread().threadId(), new IBDataFeedKey(null, "otherTicker", "secType", "exchange", "currency"));
+        Symbol symbol = new Symbol();
+        symbol.setIbConID(1);
+        Mockito.when(symbolDAO.getSymbolByCriteria(Mockito.anyString(), Mockito.anyString(), Mockito.any(AssetTypeEnum.class))).thenReturn(symbol);
+        wrapper.subscribeToDataFeed(Thread.currentThread().threadId(), new IBDataFeedKey(null, "ticker", "STK", "exchange", "currency"));
+        wrapper.subscribeToDataFeed(Thread.currentThread().threadId(), new IBDataFeedKey(null, "otherTicker", "STK", "exchange", "currency"));
         Mockito.verify(client, Mockito.times(2)).reqRealTimeBars(Mockito.anyInt(), Mockito.any(Contract.class), Mockito.anyInt(), Mockito.anyString(), Mockito.anyBoolean(), Mockito.any());
         Assertions.assertEquals(2, connection.datafeeds.size());
     }
 
     @Test
     public void testSubscribeAgainAfterUnsubscribing() {
-        IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency");
+        IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "STK", "exchange", "currency");
+        Symbol symbol = new Symbol();
+        symbol.setIbConID(1);
+        Mockito.when(symbolDAO.getSymbolByCriteria(Mockito.anyString(), Mockito.anyString(), Mockito.any(AssetTypeEnum.class))).thenReturn(symbol);
         wrapper.subscribeToDataFeed(Thread.currentThread().threadId(), dataFeedKey);
         wrapper.unsubscribeFromDataFeed(Thread.currentThread().threadId(), dataFeedKey);
         wrapper.subscribeToDataFeed(Thread.currentThread().threadId(), dataFeedKey);
@@ -239,8 +256,10 @@ public class IBSyncWrapperTest {
 
         int reqId = connection.nextValidId.get();
 
-        IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency");
-
+        IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "STK", "exchange", "currency");
+        Symbol symbol = new Symbol();
+        symbol.setIbConID(1);
+        Mockito.when(symbolDAO.getSymbolByCriteria(Mockito.anyString(), Mockito.anyString(), Mockito.any(AssetTypeEnum.class))).thenReturn(symbol);
         wrapper.subscribeToDataFeed(Thread.currentThread().threadId(), dataFeedKey);
 
         CountDownLatch latch = new CountDownLatch(1);
@@ -273,7 +292,10 @@ public class IBSyncWrapperTest {
     @Test
     public void testReadAtSubFiveSecondGranularity() {
         int reqId = connection.nextValidId.get();
-        IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency");
+        IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "STK", "exchange", "currency");
+        Symbol symbol = new Symbol();
+        symbol.setIbConID(1);
+        Mockito.when(symbolDAO.getSymbolByCriteria(Mockito.anyString(), Mockito.anyString(), Mockito.any(AssetTypeEnum.class))).thenReturn(symbol);
         wrapper.subscribeToDataFeed(Thread.currentThread().threadId(), dataFeedKey);
         connection.getWrapper().realtimeBar(reqId, 0, 1, 2, 3, 4, Decimal.ONE_HUNDRED, null, -1);
         Assertions.assertTrue(wrapper.readFromDataFeed(Thread.currentThread().threadId(), dataFeedKey, 1, IntervalUnitEnum.SECOND).isEmpty());
@@ -282,7 +304,10 @@ public class IBSyncWrapperTest {
     @Test
     public void testReadAtSevenSecondGranularity() {
         int reqId = connection.nextValidId.get();
-        IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency");
+        IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "STK", "exchange", "currency");
+        Symbol symbol = new Symbol();
+        symbol.setIbConID(1);
+        Mockito.when(symbolDAO.getSymbolByCriteria(Mockito.anyString(), Mockito.anyString(), Mockito.any(AssetTypeEnum.class))).thenReturn(symbol);
         wrapper.subscribeToDataFeed(Thread.currentThread().threadId(), dataFeedKey);
         connection.getWrapper().realtimeBar(reqId, 0, 1, 2, 3, 4, Decimal.ONE_HUNDRED, null, -1);
         connection.getWrapper().realtimeBar(reqId, 5, 1, 2, 3, 4, Decimal.ONE_HUNDRED, null, -1);
@@ -292,7 +317,10 @@ public class IBSyncWrapperTest {
     @Test
     public void testReadFromDataFeedCondenseBars() {
         int reqId = connection.nextValidId.get();
-        IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency");
+        IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "STK", "exchange", "currency");
+        Symbol symbol = new Symbol();
+        symbol.setIbConID(1);
+        Mockito.when(symbolDAO.getSymbolByCriteria(Mockito.anyString(), Mockito.anyString(), Mockito.any(AssetTypeEnum.class))).thenReturn(symbol);
         wrapper.subscribeToDataFeed(Thread.currentThread().threadId(), dataFeedKey);
         connection.getWrapper().realtimeBar(reqId, 0, 2, 2, 1, 1.5, Decimal.ONE_HUNDRED, null, -1);
         connection.getWrapper().realtimeBar(reqId, 5, 1.5, 5, 2, 4, Decimal.ONE_HUNDRED, null, -1);
@@ -309,7 +337,10 @@ public class IBSyncWrapperTest {
 
     @Test
     public void testUnsubscribeCancelsIBSubscription() {
-        IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency");
+        IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "STK", "exchange", "currency");
+        Symbol symbol = new Symbol();
+        symbol.setIbConID(1);
+        Mockito.when(symbolDAO.getSymbolByCriteria(Mockito.anyString(), Mockito.anyString(), Mockito.any(AssetTypeEnum.class))).thenReturn(symbol);
         wrapper.subscribeToDataFeed(Thread.currentThread().threadId(), dataFeedKey);
         wrapper.unsubscribeFromDataFeed(Thread.currentThread().threadId(), dataFeedKey);
         Mockito.verify(client, Mockito.times(1)).cancelRealTimeBars(Mockito.anyInt());
@@ -324,7 +355,10 @@ public class IBSyncWrapperTest {
 
     @Test
     public void testUnsubscribeDoesNotCancelIfThereIsAnotherSubscriber() throws InterruptedException {
-        IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency");
+        IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "STK", "exchange", "currency");
+        Symbol symbol = new Symbol();
+        symbol.setIbConID(1);
+        Mockito.when(symbolDAO.getSymbolByCriteria(Mockito.anyString(), Mockito.anyString(), Mockito.any(AssetTypeEnum.class))).thenReturn(symbol);
         wrapper.subscribeToDataFeed(Thread.currentThread().threadId(), dataFeedKey);
 
         CountDownLatch latch = new CountDownLatch(1);
@@ -343,7 +377,10 @@ public class IBSyncWrapperTest {
     @Test
     public void testReadAfterUnsubscribe() {
         int reqId = connection.nextValidId.get();
-        IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency");
+        IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "STK", "exchange", "currency");
+        Symbol symbol = new Symbol();
+        symbol.setIbConID(1);
+        Mockito.when(symbolDAO.getSymbolByCriteria(Mockito.anyString(), Mockito.anyString(), Mockito.any(AssetTypeEnum.class))).thenReturn(symbol);
         wrapper.subscribeToDataFeed(Thread.currentThread().threadId(), dataFeedKey);
         connection.getWrapper().realtimeBar(reqId, 0, 2, 2, 1, 1.5, Decimal.ONE_HUNDRED, null, -1);
         wrapper.unsubscribeFromDataFeed(Thread.currentThread().threadId(), dataFeedKey);
@@ -354,7 +391,10 @@ public class IBSyncWrapperTest {
     @Test
     public void testReadNeedsAligning() {
         int reqId = connection.nextValidId.get();
-        IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "secType", "exchange", "currency");
+        IBDataFeedKey dataFeedKey = new IBDataFeedKey(null, "ticker", "STK", "exchange", "currency");
+        Symbol symbol = new Symbol();
+        symbol.setIbConID(1);
+        Mockito.when(symbolDAO.getSymbolByCriteria(Mockito.anyString(), Mockito.anyString(), Mockito.any(AssetTypeEnum.class))).thenReturn(symbol);
         wrapper.subscribeToDataFeed(Thread.currentThread().threadId(), dataFeedKey);
         connection.getWrapper().realtimeBar(reqId, 5, 2, 2, 1, 1.5, Decimal.get(1), null, -1);
         connection.getWrapper().realtimeBar(reqId, 10, 2, 2, 1, 1.5, Decimal.get(2), null, -1);
