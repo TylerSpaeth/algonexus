@@ -4,6 +4,7 @@ import com.github.tylerspaeth.common.data.dao.CommissionDAO;
 import com.github.tylerspaeth.common.data.dao.OrderDAO;
 import com.github.tylerspaeth.common.data.dao.TradeDAO;
 import com.github.tylerspaeth.common.data.entity.*;
+import com.github.tylerspaeth.common.enums.AssetTypeEnum;
 import com.github.tylerspaeth.common.enums.OrderStatusEnum;
 import com.github.tylerspaeth.common.enums.OrderTypeEnum;
 import com.github.tylerspaeth.common.enums.SideEnum;
@@ -312,23 +313,23 @@ public class BacktesterSharedService {
         // If this is a new order then the only price with will be considered for filling is close price
         switch (order.getOrderType()) {
             case MKT:
-                fillOrder(order, lastSeenCandlestick.getClose(), currentTimestamp);
+                fillOrder(order, lastSeenCandlestick.getClose(), currentTimestamp, lastSeenCandlestick);
                 return true;
             case LMT:
                 if(order.getSide() == SideEnum.BUY && candlestickLow <= order.getPrice()) {
-                    fillOrder(order, limitFillPriceLow, currentTimestamp);
+                    fillOrder(order, limitFillPriceLow, currentTimestamp, lastSeenCandlestick);
                     return true;
                 } else if(order.getSide() == SideEnum.SELL && candlestickHigh >= order.getPrice()) {
-                    fillOrder(order, limitFillPriceHigh, currentTimestamp);
+                    fillOrder(order, limitFillPriceHigh, currentTimestamp, lastSeenCandlestick);
                     return true;
                 }
                 break;
             case STP, STP_LMT:
                 if(order.getSide() == SideEnum.BUY && candlestickHigh >= order.getPrice()) {
-                    fillOrder(order, limitFillPriceHigh, currentTimestamp);
+                    fillOrder(order, limitFillPriceHigh, currentTimestamp, lastSeenCandlestick);
                     return true;
                 } else if(order.getSide() == SideEnum.SELL && candlestickLow <= order.getPrice()) {
-                    fillOrder(order, limitFillPriceLow, currentTimestamp);
+                    fillOrder(order, limitFillPriceLow, currentTimestamp, lastSeenCandlestick);
                     return true;
                 }
                 break;
@@ -337,12 +338,12 @@ public class BacktesterSharedService {
                 if(order.getSide() == SideEnum.BUY && candlestickHigh >= order.getPrice()) {
                     float fillPrice = order.getPrice();
                     order.setPrice(null);
-                    fillOrder(order, fillPrice, currentTimestamp);
+                    fillOrder(order, fillPrice, currentTimestamp, lastSeenCandlestick);
                     return true;
                 } else if(order.getSide() == SideEnum.SELL && candlestickLow <= order.getPrice()) {
                     float fillPrice = order.getPrice();
                     order.setPrice(null);
-                    fillOrder(order, fillPrice, currentTimestamp);
+                    fillOrder(order, fillPrice, currentTimestamp, lastSeenCandlestick);
                     return true;
                 }
                 break;
@@ -360,11 +361,14 @@ public class BacktesterSharedService {
      * @param order Order that needs to be filled.
      * @param price Price to fill the order at.
      * @param timestamp Time in which the order is filled.
+     * @param lastSeenCandlestick Candlestick that was last seen before filling the order.
      */
-    private void fillOrder(Order order, float price, Timestamp timestamp) {
+    private void fillOrder(Order order, float price, Timestamp timestamp, Candlestick lastSeenCandlestick) {
         Trade trade = new Trade();
         trade.setSide(order.getSide());
-        trade.setFillPrice(price);
+
+        setTradeFillPrice(trade, order.getSide(), order.getSymbol(), order.getSymbol().getTickSize(), price, lastSeenCandlestick);
+
         trade.setFillQuantity(order.getQuantity());
         trade.setTimestamp(timestamp);
 
@@ -390,6 +394,32 @@ public class BacktesterSharedService {
         order.setFinalized(true);
         orderDAO.update(order);
         tradeDAO.insert(trade);
+    }
+
+    /**
+     * Set the fill price on the trade.
+     * @param trade Trade
+     * @param side SideEnum
+     * @param symbol Symbol
+     * @param tickSize tick size in points
+     * @param price price in dollars or points
+     * @param lastSeenCandlestick Candlestick that was last seen before filling the order
+     */
+    private void setTradeFillPrice(Trade trade, SideEnum side, Symbol symbol, float tickSize, float price, Candlestick lastSeenCandlestick) {
+        boolean crossesSpread = false;
+        // We only care about simulating spread with futures right now. We will assume the fill is 1 tick worse than what we saw.
+        if(symbol.getAssetType() == AssetTypeEnum.FUTURES) {
+            if(side == SideEnum.BUY) {
+                crossesSpread = price >= lastSeenCandlestick.getClose();
+            } else {
+                crossesSpread = price <= lastSeenCandlestick.getClose();
+            }
+        }
+        if(crossesSpread) {
+            trade.setFillPrice(price + (side == SideEnum.BUY ? tickSize : -tickSize));
+        } else {
+            trade.setFillPrice(price);
+        }
     }
 
     /**
