@@ -22,6 +22,12 @@ import java.util.stream.Collectors;
 // the middle of the candlestick exactly. It could be reworked to incorporate RNG to determine the inner candle ordering.
 // For now, it assumes that the trigger price will be changes before the limit is hit.
 
+// TODO implement randomize candle traversal we should randomize whether H or L is hit first
+// TODO model slippage on fills
+// TODO fill orders on the candlestick after they open
+// TODO consider if orders should be fillable on the same candlestick they are created on
+// TODO simulate tif values
+
 public class BacktesterSharedService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BacktesterSharedService.class);
@@ -269,9 +275,6 @@ public class BacktesterSharedService {
                     orderDAO.update(order1);
         });
     }
-
-    // TODO consider if orders should be fillable on the same candlestick they are created on
-    // TODO simulate tif values
 
     /**
      * Attempts to fill the provided Order on the data feed corresponding to the given key.
