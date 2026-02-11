@@ -1,10 +1,13 @@
 package com.github.tylerspaeth.common.data.entity;
 
+import com.github.tylerspaeth.common.data.dao.StrategyParameterDAO;
 import jakarta.persistence.*;
 
 @Entity
 @Table(name = "strategyparameters")
 public class StrategyParameter {
+
+    private static final StrategyParameterDAO strategyParameterDAO = new StrategyParameterDAO();
 
     @Id
     @Column(name = "StrategyParameterID")
@@ -31,6 +34,7 @@ public class StrategyParameter {
     }
 
     public StrategyParameterSet getStrategyParameterSet() {
+        strategyParameterSet = strategyParameterDAO.lazyLoad(this, e -> e.strategyParameterSet);
         return strategyParameterSet;
     }
 

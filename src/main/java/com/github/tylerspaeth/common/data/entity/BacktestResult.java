@@ -1,5 +1,6 @@
 package com.github.tylerspaeth.common.data.entity;
 
+import com.github.tylerspaeth.common.data.dao.BacktestResultDAO;
 import jakarta.persistence.*;
 
 import java.sql.Timestamp;
@@ -8,6 +9,8 @@ import java.util.List;
 @Entity
 @Table(name = "backtestresults")
 public class BacktestResult {
+
+    private static final BacktestResultDAO backtestResultDAO = new BacktestResultDAO();
 
     @Id
     @Column(name = "BacktestResultID")
@@ -32,6 +35,7 @@ public class BacktestResult {
     }
 
     public StrategyParameterSet getStrategyParameterSet() {
+        strategyParameterSet = backtestResultDAO.lazyLoad(this, e -> e.strategyParameterSet);
         return strategyParameterSet;
     }
 
@@ -56,6 +60,7 @@ public class BacktestResult {
     }
 
     public List<Order> getOrders() {
+        orders = backtestResultDAO.lazyLoad(this, e -> e.orders);
         return orders;
     }
 

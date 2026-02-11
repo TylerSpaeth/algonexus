@@ -13,7 +13,7 @@ import jakarta.persistence.criteria.Root;
 import java.sql.Timestamp;
 import java.util.List;
 
-public class CandlestickDAO {
+public class CandlestickDAO extends AbstractDAO<Candlestick> {
 
     /**
      * Get a segment of the Candlesticks that belong to the provided HistoricalDataset.
@@ -23,16 +23,17 @@ public class CandlestickDAO {
      * @return List of Candlesticks.
      */
     public List<Candlestick> getPaginatedCandlesticksFromHistoricalDataset(HistoricalDataset historicalDataset, Timestamp startTime, int numCandles) {
-        EntityManager entityManager = DatasourceConfig.entityManagerFactory.createEntityManager();
-        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<Candlestick> cq = cb.createQuery(Candlestick.class);
-        Root<Candlestick> root = cq.from(Candlestick.class);
+        try (EntityManager entityManager = DatasourceConfig.entityManagerFactory.createEntityManager()) {
+            CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+            CriteriaQuery<Candlestick> cq = cb.createQuery(Candlestick.class);
+            Root<Candlestick> root = cq.from(Candlestick.class);
 
-        Predicate predicate = cb.equal(root.get(Candlestick_.historicalDataset), historicalDataset);
-        predicate = cb.and(predicate, cb.greaterThan(root.get(Candlestick_.timestamp), startTime));
+            Predicate predicate = cb.equal(root.get(Candlestick_.historicalDataset), historicalDataset);
+            predicate = cb.and(predicate, cb.greaterThan(root.get(Candlestick_.timestamp), startTime));
 
-        cq.select(root).where(predicate).orderBy(cb.asc(root.get(Candlestick_.timestamp)));
-        return entityManager.createQuery(cq).setMaxResults(numCandles).getResultList();
+            cq.select(root).where(predicate).orderBy(cb.asc(root.get(Candlestick_.timestamp)));
+            return entityManager.createQuery(cq).setMaxResults(numCandles).setHint("org.hibernate.readOnly", true).getResultList();
+        }
     }
 
 }

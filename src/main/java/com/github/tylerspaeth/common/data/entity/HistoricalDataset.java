@@ -1,5 +1,6 @@
 package com.github.tylerspaeth.common.data.entity;
 
+import com.github.tylerspaeth.common.data.dao.HistoricalDatasetDAO;
 import com.github.tylerspaeth.common.enums.IntervalUnitEnum;
 import jakarta.persistence.*;
 
@@ -10,6 +11,8 @@ import java.util.List;
 @Entity
 @Table(name = "historicaldataset")
 public class HistoricalDataset {
+
+    private static final HistoricalDatasetDAO historicalDatasetDAO = new HistoricalDatasetDAO();
 
     @Id
     @Column(name = "HistoricalDatasetId")
@@ -71,6 +74,7 @@ public class HistoricalDataset {
     }
 
     public Symbol getSymbol() {
+        symbol = historicalDatasetDAO.lazyLoad(this, e -> e.symbol);
         return symbol;
     }
 
@@ -120,9 +124,11 @@ public class HistoricalDataset {
 
 
     public List<Candlestick> getCandlesticks() {
+        candlesticks = historicalDatasetDAO.lazyLoad(this, e -> e.candlesticks);
         if(candlesticks == null) {
             candlesticks = new ArrayList<>();
         }
+
         return candlesticks;
     }
 

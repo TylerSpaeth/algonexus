@@ -1,5 +1,6 @@
 package com.github.tylerspaeth.common.data.entity;
 
+import com.github.tylerspaeth.common.data.dao.SymbolDAO;
 import com.github.tylerspaeth.common.enums.AssetTypeEnum;
 import jakarta.persistence.*;
 
@@ -9,6 +10,8 @@ import java.util.List;
 @Entity
 @Table(name = "symbols")
 public class Symbol {
+
+    private static final SymbolDAO symbolDAO = new SymbolDAO();
 
     @Id
     @Column(name = "SymbolID")
@@ -73,6 +76,7 @@ public class Symbol {
     }
 
     public Exchange getExchange() {
+        exchange = symbolDAO.lazyLoad(this, e -> e.exchange);
         return exchange;
     }
 
@@ -121,6 +125,7 @@ public class Symbol {
     }
 
     public List<HistoricalDataset> getHistoricalDatasets() {
+        historicalDatasets = symbolDAO.lazyLoad(this, e -> e.historicalDatasets);
         if(historicalDatasets == null) {
             historicalDatasets = new ArrayList<>();
         }
@@ -128,6 +133,7 @@ public class Symbol {
     }
 
     public Commission getCommission() {
+        commission = symbolDAO.lazyLoad(this, e -> e.commission);
         return commission;
     }
 

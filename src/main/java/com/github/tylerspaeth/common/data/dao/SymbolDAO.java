@@ -2,10 +2,10 @@ package com.github.tylerspaeth.common.data.dao;
 
 import com.github.tylerspaeth.common.data.entity.Exchange;
 import com.github.tylerspaeth.common.data.entity.Exchange_;
+import com.github.tylerspaeth.common.data.entity.Symbol;
 import com.github.tylerspaeth.common.data.entity.Symbol_;
 import com.github.tylerspaeth.common.enums.AssetTypeEnum;
 import com.github.tylerspaeth.config.DatasourceConfig;
-import com.github.tylerspaeth.common.data.entity.Symbol;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.*;
 
@@ -19,13 +19,14 @@ public class SymbolDAO extends AbstractDAO<Symbol> {
      */
     public List<Symbol> getAllSymbols() {
 
-        EntityManager entityManager = DatasourceConfig.entityManagerFactory.createEntityManager();
+        try (EntityManager entityManager = DatasourceConfig.entityManagerFactory.createEntityManager()) {
 
-        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<Symbol> cq = cb.createQuery(Symbol.class);
-        Root<Symbol> root = cq.from(Symbol.class);
-        cq.select(root);
-        return entityManager.createQuery(cq).getResultList();
+            CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+            CriteriaQuery<Symbol> cq = cb.createQuery(Symbol.class);
+            Root<Symbol> root = cq.from(Symbol.class);
+            cq.select(root);
+            return entityManager.createQuery(cq).getResultList();
+        }
 
     }
 
@@ -38,20 +39,21 @@ public class SymbolDAO extends AbstractDAO<Symbol> {
      */
     public Symbol getSymbolByCriteria(String ticker, String exchangeName, AssetTypeEnum assetType) {
 
-        EntityManager entityManager = DatasourceConfig.entityManagerFactory.createEntityManager();
+        try (EntityManager entityManager = DatasourceConfig.entityManagerFactory.createEntityManager()) {
 
-        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<Symbol> cq = cb.createQuery(Symbol.class);
-        Root<Symbol> root = cq.from(Symbol.class);
-        Join<Symbol, Exchange> join = root.join(Exchange.class);
+            CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+            CriteriaQuery<Symbol> cq = cb.createQuery(Symbol.class);
+            Root<Symbol> root = cq.from(Symbol.class);
+            Join<Symbol, Exchange> join = root.join(Exchange.class);
 
-        Predicate predicate = cb.equal(root.get(Symbol_.ticker), ticker);
-        predicate = cb.and(predicate, cb.equal(join.get(Exchange_.name), exchangeName));
-        predicate = cb.and(predicate, cb.equal(root.get(Symbol_.assetType), assetType));
+            Predicate predicate = cb.equal(root.get(Symbol_.ticker), ticker);
+            predicate = cb.and(predicate, cb.equal(join.get(Exchange_.name), exchangeName));
+            predicate = cb.and(predicate, cb.equal(root.get(Symbol_.assetType), assetType));
 
-        cq.select(root).where(predicate);
+            cq.select(root).where(predicate);
 
-        return entityManager.createQuery(cq).getSingleResultOrNull();
+            return entityManager.createQuery(cq).getSingleResultOrNull();
+        }
     }
 
     /**
@@ -65,20 +67,21 @@ public class SymbolDAO extends AbstractDAO<Symbol> {
             return symbol;
         }
 
-        EntityManager entityManager = DatasourceConfig.entityManagerFactory.createEntityManager();
+        try (EntityManager entityManager = DatasourceConfig.entityManagerFactory.createEntityManager()) {
 
-        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<Symbol> cq = cb.createQuery(Symbol.class);
-        Root<Symbol> root = cq.from(Symbol.class);
+            CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+            CriteriaQuery<Symbol> cq = cb.createQuery(Symbol.class);
+            Root<Symbol> root = cq.from(Symbol.class);
 
-        Predicate predicate = cb.equal(root.get(Symbol_.ticker), symbol.getTicker());
-        predicate = cb.and(predicate, cb.equal(root.get(Symbol_.name), symbol.getName()));
-        predicate = cb.and(predicate, cb.equal(root.get(Symbol_.exchange), symbol.getExchange()));
-        predicate = cb.and(predicate, cb.equal(root.get(Symbol_.assetType), symbol.getAssetType()));
+            Predicate predicate = cb.equal(root.get(Symbol_.ticker), symbol.getTicker());
+            predicate = cb.and(predicate, cb.equal(root.get(Symbol_.name), symbol.getName()));
+            predicate = cb.and(predicate, cb.equal(root.get(Symbol_.exchange), symbol.getExchange()));
+            predicate = cb.and(predicate, cb.equal(root.get(Symbol_.assetType), symbol.getAssetType()));
 
-        cq.select(root).where(predicate);
+            cq.select(root).where(predicate);
 
-        return entityManager.createQuery(cq).getSingleResultOrNull();
+            return entityManager.createQuery(cq).getSingleResultOrNull();
+        }
     }
 
     /**
@@ -87,15 +90,16 @@ public class SymbolDAO extends AbstractDAO<Symbol> {
      * @return Symbol
      */
     public Symbol getSymbolByTicker(String tickerSymbol) {
-        EntityManager entityManager = DatasourceConfig.entityManagerFactory.createEntityManager();
+        try (EntityManager entityManager = DatasourceConfig.entityManagerFactory.createEntityManager()) {
 
-        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<Symbol> cq = cb.createQuery(Symbol.class);
-        Root<Symbol> root = cq.from(Symbol.class);
+            CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+            CriteriaQuery<Symbol> cq = cb.createQuery(Symbol.class);
+            Root<Symbol> root = cq.from(Symbol.class);
 
-        cq.select(root).where(cb.equal(root.get(Symbol_.ticker), tickerSymbol));
+            cq.select(root).where(cb.equal(root.get(Symbol_.ticker), tickerSymbol));
 
-        return entityManager.createQuery(cq).getSingleResultOrNull();
+            return entityManager.createQuery(cq).getSingleResultOrNull();
+        }
     }
 
 }

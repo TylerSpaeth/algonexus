@@ -1,5 +1,6 @@
 package com.github.tylerspaeth.common.data.entity;
 
+import com.github.tylerspaeth.common.data.dao.TradeDAO;
 import com.github.tylerspaeth.common.enums.SideEnum;
 import jakarta.persistence.*;
 
@@ -8,6 +9,8 @@ import java.sql.Timestamp;
 @Entity
 @Table(name = "Trades")
 public class Trade {
+
+    private static final TradeDAO tradeDAO = new TradeDAO();
 
     @Id
     @Column(name = "TradeID")
@@ -42,6 +45,7 @@ public class Trade {
     }
 
     public Order getOrder() {
+        order = tradeDAO.lazyLoad(this, e -> e.order);
         return order;
     }
 

@@ -1,5 +1,6 @@
 package com.github.tylerspaeth.common.data.entity;
 
+import com.github.tylerspaeth.common.data.dao.OrderDAO;
 import com.github.tylerspaeth.common.enums.OrderStatusEnum;
 import com.github.tylerspaeth.common.enums.OrderTypeEnum;
 import com.github.tylerspaeth.common.enums.SideEnum;
@@ -13,6 +14,8 @@ import java.util.List;
 @Entity
 @Table(name = "orders")
 public class Order {
+
+    private static final OrderDAO orderDAO = new OrderDAO();
 
     @Version
     @Column(name = "Version")
@@ -164,6 +167,7 @@ public class Order {
     }
 
     public Symbol getSymbol() {
+        symbol = orderDAO.lazyLoad(this, e -> e.symbol);
         return symbol;
     }
 
@@ -244,6 +248,7 @@ public class Order {
     }
 
     public BacktestResult getBacktestResult() {
+        backtestResult = orderDAO.lazyLoad(this, e -> e.backtestResult);
         return backtestResult;
     }
 
@@ -252,6 +257,7 @@ public class Order {
     }
 
     public StrategyParameterSet getStrategyParameterSet() {
+        strategyParameterSet = orderDAO.lazyLoad(this, e -> e.strategyParameterSet);
         return strategyParameterSet;
     }
 
@@ -260,6 +266,7 @@ public class Order {
     }
 
     public User getUser() {
+        user = orderDAO.lazyLoad(this, e -> e.user);
         return user;
     }
 
@@ -300,6 +307,7 @@ public class Order {
     }
 
     public Order getParentOrder() {
+        parentOrder = orderDAO.lazyLoad(this, e -> e.parentOrder);
         return parentOrder;
     }
 
@@ -316,10 +324,15 @@ public class Order {
     }
 
     public List<OrderEvent> getOrderEvents() {
+        orderEvents = orderDAO.lazyLoad(this, e -> e.orderEvents);
+        if(orderEvents == null) {
+            orderEvents = new ArrayList<>();
+        }
         return orderEvents;
     }
 
     public List<Trade> getTrades() {
+        trades = orderDAO.lazyLoad(this, e -> e.trades);
         if(trades == null) {
             trades = new ArrayList<>();
         }

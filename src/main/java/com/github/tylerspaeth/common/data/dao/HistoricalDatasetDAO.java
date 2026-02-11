@@ -16,12 +16,13 @@ public class HistoricalDatasetDAO extends AbstractDAO<HistoricalDataset> {
      * @return List of HistoricalDatasets
      */
     public List<HistoricalDataset> getAllHistoricalDatasets() {
-        EntityManager entityManager = DatasourceConfig.entityManagerFactory.createEntityManager();
-        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<HistoricalDataset> cq = cb.createQuery(HistoricalDataset.class);
-        Root<HistoricalDataset> root = cq.from(HistoricalDataset.class);
-        cq.select(root);
-        return entityManager.createQuery(cq).getResultList();
+        try (EntityManager entityManager = DatasourceConfig.entityManagerFactory.createEntityManager()) {
+            CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+            CriteriaQuery<HistoricalDataset> cq = cb.createQuery(HistoricalDataset.class);
+            Root<HistoricalDataset> root = cq.from(HistoricalDataset.class);
+            cq.select(root);
+            return entityManager.createQuery(cq).getResultList();
+        }
     }
 
 }

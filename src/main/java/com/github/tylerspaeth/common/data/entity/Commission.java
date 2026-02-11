@@ -1,5 +1,6 @@
 package com.github.tylerspaeth.common.data.entity;
 
+import com.github.tylerspaeth.common.data.dao.CommissionDAO;
 import com.github.tylerspaeth.common.enums.AssetTypeEnum;
 import jakarta.persistence.*;
 
@@ -10,6 +11,8 @@ import jakarta.persistence.*;
 @Entity
 @Table(name = "Commissions")
 public class Commission {
+
+    private static final CommissionDAO commissionDAO = new CommissionDAO();
 
     @Id
     @Column(name = "CommissionID")
@@ -32,6 +35,7 @@ public class Commission {
     }
 
     public Symbol getSymbol() {
+        symbol = commissionDAO.lazyLoad(this, e -> e.symbol);
         return symbol;
     }
 

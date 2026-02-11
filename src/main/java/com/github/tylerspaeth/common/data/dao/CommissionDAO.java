@@ -18,16 +18,17 @@ public class CommissionDAO extends AbstractDAO<Commission> {
      * @return Commission or null.
      */
     public Commission findDefaultCommissionForAssetType(AssetTypeEnum assetType) {
-        EntityManager entityManager = DatasourceConfig.entityManagerFactory.createEntityManager();
-        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<Commission> cq = cb.createQuery(Commission.class);
-        Root<Commission> root = cq.from(Commission.class);
+        try (EntityManager entityManager = DatasourceConfig.entityManagerFactory.createEntityManager()) {
+            CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+            CriteriaQuery<Commission> cq = cb.createQuery(Commission.class);
+            Root<Commission> root = cq.from(Commission.class);
 
-        Predicate predicate = cb.equal(root.get(Commission_.assetType), assetType);
-        predicate = cb.and(predicate, cb.isNull(root.get(Commission_.symbol)));
+            Predicate predicate = cb.equal(root.get(Commission_.assetType), assetType);
+            predicate = cb.and(predicate, cb.isNull(root.get(Commission_.symbol)));
 
-        cq.select(root).where(predicate);
-        return entityManager.createQuery(cq).getSingleResultOrNull();
+            cq.select(root).where(predicate);
+            return entityManager.createQuery(cq).getSingleResultOrNull();
+        }
     }
 
 }

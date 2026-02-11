@@ -14,17 +14,14 @@ import org.slf4j.LoggerFactory;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class BacktesterDataFeedService implements IDataFeedService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BacktesterDataFeedService.class);
 
-    private static final Integer MAX_CANDLESTICKS = 100_000;
+    private static final Integer MAX_CANDLESTICKS = 1_000_000;
 
     private final SymbolDAO symbolDAO;
     private final CandlestickDAO candlestickDAO;
@@ -33,7 +30,7 @@ public class BacktesterDataFeedService implements IDataFeedService {
     private final Map<BacktesterDataFeedKey, Timestamp> lastSeenOffsets = new ConcurrentHashMap<>(); // Last seen timestamp offset for each datafeed
     private final Map<BacktesterDataFeedKey, Integer> datafeedIntervalMap = new ConcurrentHashMap<>(); // Map of the interval duration being read by each data feed
     private final Map<BacktesterDataFeedKey, IntervalUnitEnum> dataFeedIntervalUnitMap = new ConcurrentHashMap<>(); // Map of the interval unit being read by each data feed
-    private final Map<BacktesterDataFeedKey, List<Candlestick>> candlesticksPendingReturn = new ConcurrentHashMap<>(); // Map of candlesticks that have already been built for each data feed
+    private final Map<BacktesterDataFeedKey, Deque<Candlestick>> candlesticksPendingReturn = new ConcurrentHashMap<>(); // Map of candlesticks that have already been built for each data feed
     private final Map<BacktesterDataFeedKey, Object> datafeedLocks; // Locks for accessing the shared service
 
     private final BacktesterSharedService backtesterSharedService;
@@ -95,7 +92,7 @@ public class BacktesterDataFeedService implements IDataFeedService {
             return List.of();
         }
 
-        List<Candlestick> prebuiltCandlesticks = candlesticksPendingReturn.get(mapKey);
+        Deque<Candlestick> prebuiltCandlesticks = candlesticksPendingReturn.get(mapKey);
         Integer expectedDuration = datafeedIntervalMap.get(mapKey);
         IntervalUnitEnum expectedUnit = dataFeedIntervalUnitMap.get(mapKey);
 
@@ -111,7 +108,7 @@ public class BacktesterDataFeedService implements IDataFeedService {
             dataFeedToReturn.add(prebuiltCandlesticks.removeFirst());
         } else if (prebuiltCandlesticks == null) {
             // If we have not read from the datafeed yet then initialize values in the maps
-            prebuiltCandlesticks = new ArrayList<>();
+            prebuiltCandlesticks = new ArrayDeque<>();
             candlesticksPendingReturn.put(mapKey, prebuiltCandlesticks);
             datafeedIntervalMap.put(mapKey, intervalDuration);
             dataFeedIntervalUnitMap.put(mapKey, intervalUnit);
@@ -145,7 +142,7 @@ public class BacktesterDataFeedService implements IDataFeedService {
             numCandlestickToQuery--;
         }
 
-        List<Candlestick> candlesticksToCondense = candlestickDAO.getPaginatedCandlesticksFromHistoricalDataset(dataset, lastSeenTime, numCandlestickToQuery - 1);
+        Deque<Candlestick> candlesticksToCondense = new ArrayDeque<>(candlestickDAO.getPaginatedCandlesticksFromHistoricalDataset(dataset, lastSeenTime, numCandlestickToQuery - 1));
         candlesticksToCondense.addFirst(firstCandlestick);
         lastSeenTime = candlesticksToCondense.getLast().getTimestamp();
 

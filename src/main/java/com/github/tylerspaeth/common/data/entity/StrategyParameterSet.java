@@ -1,5 +1,6 @@
 package com.github.tylerspaeth.common.data.entity;
 
+import com.github.tylerspaeth.common.data.dao.StrategyParameterSetDAO;
 import jakarta.persistence.*;
 
 import java.util.ArrayList;
@@ -8,6 +9,8 @@ import java.util.List;
 @Entity
 @Table(name = "strategyparametersets")
 public class StrategyParameterSet {
+
+    private static final StrategyParameterSetDAO strategyParameterSetDAO = new StrategyParameterSetDAO();
 
     @Id
     @Column(name = "StrategyParameterSetID")
@@ -51,7 +54,12 @@ public class StrategyParameterSet {
         return description;
     }
 
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
     public Strategy getStrategy() {
+        strategy = strategyParameterSetDAO.lazyLoad(this, e -> e.strategy);
         return strategy;
     }
 
@@ -59,11 +67,8 @@ public class StrategyParameterSet {
         this.strategy = strategy;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
     public List<StrategyParameter> getStrategyParameters() {
+        strategyParameters = strategyParameterSetDAO.lazyLoad(this, e -> e.strategyParameters);
         if(strategyParameters == null) {
             strategyParameters = new ArrayList<>();
         }
@@ -71,6 +76,7 @@ public class StrategyParameterSet {
     }
 
     public List<BacktestResult> getBacktestResults() {
+        backtestResults = strategyParameterSetDAO.lazyLoad(this, e -> backtestResults);
         if(backtestResults == null) {
             backtestResults = new ArrayList<>();
         }

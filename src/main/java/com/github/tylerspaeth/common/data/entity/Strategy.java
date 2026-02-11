@@ -1,5 +1,6 @@
 package com.github.tylerspaeth.common.data.entity;
 
+import com.github.tylerspaeth.common.data.dao.StrategyDAO;
 import jakarta.persistence.*;
 
 import java.sql.Timestamp;
@@ -9,6 +10,8 @@ import java.util.List;
 @Entity
 @Table(name = "strategies")
 public class Strategy {
+
+    private static final StrategyDAO strategyDAO = new StrategyDAO();
 
     @Id
     @Column(name = "StrategyID")
@@ -98,6 +101,7 @@ public class Strategy {
     }
 
     public Strategy getParentStrategy() {
+        parentStrategy = strategyDAO.lazyLoad(this, e -> e.parentStrategy);
         return parentStrategy;
     }
 
@@ -106,6 +110,7 @@ public class Strategy {
     }
 
     public List<StrategyParameterSet> getStrategyParameterSets() {
+        strategyParameterSets = strategyDAO.lazyLoad(this, e -> e.strategyParameterSets);
         if(strategyParameterSets == null) {
             strategyParameterSets = new ArrayList<>();
         }

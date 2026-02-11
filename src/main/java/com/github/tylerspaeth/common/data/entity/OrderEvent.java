@@ -1,5 +1,6 @@
 package com.github.tylerspaeth.common.data.entity;
 
+import com.github.tylerspaeth.common.data.dao.OrderEventDAO;
 import com.github.tylerspaeth.common.enums.OrderStatusEnum;
 import jakarta.persistence.*;
 
@@ -8,6 +9,8 @@ import java.sql.Timestamp;
 @Entity
 @Table(name = "orderevents")
 public class OrderEvent {
+
+    private static final OrderEventDAO orderEventDAO = new OrderEventDAO();
 
     @Id
     @Column(name = "OrderEventID")
@@ -30,6 +33,7 @@ public class OrderEvent {
     }
 
     public Order getOrder() {
+        order = orderEventDAO.lazyLoad(this, e -> e.order);
         return order;
     }
 

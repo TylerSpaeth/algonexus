@@ -1,5 +1,6 @@
 package com.github.tylerspaeth.common.data.entity;
 
+import com.github.tylerspaeth.common.data.dao.CandlestickDAO;
 import jakarta.persistence.*;
 
 import java.sql.Timestamp;
@@ -9,6 +10,8 @@ import java.text.SimpleDateFormat;
 @Entity
 @Table(name = "candlesticks")
 public class Candlestick {
+
+    private static final CandlestickDAO candlestickDAO = new CandlestickDAO();
 
     @Id
     @Column(name = "CandlestickID")
@@ -101,6 +104,7 @@ public class Candlestick {
     }
 
     public HistoricalDataset getHistoricalDataset() {
+        historicalDataset = candlestickDAO.lazyLoad(this, e -> e.historicalDataset);
         return historicalDataset;
     }
 

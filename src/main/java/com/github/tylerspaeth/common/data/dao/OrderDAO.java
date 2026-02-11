@@ -20,32 +20,33 @@ public class OrderDAO extends AbstractDAO<Order> {
      * @return List of all non-finalized orders.
      */
     public List<Order> getOpenOrdersForUser(User user) {
-        EntityManager entityManager = DatasourceConfig.entityManagerFactory.createEntityManager();
-        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<Order> cq = cb.createQuery(Order.class);
-        Root<Order> root = cq.from(Order.class);
+        try (EntityManager entityManager = DatasourceConfig.entityManagerFactory.createEntityManager()) {
+            CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+            CriteriaQuery<Order> cq = cb.createQuery(Order.class);
+            Root<Order> root = cq.from(Order.class);
 
-        Predicate predicate = cb.equal(root.get(Order_.user), user);
-        predicate = cb.and(predicate, cb.isTrue(root.get(Order_.finalized)));
+            Predicate predicate = cb.equal(root.get(Order_.user), user);
+            predicate = cb.and(predicate, cb.isTrue(root.get(Order_.finalized)));
 
-        cq.select(root).where(predicate);
-        return entityManager.createQuery(cq).getResultList();
+            cq.select(root).where(predicate);
+            return entityManager.createQuery(cq).getResultList();
+        }
     }
 
     @Override
     public Order update(Order order) {
-        EntityManager em = DatasourceConfig.entityManagerFactory.createEntityManager();
-        em.getTransaction().begin();
-        Order managed = em.merge(order);
-        em.getTransaction().commit();
-        em.close();
+        try (EntityManager em = DatasourceConfig.entityManagerFactory.createEntityManager()) {
+            em.getTransaction().begin();
+            Order managed = em.merge(order);
+            em.getTransaction().commit();
 
-        if(order.getOrderID() == null) {
-            order.setOrderID(managed.getOrderID());
+            if (order.getOrderID() == null) {
+                order.setOrderID(managed.getOrderID());
+            }
+            // Update the version so that the existing order can be reused
+            order.setVersion(managed.getVersion());
+            return managed;
         }
-        // Update the version so that the existing order can be reused
-        order.setVersion(managed.getVersion());
-        return managed;
     }
 
 }
