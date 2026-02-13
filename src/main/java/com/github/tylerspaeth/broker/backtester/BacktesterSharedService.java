@@ -12,20 +12,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Timestamp;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-// Note that Trail limit orders are not perfectly simulated right now. We can not simulate the behavior that happens in
-// the middle of the candlestick exactly. It could be reworked to incorporate RNG to determine the inner candle ordering.
-// For now, it assumes that the trigger price will be changes before the limit is hit.
-
-// TODO implement randomize candle traversal we should randomize whether H or L is hit first
 // TODO model slippage on fills
-// TODO fill orders on the candlestick after they open
-// TODO consider if orders should be fillable on the same candlestick they are created on
 // TODO simulate tif values
 
 public class BacktesterSharedService {
@@ -64,65 +58,103 @@ public class BacktesterSharedService {
             return;
         }
 
+        Candlestick previousLastSeenCandlestick = lastSeenCandlesticks.get(mapKey);
+
         lastSeenCandlesticks.put(mapKey, lastSeenCandlestick);
         currentTimestamps.put(mapKey, currentTimestamp);
+
+        float previousClose = previousLastSeenCandlestick != null ? previousLastSeenCandlestick.getClose() : lastSeenCandlestick.getOpen();
+
+        // Process each price of the candlestick individually in order of Open -> High/Low (Ordered by which is closer to the open price) -> Close
+        processUpdatedPrice(mapKey, previousClose, lastSeenCandlestick.getOpen(), currentTimestamp);
+        if(Math.abs(lastSeenCandlestick.getOpen() - lastSeenCandlestick.getHigh()) < Math.abs(lastSeenCandlestick.getOpen() - lastSeenCandlestick.getLow())) {
+            processUpdatedPrice(mapKey, lastSeenCandlestick.getOpen(), lastSeenCandlestick.getHigh(), currentTimestamp);
+            processUpdatedPrice(mapKey, lastSeenCandlestick.getHigh(), lastSeenCandlestick.getLow(), currentTimestamp);
+            processUpdatedPrice(mapKey, lastSeenCandlestick.getLow(), lastSeenCandlestick.getClose(), currentTimestamp);
+        } else {
+            processUpdatedPrice(mapKey, lastSeenCandlestick.getOpen(), lastSeenCandlestick.getLow(), currentTimestamp);
+            processUpdatedPrice(mapKey, lastSeenCandlestick.getLow(), lastSeenCandlestick.getHigh(), currentTimestamp);
+            processUpdatedPrice(mapKey, lastSeenCandlestick.getHigh(), lastSeenCandlestick.getClose(), currentTimestamp);
+        }
+
+    }
+
+    /**
+     * Process the most updated price that the data feed has seen
+     * @param mapKey BacktesterDataFeedKey
+     * @param previousPrice The previous price that was processed.
+     * @param currentPrice The most up to date the data feed has seen.
+     * @param currentTimestamp The time that the data feed is at.
+     */
+    private void processUpdatedPrice(BacktesterDataFeedKey mapKey, float previousPrice, float currentPrice, Timestamp currentTimestamp) {
         Map<Integer, Order> pendingOrdersForMapKey = pendingOrders.get(mapKey);
         if(pendingOrdersForMapKey != null) {
-
-            // For the backtester we set the price value on TRL_LMT orders to the price that will trigger the fill
-            for(Order order : pendingOrdersForMapKey.values().stream().filter(order -> order.getOrderType() == OrderTypeEnum.TRL_LMT).collect(Collectors.toSet())) {
-
-                Float trailAmount = order.getTrailAmount();
-                Float trailPercent = order.getTrailPercent();
-
-                if(order.getSide() == SideEnum.BUY) {
-                    if(trailAmount != null) {
-                        float newPrice = lastSeenCandlestick.getLow() + trailAmount;
-                        if(order.getPrice() == null) {
-                            order.setPrice(newPrice);
-                        } else {
-                            order.setPrice(Math.min(order.getPrice(), newPrice));
-                        }
-                    } else if(trailPercent != null) {
-                        float newPrice = lastSeenCandlestick.getLow() * (1 + trailPercent);
-                        if(order.getPrice() == null) {
-                            order.setPrice(newPrice );
-                        } else {
-                            order.setPrice(Math.min(order.getPrice(), newPrice));
-                        }
-                    }
-                } else if(order.getSide() == SideEnum.SELL) {
-                    if(trailAmount != null) {
-                        float newPrice = lastSeenCandlestick.getHigh() - trailAmount;
-                        if(order.getPrice() == null) {
-                            order.setPrice(newPrice);
-                        } else {
-                            order.setPrice(Math.max(order.getPrice(), newPrice));
-                        }
-                    } else if(trailPercent != null) {
-                        float newPrice = lastSeenCandlestick.getHigh() * (1 - trailPercent);
-                        if(order.getPrice() == null) {
-                            order.setPrice(newPrice );
-                        } else {
-                            order.setPrice(Math.max(order.getPrice(), newPrice));
-                        }
-                    }
-                }
-            }
 
             for(Iterator<Order> it = pendingOrdersForMapKey.values().iterator(); it.hasNext();) {
                 Order order = it.next();
                 if(order.isFinalized()) {
                     continue;
                 }
-                boolean orderFilled = tryToFillOrder(mapKey, order, false);
+                boolean orderFilled = tryToFillOrder(previousPrice, currentPrice, currentTimestamp, order);
                 if(orderFilled && order.getOCAGroup() != null && !order.getOCAGroup().isBlank()) {
                     ocaGroupTriggered(mapKey, order.getOCAGroup());
                 }
             }
-
             pendingOrdersForMapKey.entrySet().removeIf(e -> e.getValue().isFinalized());
 
+            updateTrailLimitPrices(pendingOrdersForMapKey.values(), currentPrice);
+        }
+    }
+
+    /**
+     * Update the prices on Trail Limit orders that we use to trigger the fill.
+     * @param pendingOrders Collection of pending orders that need to be filled.
+     * @param currentPrice The current price that the data feed is at.
+     */
+    private void updateTrailLimitPrices(Collection<Order> pendingOrders, float currentPrice) {
+        // For the backtester we set the price value on TRL_LMT orders to the price that will trigger the fill
+        for(Order order : pendingOrders.stream().filter(order -> order.getOrderType() == OrderTypeEnum.TRL_LMT).collect(Collectors.toSet())) {
+
+            if(order.isFinalized() || !order.isTransmit()) {
+                continue;
+            }
+
+            Float trailAmount = order.getTrailAmount();
+            Float trailPercent = order.getTrailPercent();
+
+            if(order.getSide() == SideEnum.BUY) {
+                if(trailAmount != null) {
+                    float newPrice = currentPrice + trailAmount;
+                    if(order.getPrice() == null) {
+                        order.setPrice(newPrice);
+                    } else {
+                        order.setPrice(Math.min(order.getPrice(), newPrice));
+                    }
+                } else if(trailPercent != null) {
+                    float newPrice = currentPrice * (1 + trailPercent);
+                    if(order.getPrice() == null) {
+                        order.setPrice(newPrice );
+                    } else {
+                        order.setPrice(Math.min(order.getPrice(), newPrice));
+                    }
+                }
+            } else if(order.getSide() == SideEnum.SELL) {
+                if(trailAmount != null) {
+                    float newPrice = currentPrice - trailAmount;
+                    if(order.getPrice() == null) {
+                        order.setPrice(newPrice);
+                    } else {
+                        order.setPrice(Math.max(order.getPrice(), newPrice));
+                    }
+                } else if(trailPercent != null) {
+                    float newPrice = currentPrice * (1 - trailPercent);
+                    if(order.getPrice() == null) {
+                        order.setPrice(newPrice );
+                    } else {
+                        order.setPrice(Math.max(order.getPrice(), newPrice));
+                    }
+                }
+            }
         }
     }
 
@@ -169,7 +201,7 @@ public class BacktesterSharedService {
         }
 
         order.setStatus(OrderStatusEnum.SUBMITTED);
-        order.setTimePlaced(currentTimestamps.get(mapKey));
+        order.setTimePlaced(currentTimestamp);
         orderDAO.update(order);
 
         // If the trail is supposed to act like a market order then set its price to the current price so it fills right away
@@ -195,38 +227,15 @@ public class BacktesterSharedService {
         Map<Integer, Order> pendingOrdersForMapKey = pendingOrders.computeIfAbsent(mapKey, _ -> new ConcurrentHashMap<>());
         pendingOrdersForMapKey.put(order.getOrderID(), order);
 
-        boolean orderFilled = tryToFillOrder(mapKey, order, true);
-        if(orderFilled) {
-            if(order.getOCAGroup() != null && !order.getOCAGroup().isBlank()) {
-                ocaGroupTriggered(mapKey, order.getOCAGroup());
-            }
-            pendingOrdersForMapKey.values().stream()
-                    .filter(childOrder -> childOrder.getParentOrder() != null && childOrder.getParentOrder().equals(order))
-                    .forEach(childOrder -> tryToFillOrder(mapKey, childOrder, true));
-        }
-
         // Once a transmit flag is seen all other pending orders should have their flags updated
         if(order.isTransmit()) {
             pendingOrdersForMapKey.values().forEach(pendingOrder -> {
                 if(!pendingOrder.isTransmit() && !order.isFinalized()) {
                     pendingOrder.setTransmit(true);
                     orderDAO.update(pendingOrder);
-
-                    boolean pendingOrderFilled = tryToFillOrder(mapKey, pendingOrder, true);
-                    if(pendingOrderFilled) {
-                        if(pendingOrder.getOCAGroup() != null && !pendingOrder.getOCAGroup().isBlank()) {
-                            ocaGroupTriggered(mapKey, pendingOrder.getOCAGroup());
-                        }
-                        pendingOrdersForMapKey.values().stream()
-                                .filter(childOrder -> childOrder.getParentOrder() != null && childOrder.getParentOrder().equals(pendingOrder))
-                                .forEach(childOrder -> tryToFillOrder(mapKey, childOrder, true));
-                    }
-
                 }
             });
         }
-
-        pendingOrdersForMapKey.entrySet().removeIf(e -> e.getValue().isFinalized());
     }
 
     /**
@@ -267,7 +276,7 @@ public class BacktesterSharedService {
 
         // If a parent is cancelled, cancel the children
         pendingOrdersForMapKey.values().stream()
-                .filter(order1 -> order1.getParentOrder().equals(order))
+                .filter(order1 -> order1.getParentOrder() != null && order.getOrderID().equals(order1.getParentOrder().getOrderID()))
                 .forEach(order1 -> {
                     order1.setStatus(OrderStatusEnum.CANCELLED);
                     order1.setTimeClosed(currentTimestamps.get(mapKey));
@@ -277,15 +286,16 @@ public class BacktesterSharedService {
     }
 
     /**
-     * Attempts to fill the provided Order on the data feed corresponding to the given key.
-     * @param mapKey BacktesterDataFeedKey
+     * Attempts to fill the provided Order at the given price and time
+     * @param previousPrice The previous price that was processed.
+     * @param currentPrice The current price that is being processed.
+     * @param currentTimestamp The current timestamp that is being processed.
      * @param order Order to try filling.
-     * @param newOrder If this is a new order that was just added, rather than trying to fill from a data feed update
      */
-    private boolean tryToFillOrder(BacktesterDataFeedKey mapKey, Order order, boolean newOrder) {
+    private boolean tryToFillOrder(float previousPrice, float currentPrice, Timestamp currentTimestamp, Order order) {
 
-        if(mapKey == null) {
-            LOGGER.error("Can not try to fill order when key is null.");
+        if(currentTimestamp == null) {
+            LOGGER.error("Can not try to fill order when timestamp is null.");
             return false;
         }
 
@@ -304,49 +314,80 @@ public class BacktesterSharedService {
             return false;
         }
 
-        Candlestick lastSeenCandlestick = lastSeenCandlesticks.get(mapKey);
-        Timestamp currentTimestamp = currentTimestamps.get(mapKey);
-
-        float candlestickLow = newOrder ? lastSeenCandlestick.getClose() : lastSeenCandlestick.getLow();
-        float candlestickHigh = newOrder ? lastSeenCandlestick.getClose() : lastSeenCandlestick.getHigh();
-
-        float limitFillPriceLow = newOrder ? candlestickLow : order.getPrice();
-        float limitFillPriceHigh = newOrder ? candlestickHigh : order.getPrice();
-
         // If this is a new order then the only price with will be considered for filling is close price
         switch (order.getOrderType()) {
             case MKT:
-                fillOrder(order, lastSeenCandlestick.getClose(), currentTimestamp, lastSeenCandlestick);
+                fillOrder(order, currentPrice, currentTimestamp, currentPrice);
                 return true;
             case LMT:
-                if(order.getSide() == SideEnum.BUY && candlestickLow <= order.getPrice()) {
-                    fillOrder(order, limitFillPriceLow, currentTimestamp, lastSeenCandlestick);
-                    return true;
-                } else if(order.getSide() == SideEnum.SELL && candlestickHigh >= order.getPrice()) {
-                    fillOrder(order, limitFillPriceHigh, currentTimestamp, lastSeenCandlestick);
-                    return true;
+                float limit = order.getPrice();
+                if (order.getSide() == SideEnum.BUY) {
+
+                    // 1) Marketable at time of evaluation (limit already above market)
+                    if (limit >= previousPrice && limit >= currentPrice) {
+                        // behave like marketable limit → fill at best available price
+                        float fillPrice = Math.min(previousPrice, currentPrice);
+                        fillOrder(order, fillPrice, currentTimestamp, currentPrice);
+                        return true;
+                    }
+
+                    // 2) Price moved downward through the limit
+                    boolean crossedDown = previousPrice > limit && currentPrice <= limit;
+
+                    if (crossedDown) {
+                        // fill at the first price available when touched
+                        float fillPrice = Math.min(previousPrice, limit);
+                        fillOrder(order, fillPrice, currentTimestamp, currentPrice);
+                        return true;
+                    }
+                }
+                else if (order.getSide() == SideEnum.SELL) {
+
+                    // 1) Marketable at time of evaluation (limit already below market)
+                    if (limit <= previousPrice && limit <= currentPrice) {
+                        float fillPrice = Math.max(previousPrice, currentPrice);
+                        fillOrder(order, fillPrice, currentTimestamp, currentPrice);
+                        return true;
+                    }
+
+                    // 2) Price moved upward through the limit
+                    boolean crossedUp = previousPrice < limit && currentPrice >= limit;
+
+                    if (crossedUp) {
+                        float fillPrice = Math.max(previousPrice, limit);
+                        fillOrder(order, fillPrice, currentTimestamp, currentPrice);
+                        return true;
+                    }
                 }
                 break;
             case STP, STP_LMT:
-                if(order.getSide() == SideEnum.BUY && candlestickHigh >= order.getPrice()) {
-                    fillOrder(order, limitFillPriceHigh, currentTimestamp, lastSeenCandlestick);
+                if(order.getSide() == SideEnum.BUY && currentPrice >= order.getPrice()) {
+                    float fillPrice = currentPrice;
+                    if(previousPrice < currentPrice) {
+                        fillPrice = Math.min(Math.max(order.getPrice(), previousPrice), currentPrice);
+                    }
+                    fillOrder(order, fillPrice, currentTimestamp, currentPrice);
                     return true;
-                } else if(order.getSide() == SideEnum.SELL && candlestickLow <= order.getPrice()) {
-                    fillOrder(order, limitFillPriceLow, currentTimestamp, lastSeenCandlestick);
+                } else if(order.getSide() == SideEnum.SELL && currentPrice <= order.getPrice()) {
+                    float fillPrice = currentPrice;
+                    if(previousPrice > currentPrice) {
+                        fillPrice = Math.max(Math.min(order.getPrice(), previousPrice), currentPrice);
+                    }
+                    fillOrder(order, fillPrice, currentTimestamp, currentPrice);
                     return true;
                 }
                 break;
             case TRL_LMT:
                 // For trail limits in the backtester, the price field on the order will store the current limit price
-                if(order.getSide() == SideEnum.BUY && candlestickHigh >= order.getPrice()) {
+                if(order.getSide() == SideEnum.BUY && currentPrice >= order.getPrice()) {
                     float fillPrice = order.getPrice();
                     order.setPrice(null);
-                    fillOrder(order, fillPrice, currentTimestamp, lastSeenCandlestick);
+                    fillOrder(order, fillPrice, currentTimestamp, currentPrice);
                     return true;
-                } else if(order.getSide() == SideEnum.SELL && candlestickLow <= order.getPrice()) {
+                } else if(order.getSide() == SideEnum.SELL && currentPrice <= order.getPrice()) {
                     float fillPrice = order.getPrice();
                     order.setPrice(null);
-                    fillOrder(order, fillPrice, currentTimestamp, lastSeenCandlestick);
+                    fillOrder(order, fillPrice, currentTimestamp, currentPrice);
                     return true;
                 }
                 break;
@@ -364,15 +405,15 @@ public class BacktesterSharedService {
      * @param order Order that needs to be filled.
      * @param price Price to fill the order at.
      * @param timestamp Time in which the order is filled.
-     * @param lastSeenCandlestick Candlestick that was last seen before filling the order.
+     * @param currentPrice The price that the data feed is currently at.
      */
-    private void fillOrder(Order order, float price, Timestamp timestamp, Candlestick lastSeenCandlestick) {
+    private void fillOrder(Order order, float price, Timestamp timestamp, float currentPrice) {
         Trade trade = new Trade();
         trade.setSide(order.getSide());
 
         // Default tick size to 0.01 if not set
         float tickSize = order.getSymbol().getTickSize() == null ? 0.01f : order.getSymbol().getTickSize();
-        setTradeFillPrice(trade, order.getSide(), order.getSymbol(), tickSize, price, lastSeenCandlestick);
+        setTradeFillPrice(trade, order.getSide(), order.getSymbol(), tickSize, price, currentPrice);
 
         trade.setFillQuantity(order.getQuantity());
         trade.setTimestamp(timestamp);
@@ -408,16 +449,16 @@ public class BacktesterSharedService {
      * @param symbol Symbol
      * @param tickSize tick size in points
      * @param price price in dollars or points
-     * @param lastSeenCandlestick Candlestick that was last seen before filling the order
+     * @param currentPrice The current price that the data feed is at.
      */
-    private void setTradeFillPrice(Trade trade, SideEnum side, Symbol symbol, float tickSize, float price, Candlestick lastSeenCandlestick) {
+    private void setTradeFillPrice(Trade trade, SideEnum side, Symbol symbol, float tickSize, float price, float currentPrice) {
         boolean crossesSpread = false;
         // We only care about simulating spread with futures right now. We will assume the fill is 1 tick worse than what we saw.
         if(symbol.getAssetType() == AssetTypeEnum.FUTURES) {
             if(side == SideEnum.BUY) {
-                crossesSpread = price >= lastSeenCandlestick.getClose();
+                crossesSpread = price >= currentPrice;
             } else {
-                crossesSpread = price <= lastSeenCandlestick.getClose();
+                crossesSpread = price <= currentPrice;
             }
         }
         if(crossesSpread) {

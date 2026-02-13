@@ -3,10 +3,7 @@ package com.github.tylerspaeth.broker.backtester;
 import com.github.tylerspaeth.common.data.dao.CommissionDAO;
 import com.github.tylerspaeth.common.data.dao.OrderDAO;
 import com.github.tylerspaeth.common.data.dao.TradeDAO;
-import com.github.tylerspaeth.common.data.entity.Candlestick;
-import com.github.tylerspaeth.common.data.entity.Order;
-import com.github.tylerspaeth.common.data.entity.Symbol;
-import com.github.tylerspaeth.common.data.entity.User;
+import com.github.tylerspaeth.common.data.entity.*;
 import com.github.tylerspaeth.common.enums.OrderStatusEnum;
 import com.github.tylerspaeth.common.enums.OrderTypeEnum;
 import com.github.tylerspaeth.common.enums.SideEnum;
@@ -21,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.lang.reflect.Field;
 import java.sql.Timestamp;
+import java.util.List;
 
 @ExtendWith({MockitoExtension.class})
 public class BacktesterSharedServiceTest {
@@ -39,6 +37,19 @@ public class BacktesterSharedServiceTest {
         backtesterSharedService = new BacktesterSharedService(orderDAO, tradeDAO, commissionDAO);
     }
 
+    private void loadData(int symbolID) {
+        BacktesterDataFeedKey key = new BacktesterDataFeedKey(1, Thread.currentThread().threadId());
+        Timestamp timestamp = new Timestamp(0);
+        Candlestick candlestick = new Candlestick();
+        candlestick.setOpen(1f);
+        candlestick.setHigh(5f);
+        candlestick.setLow(0f);
+        candlestick.setClose(3f);
+        candlestick.setVolume(1000f);
+        candlestick.setTimestamp(timestamp);
+
+        backtesterSharedService.updateDataFeed(key, candlestick, timestamp);
+    }
 
     private Symbol loadDataAndCreateSymbol(int symbolID) throws Exception {
         BacktesterDataFeedKey key = new BacktesterDataFeedKey(1, Thread.currentThread().threadId());
@@ -107,16 +118,15 @@ public class BacktesterSharedServiceTest {
 
     @Test
     public void testUpdateDataFeedCreatesNewDataFeedIfNotExist() {
-        backtesterSharedService.updateDataFeed(new BacktesterDataFeedKey(1, Thread.currentThread().threadId()), new Candlestick(), new Timestamp(1));
+        backtesterSharedService.updateDataFeed(new BacktesterDataFeedKey(1, Thread.currentThread().threadId()), new Candlestick(0f, 0f, 0f, 0f, 0f, new Timestamp(1)), new Timestamp(1));
         Assertions.assertEquals(1, backtesterSharedService.currentTimestamps.size());
         Assertions.assertEquals(1, backtesterSharedService.lastSeenCandlesticks.size());
     }
 
     @Test
     public void testUpdateDataFeedUpdatesDataFeedIfExists() {
-        Candlestick updated = new Candlestick();
-        updated.setHigh(100f);
-        backtesterSharedService.updateDataFeed(new BacktesterDataFeedKey(1, Thread.currentThread().threadId()), new Candlestick(), new Timestamp(1));
+        Candlestick updated = new Candlestick(0f, 100f, 0f, 0f, 0f, new Timestamp(5));
+        backtesterSharedService.updateDataFeed(new BacktesterDataFeedKey(1, Thread.currentThread().threadId()), new Candlestick(0f, 0f, 0f, 0f, 0f, new Timestamp(1)), new Timestamp(1));
         backtesterSharedService.updateDataFeed(new BacktesterDataFeedKey(1, Thread.currentThread().threadId()), updated, new Timestamp(5));
         Assertions.assertEquals(1, backtesterSharedService.currentTimestamps.size());
         Assertions.assertEquals(1, backtesterSharedService.lastSeenCandlesticks.size());
@@ -126,9 +136,8 @@ public class BacktesterSharedServiceTest {
 
     @Test
     public void testUpdateOtherDataFeedDoesNotOverwrite() {
-        Candlestick updated = new Candlestick();
-        updated.setHigh(100f);
-        backtesterSharedService.updateDataFeed(new BacktesterDataFeedKey(1, Thread.currentThread().threadId()), new Candlestick(), new Timestamp(1));
+        Candlestick updated = new Candlestick(0f, 100f, 0f, 0f, 0f, new Timestamp(5));
+        backtesterSharedService.updateDataFeed(new BacktesterDataFeedKey(1, Thread.currentThread().threadId()), new Candlestick(0f, 0f, 0f, 0f, 0f, new Timestamp(1)), new Timestamp(1));
         backtesterSharedService.updateDataFeed(new BacktesterDataFeedKey(2, Thread.currentThread().threadId()), updated, new Timestamp(5));
         Assertions.assertEquals(2, backtesterSharedService.currentTimestamps.size());
         Assertions.assertEquals(2, backtesterSharedService.lastSeenCandlesticks.size());
@@ -136,13 +145,13 @@ public class BacktesterSharedServiceTest {
 
     @Test
     public void testHasActiveDataFeedReturnsTrueWhenExpected() {
-        backtesterSharedService.updateDataFeed(new BacktesterDataFeedKey(1, Thread.currentThread().threadId()), new Candlestick(), new Timestamp(1));
+        backtesterSharedService.updateDataFeed(new BacktesterDataFeedKey(1, Thread.currentThread().threadId()), new Candlestick(0f, 0f, 0f, 0f, 0f, new Timestamp(1)), new Timestamp(1));
         Assertions.assertTrue(backtesterSharedService.hasActiveDataFeed(new BacktesterDataFeedKey(1, Thread.currentThread().threadId())));
     }
 
     @Test
     public void testHasActiveDataFeedReturnsFalseWhenExpected() {
-        backtesterSharedService.updateDataFeed(new BacktesterDataFeedKey(1, Thread.currentThread().threadId()), new Candlestick(), new Timestamp(1));
+        backtesterSharedService.updateDataFeed(new BacktesterDataFeedKey(1, Thread.currentThread().threadId()), new Candlestick(0f, 0f, 0f, 0f, 0f, new Timestamp(1)), new Timestamp(1));
         Assertions.assertFalse(backtesterSharedService.hasActiveDataFeed(new BacktesterDataFeedKey(2, Thread.currentThread().threadId())));
     }
 
@@ -165,7 +174,7 @@ public class BacktesterSharedServiceTest {
     @Test
     public void testAddInvalidOrderDoesNothing() {
         Order order = new Order();
-        backtesterSharedService.updateDataFeed(new BacktesterDataFeedKey(1, Thread.currentThread().threadId()), new Candlestick(), new Timestamp(1));
+        backtesterSharedService.updateDataFeed(new BacktesterDataFeedKey(1, Thread.currentThread().threadId()), new Candlestick(0f, 0f, 0f, 0f, 0f, new Timestamp(0)), new Timestamp(1));
         backtesterSharedService.addOrder(new BacktesterDataFeedKey(1, Thread.currentThread().threadId()), order);
         Assertions.assertEquals(0, backtesterSharedService.pendingOrders.size());
         Assertions.assertNull(order.getStatus());
@@ -191,13 +200,17 @@ public class BacktesterSharedServiceTest {
 
         Mockito.when(orderDAO.update(Mockito.any(Order.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
 
+        Mockito.when(commissionDAO.findDefaultCommissionForAssetType(Mockito.any())).thenReturn(new Commission());
+
         backtesterSharedService.addOrder(key, order);
+
+        loadData(1);
 
         Assertions.assertEquals(OrderStatusEnum.FILLED, order.getStatus());
         Assertions.assertTrue(order.isFinalized());
         Assertions.assertEquals(1, order.getTrades().size());
         Assertions.assertEquals(1, order.getTrades().getFirst().getFillQuantity());
-        Assertions.assertEquals(3, order.getTrades().getFirst().getFillPrice());
+        Assertions.assertEquals(1, order.getTrades().getFirst().getFillPrice());
         Mockito.verify(orderDAO, Mockito.atLeast(1)).update(Mockito.any(Order.class));
     }
 
@@ -223,11 +236,13 @@ public class BacktesterSharedServiceTest {
 
         backtesterSharedService.addOrder(key, order);
 
+        loadData(1);
+
         Assertions.assertEquals(OrderStatusEnum.FILLED, order.getStatus());
         Assertions.assertTrue(order.isFinalized());
         Assertions.assertEquals(1, order.getTrades().size());
         Assertions.assertEquals(4, order.getTrades().getFirst().getFillQuantity());
-        Assertions.assertEquals(3, order.getTrades().getFirst().getFillPrice());
+        Assertions.assertEquals(1, order.getTrades().getFirst().getFillPrice());
         Mockito.verify(orderDAO, Mockito.atLeast(1)).update(Mockito.any(Order.class));
     }
 
@@ -281,10 +296,12 @@ public class BacktesterSharedServiceTest {
 
         backtesterSharedService.addOrder(key, order);
 
+        loadData(1);
+
         Assertions.assertEquals(OrderStatusEnum.FILLED, order.getStatus());
         Assertions.assertTrue(order.isFinalized());
         Assertions.assertEquals(1, order.getTrades().size());
-        Assertions.assertEquals(3, order.getTrades().getFirst().getFillPrice());
+        Assertions.assertEquals(1, order.getTrades().getFirst().getFillPrice());
         Mockito.verify(orderDAO, Mockito.atLeast(1)).update(Mockito.any(Order.class));
     }
 
@@ -310,10 +327,12 @@ public class BacktesterSharedServiceTest {
 
         backtesterSharedService.addOrder(key, order);
 
+        loadData(1);
+
         Assertions.assertEquals(OrderStatusEnum.FILLED, order.getStatus());
         Assertions.assertTrue(order.isFinalized());
         Assertions.assertEquals(1, order.getTrades().size());
-        Assertions.assertEquals(3, order.getTrades().getFirst().getFillPrice());
+        Assertions.assertEquals(2, order.getTrades().getFirst().getFillPrice());
         Mockito.verify(orderDAO, Mockito.atLeast(1)).update(Mockito.any(Order.class));
     }
 
@@ -364,13 +383,16 @@ public class BacktesterSharedServiceTest {
         orderID.set(order, 1);
 
         Mockito.when(orderDAO.update(Mockito.any(Order.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
+        Mockito.when(commissionDAO.findDefaultCommissionForAssetType(Mockito.any())).thenReturn(new Commission());
 
         backtesterSharedService.addOrder(key, order);
+
+        loadData(1);
 
         Assertions.assertEquals(OrderStatusEnum.FILLED, order.getStatus());
         Assertions.assertTrue(order.isFinalized());
         Assertions.assertEquals(1, order.getTrades().size());
-        Assertions.assertEquals(3, order.getTrades().getFirst().getFillPrice());
+        Assertions.assertEquals(2, order.getTrades().getFirst().getFillPrice());
         Mockito.verify(orderDAO, Mockito.atLeast(1)).update(Mockito.any(Order.class));
     }
 
@@ -423,6 +445,9 @@ public class BacktesterSharedServiceTest {
         Mockito.when(orderDAO.update(Mockito.any(Order.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
 
         backtesterSharedService.addOrder(key, order);
+
+        Mockito.when(commissionDAO.findDefaultCommissionForAssetType(Mockito.any())).thenReturn(new Commission());
+        loadData(1);
 
         Assertions.assertEquals(OrderStatusEnum.FILLED, order.getStatus());
         Assertions.assertTrue(order.isFinalized());
@@ -481,10 +506,13 @@ public class BacktesterSharedServiceTest {
 
         backtesterSharedService.addOrder(key, order);
 
+        Mockito.when(commissionDAO.findDefaultCommissionForAssetType(Mockito.any())).thenReturn(new Commission());
+        loadData(1);
+
         Assertions.assertEquals(OrderStatusEnum.FILLED, order.getStatus());
         Assertions.assertTrue(order.isFinalized());
         Assertions.assertEquals(1, order.getTrades().size());
-        Assertions.assertEquals(3, order.getTrades().getFirst().getFillPrice());
+        Assertions.assertEquals(0, order.getTrades().getFirst().getFillPrice());
         Mockito.verify(orderDAO, Mockito.atLeast(1)).update(Mockito.any(Order.class));
     }
 
@@ -509,6 +537,8 @@ public class BacktesterSharedServiceTest {
         Mockito.when(orderDAO.update(Mockito.any(Order.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
 
         backtesterSharedService.addOrder(key, order);
+
+        loadData(1);
 
         Assertions.assertEquals(OrderStatusEnum.FILLED, order.getStatus());
         Assertions.assertTrue(order.isFinalized());
@@ -623,10 +653,12 @@ public class BacktesterSharedServiceTest {
 
         backtesterSharedService.addOrder(key, order);
 
+        loadData(1);
+
         Assertions.assertEquals(OrderStatusEnum.FILLED, order.getStatus());
         Assertions.assertTrue(order.isFinalized());
         Assertions.assertEquals(1, order.getTrades().size());
-        Assertions.assertEquals(3, order.getTrades().getFirst().getFillPrice());
+        Assertions.assertEquals(1, order.getTrades().getFirst().getFillPrice());
         Mockito.verify(orderDAO, Mockito.atLeast(1)).update(Mockito.any(Order.class));
     }
 
@@ -652,6 +684,8 @@ public class BacktesterSharedServiceTest {
 
         backtesterSharedService.addOrder(key, filledOrder);
 
+        loadData(1);
+
         Assertions.assertEquals(OrderStatusEnum.SUBMITTED, filledOrder.getStatus());
         Assertions.assertFalse(filledOrder.isFinalized());
 
@@ -671,10 +705,12 @@ public class BacktesterSharedServiceTest {
 
         backtesterSharedService.addOrder(key, cancelledOrder);
 
+        loadData(1);
+
         Assertions.assertEquals(OrderStatusEnum.FILLED, filledOrder.getStatus());
         Assertions.assertTrue(filledOrder.isFinalized());
         Assertions.assertEquals(1, filledOrder.getTrades().size());
-        Assertions.assertEquals(3, filledOrder.getTrades().getFirst().getFillPrice());
+        Assertions.assertEquals(1, filledOrder.getTrades().getFirst().getFillPrice());
 
         Assertions.assertEquals(OrderStatusEnum.CANCELLED, cancelledOrder.getStatus());
         Assertions.assertTrue(cancelledOrder.isFinalized());
@@ -685,6 +721,9 @@ public class BacktesterSharedServiceTest {
 
     @Test
     public void testFillSecondMarketOrderInOCAGroupWhenAdded() throws Exception {
+
+        Mockito.when(commissionDAO.findDefaultCommissionForAssetType(Mockito.any())).thenReturn(new Commission());
+
         BacktesterDataFeedKey key = new BacktesterDataFeedKey(1, Thread.currentThread().threadId());
         Symbol symbol = loadDataAndCreateSymbol(1);
 
@@ -723,26 +762,25 @@ public class BacktesterSharedServiceTest {
 
         backtesterSharedService.addOrder(key, cancelledOrder);
 
-        Assertions.assertEquals(OrderStatusEnum.FILLED, cancelledOrder.getStatus());
-        Assertions.assertTrue(cancelledOrder.isFinalized());
-        Assertions.assertEquals(1, cancelledOrder.getTrades().size());
-        Assertions.assertEquals(3, cancelledOrder.getTrades().getFirst().getFillPrice());
+        loadData(1);
 
-        Assertions.assertEquals(OrderStatusEnum.CANCELLED, filledOrder.getStatus());
-        Assertions.assertTrue(filledOrder.isFinalized());
-        Assertions.assertEquals(0, filledOrder.getTrades().size());
-
+        Assertions.assertTrue(List.of(cancelledOrder.getStatus(), filledOrder.getStatus()).contains(OrderStatusEnum.CANCELLED));
+        Assertions.assertTrue(List.of(cancelledOrder.getStatus(), filledOrder.getStatus()).contains(OrderStatusEnum.FILLED));
         Mockito.verify(orderDAO, Mockito.atLeast(2)).update(Mockito.any(Order.class));
     }
 
     @Test
-    public void testFillOneOCAGroupDoesNotAffectAnother() throws Exception{
+    public void testFillOneOCAGroupDoesNotAffectAnother() throws Exception {
+
+        Mockito.when(commissionDAO.findDefaultCommissionForAssetType(Mockito.any())).thenReturn(new Commission());
+
         BacktesterDataFeedKey key = new BacktesterDataFeedKey(1, Thread.currentThread().threadId());
         Symbol symbol = loadDataAndCreateSymbol(1);
 
         Order otherOrder = new Order();
-        otherOrder.setOrderType(OrderTypeEnum.MKT);
-        otherOrder.setSide(SideEnum.BUY);
+        otherOrder.setOrderType(OrderTypeEnum.LMT);
+        otherOrder.setPrice(100f);
+        otherOrder.setSide(SideEnum.SELL);
         otherOrder.setTimeInForce(TimeInForceEnum.GTC);
         otherOrder.setQuantity(4f);
         otherOrder.setUser(new User());
@@ -772,12 +810,14 @@ public class BacktesterSharedServiceTest {
 
         backtesterSharedService.addOrder(key, filledOrder);
 
+        loadData(1);
+
         Assertions.assertEquals(OrderStatusEnum.FILLED, filledOrder.getStatus());
         Assertions.assertTrue(filledOrder.isFinalized());
         Assertions.assertEquals(1, filledOrder.getTrades().size());
-        Assertions.assertEquals(3, filledOrder.getTrades().getFirst().getFillPrice());
+        Assertions.assertEquals(1, filledOrder.getTrades().getFirst().getFillPrice());
 
-        Assertions.assertEquals(OrderStatusEnum.SUBMITTED, otherOrder.getStatus());
+        Assertions.assertNotEquals(OrderStatusEnum.CANCELLED, otherOrder.getStatus());
         Assertions.assertFalse(otherOrder.isFinalized());
         Assertions.assertEquals(0, otherOrder.getTrades().size());
 
@@ -832,6 +872,9 @@ public class BacktesterSharedServiceTest {
 
     @Test
     public void testParentMarketChildLimitDoesNotFillChild() throws Exception {
+
+        Mockito.when(commissionDAO.findDefaultCommissionForAssetType(Mockito.any())).thenReturn(new Commission());
+
         BacktesterDataFeedKey key = new BacktesterDataFeedKey(1, Thread.currentThread().threadId());
         Symbol symbol = loadDataAndCreateSymbol(1);
 
@@ -852,9 +895,9 @@ public class BacktesterSharedServiceTest {
         backtesterSharedService.addOrder(key, parentOrder);
 
         Order childOrder = new Order();
-        childOrder.setPrice(0f);
+        childOrder.setPrice(100f);
         childOrder.setOrderType(OrderTypeEnum.LMT);
-        childOrder.setSide(SideEnum.BUY);
+        childOrder.setSide(SideEnum.SELL);
         childOrder.setTimeInForce(TimeInForceEnum.GTC);
         childOrder.setQuantity(4f);
         childOrder.setUser(new User());
@@ -866,6 +909,8 @@ public class BacktesterSharedServiceTest {
         childOrderID.set(childOrder, 2);
 
         backtesterSharedService.addOrder(key, childOrder);
+
+        loadData(1);
 
         Assertions.assertEquals(OrderStatusEnum.FILLED, parentOrder.getStatus());
         Assertions.assertTrue(parentOrder.isFinalized());
@@ -912,6 +957,8 @@ public class BacktesterSharedServiceTest {
 
         backtesterSharedService.addOrder(key, childOrder);
 
+        loadData(1);
+
         Assertions.assertEquals(OrderStatusEnum.FILLED, parentOrder.getStatus());
         Assertions.assertTrue(parentOrder.isFinalized());
         Assertions.assertEquals(1, parentOrder.getTrades().size());
@@ -942,6 +989,8 @@ public class BacktesterSharedServiceTest {
 
         backtesterSharedService.addOrder(key, parentOrder);
 
+        loadData(1);
+
         Order childOrder = new Order();
         childOrder.setOrderType(OrderTypeEnum.MKT);
         childOrder.setSide(SideEnum.BUY);
@@ -956,6 +1005,8 @@ public class BacktesterSharedServiceTest {
         childOrderID.set(childOrder, 2);
 
         backtesterSharedService.addOrder(key, childOrder);
+
+        loadData(1);
 
         Assertions.assertEquals(OrderStatusEnum.FILLED, parentOrder.getStatus());
         Assertions.assertTrue(parentOrder.isFinalized());
@@ -1055,6 +1106,9 @@ public class BacktesterSharedServiceTest {
 
     @Test
     public void testUpdateDataFeedStopOrderFillsAtCorrectPriceSell() throws Exception {
+
+        Mockito.when(commissionDAO.findDefaultCommissionForAssetType(Mockito.any())).thenReturn(new Commission());
+
         BacktesterDataFeedKey key = new BacktesterDataFeedKey(1, Thread.currentThread().threadId());
         Symbol symbol = loadDataAnddCreateSymbol(1, 100, 200, 50, 100, 1000);
 
@@ -1238,6 +1292,8 @@ public class BacktesterSharedServiceTest {
         childOrderID.setAccessible(true);
         childOrderID.set(childOrder, 2);
         backtesterSharedService.addOrder(key, childOrder);
+
+        loadData(1);
 
         backtesterSharedService.cancelOrder(key, parentOrder.getOrderID());
         Assertions.assertEquals(OrderStatusEnum.CANCELLED, parentOrder.getStatus());
