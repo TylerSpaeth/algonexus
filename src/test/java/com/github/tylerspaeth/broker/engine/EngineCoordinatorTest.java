@@ -153,12 +153,6 @@ public class EngineCoordinatorTest {
     public void testUseBacktesterWillUseBacktestServices() throws InterruptedException {
         engineCoordinator.useBacktester();
 
-        Mockito.when(executorService.submit(Mockito.any(Runnable.class))).thenAnswer(invocationOnMock -> {
-            SubscribeToDataFeedRequest request = invocationOnMock.getArgument(0);
-            request.run();
-            return request.get();
-        });
-
         Thread requestThread = new Thread(() -> {
             try {
                 engineCoordinator.submitRequest(new SubscribeToDataFeedRequest(new Symbol()));
@@ -175,7 +169,7 @@ public class EngineCoordinatorTest {
 
         Assertions.assertTrue(runThread.isAlive());
         Assertions.assertFalse(requestThread.isAlive());
-        Mockito.verify(executorService, Mockito.times(1)).submit(Mockito.any(Runnable.class));
+        Mockito.verify(executorService, Mockito.times(0)).submit(Mockito.any(Runnable.class));
         Mockito.verify(backtesterDataFeedService, Mockito.times(1)).subscribeToDataFeed(Mockito.any(long.class), Mockito.any(Symbol.class));
     }
 

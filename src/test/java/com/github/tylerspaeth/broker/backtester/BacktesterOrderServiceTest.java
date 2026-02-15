@@ -18,7 +18,6 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.lang.reflect.Field;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -37,7 +36,7 @@ public class BacktesterOrderServiceTest {
 
     @BeforeEach
     public void setup() {
-        backtesterOrderService = new BacktesterOrderService(backtesterSharedService, orderDAO, symbolDAO, new ConcurrentHashMap<>());
+        backtesterOrderService = new BacktesterOrderService(backtesterSharedService, orderDAO, symbolDAO);
     }
 
     @Test

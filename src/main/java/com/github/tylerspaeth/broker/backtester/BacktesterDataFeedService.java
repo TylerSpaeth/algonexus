@@ -30,15 +30,12 @@ public class BacktesterDataFeedService implements IDataFeedService {
     private final Map<BacktesterDataFeedKey, Integer> datafeedIntervalMap = new ConcurrentHashMap<>(); // Map of the interval duration being read by each data feed
     private final Map<BacktesterDataFeedKey, IntervalUnitEnum> dataFeedIntervalUnitMap = new ConcurrentHashMap<>(); // Map of the interval unit being read by each data feed
     private final Map<BacktesterDataFeedKey, Deque<Candlestick>> candlesticksPendingReturn = new ConcurrentHashMap<>(); // Map of candlesticks that have already been built for each data feed
-    private final Map<BacktesterDataFeedKey, Object> datafeedLocks; // Locks for accessing the shared service
-
     private final BacktesterSharedService backtesterSharedService;
 
-    public BacktesterDataFeedService(BacktesterSharedService backtesterSharedService, SymbolDAO symbolDAO, CandlestickDAO candlestickDAO, ConcurrentHashMap<BacktesterDataFeedKey, Object> datafeedLocks) {
+    public BacktesterDataFeedService(BacktesterSharedService backtesterSharedService, SymbolDAO symbolDAO, CandlestickDAO candlestickDAO) {
         this.backtesterSharedService = backtesterSharedService;
         this.symbolDAO = symbolDAO;
         this.candlestickDAO = candlestickDAO;
-        this.datafeedLocks = datafeedLocks;
     }
 
     @Override
@@ -147,34 +144,30 @@ public class BacktesterDataFeedService implements IDataFeedService {
         candlesticksToCondense.addFirst(firstCandlestick);
         lastSeenTime = candlesticksToCondense.getLast().getTimestamp();
 
-        Object datafeedLock = datafeedLocks.computeIfAbsent(mapKey, _ -> new Object());
 
-        synchronized (datafeedLock) {
-
-            // Build Candlesticks of desired size
-            while (candlesticksToCondense.size() >= numCandlesToCondense) {
-                List<Candlestick> singleCandlestickList = new ArrayList<>();
-                for (int i = 0; i < numCandlesToCondense; i++) {
-                    singleCandlestickList.add(candlesticksToCondense.removeFirst());
-                }
-
-                Candlestick condensed = condenseCandlesticks(singleCandlestickList);
-
-                prebuiltCandlesticks.add(condensed);
+        // Build Candlesticks of desired size
+        while (candlesticksToCondense.size() >= numCandlesToCondense) {
+            List<Candlestick> singleCandlestickList = new ArrayList<>();
+            for (int i = 0; i < numCandlesToCondense; i++) {
+                singleCandlestickList.add(candlesticksToCondense.removeFirst());
             }
 
-            if (dataFeedToReturn.isEmpty() && !prebuiltCandlesticks.isEmpty()) {
-                dataFeedToReturn.add(prebuiltCandlesticks.removeFirst());
-            }
+            Candlestick condensed = condenseCandlesticks(singleCandlestickList);
 
-            lastSeenOffsets.put(mapKey, lastSeenTime);
-
-            if(!dataFeedToReturn.isEmpty()) {
-                backtesterSharedService.updateDataFeed(mapKey, dataFeedToReturn.getFirst(), dataFeedToReturn.getFirst().getTimestamp());
-            }
-
-            return dataFeedToReturn;
+            prebuiltCandlesticks.add(condensed);
         }
+
+        if (dataFeedToReturn.isEmpty() && !prebuiltCandlesticks.isEmpty()) {
+            dataFeedToReturn.add(prebuiltCandlesticks.removeFirst());
+        }
+
+        lastSeenOffsets.put(mapKey, lastSeenTime);
+
+        if(!dataFeedToReturn.isEmpty()) {
+            backtesterSharedService.updateDataFeed(mapKey, dataFeedToReturn.getFirst(), dataFeedToReturn.getFirst().getTimestamp());
+        }
+
+        return dataFeedToReturn;
     }
 
     @Override

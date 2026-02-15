@@ -1,6 +1,5 @@
 package com.github.tylerspaeth;
 
-import com.github.tylerspaeth.broker.backtester.BacktesterDataFeedKey;
 import com.github.tylerspaeth.broker.backtester.BacktesterDataFeedService;
 import com.github.tylerspaeth.broker.backtester.BacktesterOrderService;
 import com.github.tylerspaeth.broker.backtester.BacktesterSharedService;
@@ -14,7 +13,10 @@ import com.github.tylerspaeth.ui.TUI;
 import com.github.tylerspaeth.ui.UIContext;
 import com.github.tylerspaeth.ui.view.signin.SignInMenu;
 
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Utility class for initialization/wiring logic that should be kept out of the main class.
@@ -40,13 +42,12 @@ public class AppInitializer {
         TradeDAO tradeDAO = new TradeDAO();
         CommissionDAO commissionDAO = new CommissionDAO();
         BacktesterSharedService backtesterSharedService = new BacktesterSharedService(orderDAO, tradeDAO, commissionDAO);
-        ConcurrentHashMap<BacktesterDataFeedKey, Object> datafeedLocks = new ConcurrentHashMap<>();
         return new EngineCoordinator(createEngineExecutorService(),
                 new IBAccountService(),
                 new IBDataFeedService(),
                 new IBOrderService(orderDAO),
-                new BacktesterDataFeedService(backtesterSharedService, symbolDAO, candlestickDAO, datafeedLocks),
-                new BacktesterOrderService(backtesterSharedService, orderDAO, symbolDAO, datafeedLocks));
+                new BacktesterDataFeedService(backtesterSharedService, symbolDAO, candlestickDAO),
+                new BacktesterOrderService(backtesterSharedService, orderDAO, symbolDAO));
     }
 
     /**

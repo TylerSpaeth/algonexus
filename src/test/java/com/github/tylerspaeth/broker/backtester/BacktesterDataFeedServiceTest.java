@@ -20,7 +20,6 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static org.mockito.Mockito.when;
 
@@ -41,7 +40,7 @@ public class BacktesterDataFeedServiceTest {
 
     @BeforeEach
     public void setup() {
-        backtesterDataFeedService = new BacktesterDataFeedService(new BacktesterSharedService(orderDAO, tradeDAO, commissionDAO), symbolDAO, candlestickDAO, new ConcurrentHashMap<>());
+        backtesterDataFeedService = new BacktesterDataFeedService(new BacktesterSharedService(orderDAO, tradeDAO, commissionDAO), symbolDAO, candlestickDAO);
     }
 
     private void mockPaginatedCandlesticks() {
