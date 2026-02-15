@@ -43,6 +43,7 @@ public class LiveTradingMenu extends AbstractMenuView {
             });
 
             setOptions(options, optionBehaviors);
+            setOptionsPerPage(10);
         }
     }
 

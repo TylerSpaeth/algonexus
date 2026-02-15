@@ -50,6 +50,7 @@ public class ParameterSetRunMenu extends AbstractMenuView {
         });
 
         setOptions(options, optionBehaviors);
+        setOptionsPerPage(10);
     }
 
 }

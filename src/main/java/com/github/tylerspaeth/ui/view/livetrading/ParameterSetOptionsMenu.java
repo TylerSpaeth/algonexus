@@ -49,6 +49,7 @@ public class ParameterSetOptionsMenu extends AbstractMenuView {
         });
 
         setOptions(options, optionBehaviors);
+        setOptionsPerPage(10);
     }
 
     public void setStrategyParameterSet(StrategyParameterSet strategyParameterSet) {

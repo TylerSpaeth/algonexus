@@ -14,6 +14,7 @@ public class SettingsMenu extends AbstractMenuView {
     public void onEnter(UIContext uiContext)    {
         super.onEnter(uiContext);
         setTopText("Settings Menu");
+        setOptionsPerPage(10);
     }
 
 }

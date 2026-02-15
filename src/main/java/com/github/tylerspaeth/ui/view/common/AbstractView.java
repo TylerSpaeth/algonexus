@@ -10,8 +10,6 @@ public abstract class AbstractView {
 
     protected UIContext uiContext;
 
-
-
     // Number of columns to leave blank on top and left. These are for use in concrete Views.
     // The final paddings are the relative paddings for this view.
     // The mutable paddings represent the actual position in the terminal. They should be treated as read only by concrete classes.

@@ -19,6 +19,9 @@ public abstract class AbstractMenuView extends AbstractView {
     private List<String> options;
     private List<Supplier<AbstractView>> optionBehaviors;
 
+    private int optionsPerPage;
+    private int currentPage = 0;
+
     private int selected = 0;
 
     public AbstractMenuView(AbstractView parent) {
@@ -53,6 +56,10 @@ public abstract class AbstractMenuView extends AbstractView {
         }
         this.options = options;
         this.optionBehaviors = optionBehaviors;
+
+        if(optionsPerPage == 0) {
+            optionsPerPage = options.size();
+        }
     }
 
     @Override
@@ -74,8 +81,9 @@ public abstract class AbstractMenuView extends AbstractView {
 
         // Print options
         if(options != null) {
-            for (int i = 0; i < options.size(); i++) {
-                if (i == selected) {
+            int upperBoundOfCurrentPage = Math.min(options.size() - (optionsPerPage * currentPage), optionsPerPage);
+            for (int i = optionsPerPage * currentPage; i < optionsPerPage * currentPage + upperBoundOfCurrentPage; i++) {
+                if (i == selected + (optionsPerPage * currentPage)) {
                     textGraphics.setForegroundColor(TextColor.ANSI.BLACK)
                             .setBackgroundColor(TextColor.ANSI.WHITE)
                             .putString(col, startRow++, "> " + options.get(i));
@@ -85,6 +93,10 @@ public abstract class AbstractMenuView extends AbstractView {
                             .putString(col, startRow++, "  " + options.get(i));
                 }
             }
+
+            textGraphics.setForegroundColor(TextColor.ANSI.WHITE)
+                    .setBackgroundColor(TextColor.ANSI.DEFAULT)
+                    .putString(col, startRow++, "--Page " + (currentPage+1) + " of " + (int)Math.ceil((double)options.size() / optionsPerPage) + "--");
         }
 
         // Print bottom text, creating a new line when "\n" is seen
@@ -102,9 +114,11 @@ public abstract class AbstractMenuView extends AbstractView {
     @Override
     public AbstractView handleInput(KeyStroke keyStroke) throws Exception {
         return switch (keyStroke.getKeyType()) {
-            case ArrowUp -> { selected = (selected - 1 + options.size() ) % options.size(); yield null; }
-            case ArrowDown -> { selected = (selected + 1) % options.size(); yield null; }
-            case Enter -> optionBehaviors.get(selected).get();
+            case ArrowUp -> { selected = (selected - 1 + Math.min(optionsPerPage, options.size())) % Math.min(optionsPerPage, options.size()); yield null; }
+            case ArrowDown -> { selected = (selected + 1) % Math.min(optionsPerPage, options.size()); yield null; }
+            case ArrowLeft -> { currentPage = Math.max(currentPage-1, 0); yield null; }
+            case ArrowRight -> { currentPage = Math.min(currentPage+1, (int)Math.ceil((double)options.size() / optionsPerPage) - 1); yield null;}
+            case Enter -> optionBehaviors.get(selected + (optionsPerPage * currentPage)).get();
             case Escape -> parent;
             default -> null;
         };
@@ -116,5 +130,14 @@ public abstract class AbstractMenuView extends AbstractView {
      */
     public int getSelected() {
         return selected;
+    }
+
+    public void setOptionsPerPage(int optionsPerPage) {
+        if(optionsPerPage == 0) {
+            LOGGER.error("At least one option must be shown on every page.");
+            return;
+        }
+
+        this.optionsPerPage = optionsPerPage;
     }
 }

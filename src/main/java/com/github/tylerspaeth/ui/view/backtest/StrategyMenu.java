@@ -45,5 +45,6 @@ public class StrategyMenu extends AbstractMenuView {
             });
         }
         setOptions(options, optionBehaviors);
+        setOptionsPerPage(10);
     }
 }

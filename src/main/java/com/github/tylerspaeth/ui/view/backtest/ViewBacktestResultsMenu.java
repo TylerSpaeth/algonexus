@@ -46,5 +46,6 @@ public class ViewBacktestResultsMenu extends AbstractMenuView {
         }
 
         setOptions(options, optionBehaviors);
+        setOptionsPerPage(10);
     }
 }

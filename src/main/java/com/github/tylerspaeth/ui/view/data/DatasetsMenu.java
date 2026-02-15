@@ -45,6 +45,7 @@ public class DatasetsMenu extends AbstractMenuView {
         }
 
         setOptions(options, optionBehaviors);
+        setOptionsPerPage(10);
     }
 
 }

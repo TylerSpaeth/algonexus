@@ -34,7 +34,7 @@ public class MainMenuView extends AbstractMenuView {
         List<String> options = new ArrayList<>();
         List<Supplier<AbstractView>> optionBehaviors = new ArrayList<>();
 
-        if(uiContext.activeUser.getAccountType() == AccountTypeEnum.INTERNAL) {
+        if (uiContext.activeUser.getAccountType() == AccountTypeEnum.INTERNAL) {
             options.add("Backtesting");
             optionBehaviors.add(() -> new BacktestMenu(this));
             options.add("Data Manager");
@@ -63,6 +63,6 @@ public class MainMenuView extends AbstractMenuView {
         });
 
         setOptions(options, optionBehaviors);
+        setOptionsPerPage(10);
     }
-
 }

@@ -59,5 +59,6 @@ public class SignInMenu extends AbstractMenuView {
         });
         setTopText("Select Account to Use:");
         setOptions(accountOptions, optionBehaviors);
+        setOptionsPerPage(10);
     }
 }

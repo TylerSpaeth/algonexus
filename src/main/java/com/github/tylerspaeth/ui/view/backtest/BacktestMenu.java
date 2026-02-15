@@ -44,6 +44,7 @@ public class BacktestMenu extends AbstractMenuView {
         }
 
         setOptions(options, optionBehaviors);
+        setOptionsPerPage(10);
     }
 
 }

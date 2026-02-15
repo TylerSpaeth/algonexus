@@ -37,6 +37,7 @@ public class StrategyManagerMenu extends AbstractMenuView {
         }
 
         setOptions(options, optionBehaviors);
+        setOptionsPerPage(10);
     }
 
 }

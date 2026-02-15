@@ -40,5 +40,6 @@ public class DataManagerMenu extends AbstractMenuView {
         });
 
         setOptions(options, optionBehaviors);
+        setOptionsPerPage(10);
     }
 }
