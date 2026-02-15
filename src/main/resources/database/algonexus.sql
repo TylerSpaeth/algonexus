@@ -147,8 +147,8 @@ CREATE TABLE IF NOT EXISTS `algonexus`.`candlesticks` (
   `Timestamp` TIMESTAMP(6) NOT NULL,
   `HistoricalDatasetID` INT NOT NULL,
   PRIMARY KEY (`CandlestickID`),
+  UNIQUE INDEX `HistoricalDatasetID_Timestamp_idx` (`HistoricalDatasetID` ASC, `Timestamp` ASC) VISIBLE,
   INDEX `HistoricalDatasetID_idx` (`HistoricalDatasetID` ASC) VISIBLE,
-  INDEX `HistoricalDatasetID_Timestamp_idx` (`HistoricalDatasetID` ASC, `Timestamp` ASC) VISIBLE,
   CONSTRAINT `fk_candlesticks_historicaldataset_HistoricalDatasetID`
     FOREIGN KEY (`HistoricalDatasetID`)
     REFERENCES `algonexus`.`historicaldataset` (`HistoricalDatasetID`))

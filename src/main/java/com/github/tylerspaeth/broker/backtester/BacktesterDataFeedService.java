@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -102,7 +101,9 @@ public class BacktesterDataFeedService implements IDataFeedService {
             throw new IllegalStateException("Can not modify the interval duration and units after the first read.");
         } else if (prebuiltCandlesticks != null && prebuiltCandlesticks.size() > 1) {
             // If we already have built candlesticks for this, then just grab the first one
-            return new ArrayList<>(List.of(prebuiltCandlesticks.removeFirst()));
+            Candlestick first = prebuiltCandlesticks.removeFirst();
+            backtesterSharedService.updateDataFeed(mapKey, first, first.getTimestamp());
+            return new ArrayList<>(List.of(first));
         } else if (prebuiltCandlesticks != null && prebuiltCandlesticks.size() == 1) {
             // If we will be removing the last prebuild candlestick do not return it right away, we need to build some more.
             dataFeedToReturn.add(prebuiltCandlesticks.removeFirst());
@@ -160,10 +161,6 @@ public class BacktesterDataFeedService implements IDataFeedService {
                 Candlestick condensed = condenseCandlesticks(singleCandlestickList);
 
                 prebuiltCandlesticks.add(condensed);
-
-                backtesterSharedService.updateDataFeed(mapKey, condensed, Timestamp.from(condensed.getTimestamp().toInstant()
-                        .plus((long) intervalDuration * intervalUnit.secondsPer, ChronoUnit.SECONDS)));
-
             }
 
             if (dataFeedToReturn.isEmpty() && !prebuiltCandlesticks.isEmpty()) {
@@ -171,6 +168,10 @@ public class BacktesterDataFeedService implements IDataFeedService {
             }
 
             lastSeenOffsets.put(mapKey, lastSeenTime);
+
+            if(!dataFeedToReturn.isEmpty()) {
+                backtesterSharedService.updateDataFeed(mapKey, dataFeedToReturn.getFirst(), dataFeedToReturn.getFirst().getTimestamp());
+            }
 
             return dataFeedToReturn;
         }

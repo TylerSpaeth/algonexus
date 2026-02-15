@@ -38,6 +38,7 @@ public class EngineCoordinator {
     private IAccountService activeAccountService;
     private IDataFeedService activeDataFeedService;
     private IOrderService activeOrderService;
+    private Boolean usingBacktester;
 
     public EngineCoordinator(ExecutorService executorService, IBAccountService ibAccountService,
                              IBDataFeedService ibDataFeedService, IBOrderService ibOrderService,
@@ -53,6 +54,7 @@ public class EngineCoordinator {
         activeAccountService = ibAccountService;
         activeDataFeedService = ibDataFeedService;
         activeOrderService = ibOrderService;
+        usingBacktester = false;
     }
 
     /**
@@ -71,7 +73,16 @@ public class EngineCoordinator {
         }
 
         request.setServices(activeAccountService, activeDataFeedService, activeOrderService);
-        requestQueue.put(request);
+
+        // When the backtester is enabled, requests are processed on the same thread.
+        // Live trading allows requests to be distributed to other threads, but backtesting has synchronization concerns
+        // that require this.
+        if(usingBacktester) {
+            request.run();
+        } else {
+            requestQueue.put(request);
+        }
+
         return request.get();
     }
 
@@ -131,6 +142,7 @@ public class EngineCoordinator {
         activeAccountService = null;
         activeDataFeedService = backtesterDataFeedService;
         activeOrderService = backtesterOrderService;
+        usingBacktester = true;
     }
 
     /**
@@ -139,6 +151,7 @@ public class EngineCoordinator {
     public void useIB() {
         activeAccountService = ibAccountService;
         activeDataFeedService = ibDataFeedService;
-        activeOrderService =  ibOrderService;
+        activeOrderService = ibOrderService;
+        usingBacktester = false;
     }
 }
