@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Constructor;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -89,7 +90,7 @@ public abstract class AbstractStrategy {
             try {
                 if (backtestResult != null) {
                     backtestResult.updateAndGet(result -> {
-                        result.setStartTime(new Timestamp(System.currentTimeMillis()));
+                        result.setStartTime(Timestamp.from(Instant.now()));
                         return backtestResultDAO.update(result);
                     });
                 }
@@ -98,7 +99,7 @@ public abstract class AbstractStrategy {
             } finally {
                 if(backtestResult != null) {
                     backtestResult.updateAndGet(result -> {
-                        result.setEndTime(new Timestamp(System.currentTimeMillis()));
+                        result.setEndTime(Timestamp.from(Instant.now()));
                         return backtestResultDAO.update(result);
                     });
                 }
@@ -153,8 +154,7 @@ public abstract class AbstractStrategy {
             throw new IllegalStateException("Failed to submit request to engine and the EngineCoordinator is null.");
         }
         T result = engineCoordinator.submitRequest(engineRequest);
-        if(result instanceof Order && backtestResult != null) {
-            Order resultAsOrder = (Order) result;
+        if(result instanceof Order resultAsOrder && backtestResult != null) {
             resultAsOrder.setBacktestResult(backtestResult.get());
             orderDAO.update(resultAsOrder);
         }
