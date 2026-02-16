@@ -4,14 +4,14 @@ import com.github.tylerspaeth.common.data.dao.CommissionDAO;
 import com.github.tylerspaeth.common.data.dao.OrderDAO;
 import com.github.tylerspaeth.common.data.dao.TradeDAO;
 import com.github.tylerspaeth.common.data.entity.*;
-import com.github.tylerspaeth.common.enums.AssetTypeEnum;
-import com.github.tylerspaeth.common.enums.OrderStatusEnum;
-import com.github.tylerspaeth.common.enums.OrderTypeEnum;
-import com.github.tylerspaeth.common.enums.SideEnum;
+import com.github.tylerspaeth.common.enums.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -20,11 +20,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 // TODO model slippage on fills
-// TODO simulate tif values
 
 public class BacktesterSharedService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BacktesterSharedService.class);
+
+    private static final float US_REG_TRADING_HOURS_START_NY = 9.5f;
+    private static final float US_REG_TRADING_HOURS_END_NY = 16f;
 
     private final OrderDAO orderDAO;
     private final TradeDAO tradeDAO;
@@ -96,11 +98,45 @@ public class BacktesterSharedService {
                     continue;
                 }
                 boolean orderFilled = tryToFillOrder(previousPrice, currentPrice, currentTimestamp, order);
+
+                // Cancel any day orders that are not valid on the current day
+                if(order.getTimeInForce() == TimeInForceEnum.DAY) {
+
+                    ZonedDateTime currentDateTime = currentTimestamp.toInstant().atZone(ZoneId.of("America/New_York"));
+                    ZonedDateTime orderDateTime = order.getTimePlaced().toInstant().atZone(ZoneId.of("America/New_York"));
+
+                    if(orderDateTime.isBefore(currentDateTime) && orderDateTime.getDayOfYear() != currentDateTime.getDayOfYear()) {
+
+                        float orderTimeInHours = orderDateTime.getHour() + (orderDateTime.getMinute() / 60f) + (orderDateTime.getSecond() / 3600f);
+
+                        if(orderTimeInHours < US_REG_TRADING_HOURS_END_NY) {
+                            order.setStatus(OrderStatusEnum.CANCELLED);
+                            order.setTimeClosed(Timestamp.from(Instant.now()));
+                            order.setFinalized(true);
+                            orderDAO.update(order);
+                            orderFilled = true;
+                        }
+                    }
+                }
+
+                // Trigger OCA group
                 if(orderFilled && order.getOCAGroup() != null && !order.getOCAGroup().isBlank()) {
                     ocaGroupTriggered(mapKey, order.getOCAGroup());
                 }
             }
             pendingOrdersForMapKey.entrySet().removeIf(e -> e.getValue().isFinalized());
+
+            // Remove any IOC orders immediately if they were not filled
+            pendingOrdersForMapKey.entrySet().stream()
+                    .filter(order -> order.getValue().getTimeInForce() == TimeInForceEnum.IOC && order.getValue().isTransmit())
+                    .forEach(order -> {
+                        order.getValue().setStatus(OrderStatusEnum.CANCELLED);
+                        order.getValue().setTimeClosed(Timestamp.from(Instant.now()));
+                        order.getValue().setFinalized(true);
+                        orderDAO.update(order.getValue());
+                    });
+            pendingOrdersForMapKey.entrySet().removeIf(e -> e.getValue().isFinalized());
+
 
             updateTrailLimitPrices(pendingOrdersForMapKey.values(), currentPrice);
         }
@@ -312,6 +348,17 @@ public class BacktesterSharedService {
         // Do not fill an order that has already been filled
         if (order.isFinalized() || order.getStatus() == OrderStatusEnum.FILLED) {
             return false;
+        }
+
+        // Do not fill DAY orders if outside of standard trading hours.
+        if (order.getTimeInForce() == TimeInForceEnum.DAY) {
+            ZonedDateTime currentTime = currentTimestamp.toInstant().atZone(ZoneId.of("America/New_York"));
+
+            float currentTimeInHours = currentTime.getHour() + (currentTime.getMinute() / 60f) + (currentTime.getSecond() / 3600f);
+
+            if(currentTimeInHours < US_REG_TRADING_HOURS_START_NY || currentTimeInHours >= US_REG_TRADING_HOURS_END_NY) {
+                return false;
+            }
         }
 
         // If this is a new order then the only price with will be considered for filling is close price
