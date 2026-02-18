@@ -51,18 +51,23 @@ public class DataManagerService {
      * @param format Column format of the csv file with characters representing each column
      * @param metadataRows The number of metadata rows at the top of the file to skip
      * @param dateFormat The format that the date column of the file is in
-     * @return HistoricalDataset if successful, otherwise null
+     * @return true if the upload starts successfully, false otherwise
      */
-    public HistoricalDataset loadDatasetFromCSV(HistoricalDataset historicalDataset, File file, String format, int metadataRows, SimpleDateFormat dateFormat) {
+    public boolean loadDatasetFromCSV(HistoricalDataset historicalDataset, File file, String format, int metadataRows, SimpleDateFormat dateFormat) {
+
+        if(historicalDataset == null) {
+            LOGGER.error("Unable to upload to a null dataset.");
+            return false;
+        }
 
         if(file == null) {
             LOGGER.error("Unable to upload file that is null.");
-            return null;
+            return false;
         }
 
         if(format == null) {
             LOGGER.error("Unable to upload with a null format.");
-            return null;
+            return false;
         }
 
         // Find the locations for all the columns
@@ -75,70 +80,72 @@ public class DataManagerService {
 
         if(dateCol == -1 || openCol == -1 || closeCol == -1 || highCol == -1 || lowCol == -1 || volumeCol == -1) {
             LOGGER.error("Missing definition for metadata column(s).");
-            return null;
+            return false;
         }
 
         if(metadataRows < 0) {
             LOGGER.error("Metadata rows must be non-negative.");
-            return null;
+            return false;
         }
 
         if(dateFormat == null) {
-            return null;
+            return false;
         }
 
-        try(BufferedReader reader = new BufferedReader(new FileReader(file))) {
+        // Run actual upload in separate thread
+        new Thread(() -> {
+            try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
 
-            // Skip metadata
-            for(int i = 0; i < metadataRows; i++) {
-                reader.readLine();
+                // Skip metadata
+                for (int i = 0; i < metadataRows; i++) {
+                    reader.readLine();
+                }
+
+                Timestamp startTime = new Timestamp(Long.MAX_VALUE);
+                Timestamp endTime = new Timestamp(Long.MIN_VALUE);
+
+                String line;
+                while ((line = reader.readLine()) != null) {
+
+                    String[] splitLine = line.split(CSV_DELIMITER);
+                    if (splitLine.length < MIN_COLUMN_COUNT || splitLine.length != format.length()) {
+                        LOGGER.error("Row does not meet expected criteria: {}", line);
+                        return;
+                    }
+
+                    // Calculate the timestamp and if it is the start or end of the data
+                    var timestamp = Timestamp.from(dateFormat.parse(splitLine[dateCol]).toInstant());
+                    if (timestamp.before(startTime)) {
+                        startTime = timestamp;
+                    }
+                    if (timestamp.after(endTime)) {
+                        endTime = timestamp;
+                    }
+
+                    Candlestick candlestick = new Candlestick();
+                    candlestick.setTimestamp(timestamp);
+                    candlestick.setOpen(Float.parseFloat(splitLine[openCol]));
+                    candlestick.setClose(Float.parseFloat(splitLine[closeCol]));
+                    candlestick.setHigh(Float.parseFloat(splitLine[highCol]));
+                    candlestick.setLow(Float.parseFloat(splitLine[lowCol]));
+                    candlestick.setVolume(Float.parseFloat(splitLine[volumeCol]));
+                    candlestick.setHistoricalDataset(historicalDataset);
+                    historicalDataset.getCandlesticks().add(candlestick);
+
+                }
+
+                historicalDataset.setDatasetStart(startTime);
+                historicalDataset.setDatasetEnd(endTime);
+                historicalDataset.setLastUpdated(Timestamp.from(Instant.now()));
+
+                historicalDatasetDAO.insert(historicalDataset);
+                LOGGER.info("Loading from file finished: {}", file.getName());
+            } catch (Exception e) {
+                LOGGER.error("Loading from file failed: {}", file.getName(), e);
             }
+        }, file.getName()+"-Upload-Thread").start();
 
-            Timestamp startTime = new Timestamp(Long.MAX_VALUE);
-            Timestamp endTime = new Timestamp(Long.MIN_VALUE);
-
-            String line;
-            while((line = reader.readLine()) != null) {
-
-                String[] splitLine = line.split(CSV_DELIMITER);
-                if(splitLine.length < MIN_COLUMN_COUNT || splitLine.length != format.length()) {
-                    LOGGER.error("Row does not meet expected criteria: {}", line);
-                    return null;
-                }
-
-                // Calculate the timestamp and if it is the start or end of the data
-                var timestamp = Timestamp.from(dateFormat.parse(splitLine[dateCol]).toInstant());
-                if(timestamp.before(startTime)) {
-                    startTime = timestamp;
-                }
-                if(timestamp.after(endTime)) {
-                    endTime = timestamp;
-                }
-
-                Candlestick candlestick = new Candlestick();
-                candlestick.setTimestamp(timestamp);
-                candlestick.setOpen(Float.parseFloat(splitLine[openCol]));
-                candlestick.setClose(Float.parseFloat(splitLine[closeCol]));
-                candlestick.setHigh(Float.parseFloat(splitLine[highCol]));
-                candlestick.setLow(Float.parseFloat(splitLine[lowCol]));
-                candlestick.setVolume(Float.parseFloat(splitLine[volumeCol]));
-                candlestick.setHistoricalDataset(historicalDataset);
-                historicalDataset.getCandlesticks().add(candlestick);
-
-            }
-
-            historicalDataset.setDatasetStart(startTime);
-            historicalDataset.setDatasetEnd(endTime);
-            historicalDataset.setLastUpdated(Timestamp.from(Instant.now()));
-
-            historicalDatasetDAO.insert(historicalDataset);
-
-        } catch (Exception e) {
-            LOGGER.error("Loading from file failed: {}", file.getName(), e);
-            return null;
-        }
-
-        return historicalDataset;
+        return true;
     }
 
     // TODO utilize this in the ui

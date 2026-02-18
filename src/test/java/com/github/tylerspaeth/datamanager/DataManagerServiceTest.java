@@ -61,36 +61,36 @@ public class DataManagerServiceTest {
     @Test
     public void testUploadWithNullDataset() {
         Path tempFile = tempDir.resolve("Test.csv");
-        Assertions.assertNull(dataManagerService.loadDatasetFromCSV(null, tempFile.toFile(), "DOCHLV", 1, new SimpleDateFormat("yyyy-MM-dd")));
+        Assertions.assertFalse(dataManagerService.loadDatasetFromCSV(null, tempFile.toFile(), "DOCHLV", 1, new SimpleDateFormat("yyyy-MM-dd")));
     }
 
     @Test
     public void testUploadWithNullFile() {
-        Assertions.assertNull(dataManagerService.loadDatasetFromCSV(new HistoricalDataset(), null, "DOCHLV", 1, new SimpleDateFormat("yyyy-MM-dd")));
+        Assertions.assertFalse(dataManagerService.loadDatasetFromCSV(new HistoricalDataset(), null, "DOCHLV", 1, new SimpleDateFormat("yyyy-MM-dd")));
     }
 
     @Test
     public void testUploadWithNullFormat() {
         Path tempFile = tempDir.resolve("Test.csv");
-        Assertions.assertNull(dataManagerService.loadDatasetFromCSV(new HistoricalDataset(), tempFile.toFile(), null, 1, new SimpleDateFormat("yyyy-MM-dd")));
+        Assertions.assertFalse(dataManagerService.loadDatasetFromCSV(new HistoricalDataset(), tempFile.toFile(), null, 1, new SimpleDateFormat("yyyy-MM-dd")));
     }
 
     @Test
     public void testUploadWithNegativeMetadataRows() {
         Path tempFile = tempDir.resolve("Test.csv");
-        Assertions.assertNull(dataManagerService.loadDatasetFromCSV(new HistoricalDataset(), tempFile.toFile(), "DOCHLV", -1, new SimpleDateFormat("yyyy-MM-dd")));
+        Assertions.assertFalse(dataManagerService.loadDatasetFromCSV(new HistoricalDataset(), tempFile.toFile(), "DOCHLV", -1, new SimpleDateFormat("yyyy-MM-dd")));
     }
 
     @Test
     public void testUploadWithNullDateFormat() {
         Path tempFile = tempDir.resolve("Test.csv");
-        Assertions.assertNull(dataManagerService.loadDatasetFromCSV(new HistoricalDataset(), tempFile.toFile(), "DOCHLV", 1, null));
+        Assertions.assertFalse(dataManagerService.loadDatasetFromCSV(new HistoricalDataset(), tempFile.toFile(), "DOCHLV", 1, null));
     }
 
     @Test
     public void testUploadWithEmptyStringFormat() {
         Path tempFile = tempDir.resolve("Test.csv");
-        Assertions.assertNull(dataManagerService.loadDatasetFromCSV(new HistoricalDataset(), tempFile.toFile(), "", 1, new SimpleDateFormat("yyyy-MM-dd")));
+        Assertions.assertFalse(dataManagerService.loadDatasetFromCSV(new HistoricalDataset(), tempFile.toFile(), "", 1, new SimpleDateFormat("yyyy-MM-dd")));
     }
 
     @Test
@@ -98,8 +98,13 @@ public class DataManagerServiceTest {
         Path tempFile = tempDir.resolve("Test.csv");
         Files.writeString(tempFile, "2025-10-01,1,2,3,4,5");
 
-        HistoricalDataset historicalDataset = dataManagerService.loadDatasetFromCSV(new HistoricalDataset(), tempFile.toFile(), "DOHLCV", 0, new SimpleDateFormat("yyyy-MM-dd"));
+        HistoricalDataset historicalDataset = new HistoricalDataset();
 
+        boolean success = dataManagerService.loadDatasetFromCSV(historicalDataset, tempFile.toFile(), "DOHLCV", 0, new SimpleDateFormat("yyyy-MM-dd"));
+
+        Thread.sleep(100);
+
+        Assertions.assertTrue(success);
         Assertions.assertEquals(1, historicalDataset.getCandlesticks().size());
         Candlestick candlestick = historicalDataset.getCandlesticks().getFirst();
         Assertions.assertEquals(1, candlestick.getOpen());
@@ -116,8 +121,12 @@ public class DataManagerServiceTest {
         Path tempFile = tempDir.resolve("Test.csv");
         Files.writeString(tempFile, "Metadata Row\n2025-10-01,1,2,3,4,5");
 
-        HistoricalDataset historicalDataset = dataManagerService.loadDatasetFromCSV(new HistoricalDataset(), tempFile.toFile(), "DOHLCV", 1, new SimpleDateFormat("yyyy-MM-dd"));
+        HistoricalDataset historicalDataset = new HistoricalDataset();
+        boolean success = dataManagerService.loadDatasetFromCSV(historicalDataset, tempFile.toFile(), "DOHLCV", 1, new SimpleDateFormat("yyyy-MM-dd"));
 
+        Thread.sleep(100);
+
+        Assertions.assertTrue(success);
         Assertions.assertEquals(1, historicalDataset.getCandlesticks().size());
         Candlestick candlestick = historicalDataset.getCandlesticks().getFirst();
         Assertions.assertEquals(1, candlestick.getOpen());
@@ -133,7 +142,12 @@ public class DataManagerServiceTest {
     public void testUploadWithFormatThatDoesNotMatch() throws Exception {
         Path tempFile = tempDir.resolve("Test.csv");
         Files.writeString(tempFile, "2025-10-01,1,2,3,4,5");
-        Assertions.assertNull(dataManagerService.loadDatasetFromCSV(new HistoricalDataset(), tempFile.toFile(), "DOHLCVXXX", 0, new SimpleDateFormat("yyyy-MM-dd")));
+        HistoricalDataset historicalDataset = new HistoricalDataset();
+        dataManagerService.loadDatasetFromCSV(historicalDataset, tempFile.toFile(), "DOHLCVXXX", 0, new SimpleDateFormat("yyyy-MM-dd"));
+
+        Thread.sleep(100);
+
+        Assertions.assertEquals(0, historicalDataset.getCandlesticks().size());
     }
 
     @Test

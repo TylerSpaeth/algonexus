@@ -1,6 +1,5 @@
 package com.github.tylerspaeth.ui.view.data;
 
-import com.github.tylerspaeth.common.data.entity.HistoricalDataset;
 import com.github.tylerspaeth.common.enums.IntervalUnitEnum;
 import com.github.tylerspaeth.ui.UIContext;
 import com.github.tylerspaeth.ui.controller.DataManagerController;
@@ -65,18 +64,16 @@ public class NewDatasetForm extends AbstractFormView {
             }
         }
 
-        HistoricalDataset newDataset = null;
         try {
-            newDataset = dataManagerController.tryToCreateDataset(formFields.get(0), formFields.get(1), formFields.get(2),
+            boolean success = dataManagerController.tryToCreateDataset(formFields.get(0), formFields.get(1), formFields.get(2),
                     Integer.parseInt(formFields.get(3)), IntervalUnitEnum.valueOf(formFields.get(4)), formFields.get(5),
                     Integer.parseInt(formFields.get(6)), formFields.get(7), formFields.get(8));
+
+            if(!success) {
+                return null;
+            }
         } catch (IllegalArgumentException e) {
             LOGGER.warn("Unable to create dataset as invalid fields was provided.", e);
-        }
-
-        // The new dataset will be null if a new one was not created
-        if(newDataset == null) {
-            return null;
         }
 
         return parent;

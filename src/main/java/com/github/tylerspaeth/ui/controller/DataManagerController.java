@@ -47,9 +47,9 @@ public class DataManagerController {
      * @param sourceFileMetadataRows Number of metadata rows the file has.
      * @param sourceFileColumnOrder Order of the columns in the file
      * @param sourceFileDateFormat Format that dates are stored as in the file
-     * @return HistoricalDataset if the creation is successful, otherwise false
+     * @return true if the upload has started successfully, false otherwise
      */
-    public HistoricalDataset tryToCreateDataset(String name, String source, String tickerSymbol, int timeInterval,
+    public boolean tryToCreateDataset(String name, String source, String tickerSymbol, int timeInterval,
                                                 IntervalUnitEnum intervalUnitEnum, String sourceFileLocation,
                                                 int sourceFileMetadataRows, String sourceFileColumnOrder,
                                                 String sourceFileDateFormat) {
@@ -67,7 +67,7 @@ public class DataManagerController {
             LOGGER.error("Multiple symbols found for ticker: {}", tickerSymbol);
         }
         if(symbol == null) {
-            return null;
+            return false;
         }
         historicalDataset.setSymbol(symbol);
 
