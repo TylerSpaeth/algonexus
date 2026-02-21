@@ -24,4 +24,13 @@ public class StrategyManagerController {
         return strategyDAO.getAllActiveStrategies();
     }
 
+    /**
+     * Get the updated version of the strategy.
+     * @param strategy Possible outdated strategy
+     * @return Up-to-date strategy
+     */
+    public Strategy getUpdatedStrategy(Strategy strategy) {
+        return strategyDAO.findByStrategyID(strategy.getStrategyID());
+    }
+
 }

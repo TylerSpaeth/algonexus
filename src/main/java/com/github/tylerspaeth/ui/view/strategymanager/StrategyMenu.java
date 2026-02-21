@@ -3,6 +3,7 @@ package com.github.tylerspaeth.ui.view.strategymanager;
 import com.github.tylerspaeth.common.data.entity.Strategy;
 import com.github.tylerspaeth.common.data.entity.StrategyParameterSet;
 import com.github.tylerspaeth.ui.UIContext;
+import com.github.tylerspaeth.ui.controller.StrategyManagerController;
 import com.github.tylerspaeth.ui.view.common.AbstractMenuView;
 import com.github.tylerspaeth.ui.view.common.AbstractView;
 import com.github.tylerspaeth.ui.view.common.HorizontalMultiView;
@@ -16,16 +17,23 @@ import java.util.function.Supplier;
  */
 public class StrategyMenu extends AbstractMenuView {
 
-    private final Strategy strategy;
+    private Strategy strategy;
 
-    public StrategyMenu(AbstractView parent, Strategy strategy) {
+    private final StrategyManagerController strategyManagerController;
+
+    public StrategyMenu(AbstractView parent, Strategy strategy, StrategyManagerController strategyManagerController) {
         super(parent);
         this.strategy = strategy;
+        this.strategyManagerController = strategyManagerController;
     }
 
     @Override
     public void onEnter(UIContext uiContext) {
         super.onEnter(uiContext);
+
+        // Update the strategy when entering this page since the child views have the ability
+        // to update the strategy and that would not persist
+        strategy = strategyManagerController.getUpdatedStrategy(strategy);
 
         setTopText(strategy.toString() + "\n\nDescription: " + strategy.getDescription() + "\n\nParameter Sets:");
 

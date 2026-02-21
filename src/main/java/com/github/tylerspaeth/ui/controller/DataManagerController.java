@@ -35,7 +35,6 @@ public class DataManagerController {
         return historicalDatasetDAO.getAllHistoricalDatasets();
     }
 
-    // TODO run this in a background thread. Currently it blocks the UI and takes 5+ minutes per upload
     /**
      * Attempt to create a dataset with the provided data
      * @param name Name of the new dataset

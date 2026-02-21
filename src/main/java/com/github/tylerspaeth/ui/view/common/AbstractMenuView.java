@@ -116,8 +116,8 @@ public abstract class AbstractMenuView extends AbstractView {
         return switch (keyStroke.getKeyType()) {
             case ArrowUp -> { selected = (selected - 1 + Math.min(optionsPerPage, options.size())) % Math.min(optionsPerPage, options.size()); yield null; }
             case ArrowDown -> { selected = (selected + 1) % Math.min(optionsPerPage, options.size()); yield null; }
-            case ArrowLeft -> { currentPage = Math.max(currentPage-1, 0); yield null; }
-            case ArrowRight -> { currentPage = Math.min(currentPage+1, (int)Math.ceil((double)options.size() / optionsPerPage) - 1); yield null;}
+            case ArrowLeft -> { currentPage = Math.max(currentPage-1, 0); selected = 0; yield null; }
+            case ArrowRight -> { currentPage = Math.min(currentPage+1, (int)Math.ceil((double)options.size() / optionsPerPage) - 1); selected = 0; yield null;}
             case Enter -> optionBehaviors.get(selected + (optionsPerPage * currentPage)).get();
             case Escape -> parent;
             default -> null;

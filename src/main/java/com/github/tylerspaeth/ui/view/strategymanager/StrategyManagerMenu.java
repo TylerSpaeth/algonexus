@@ -33,7 +33,7 @@ public class StrategyManagerMenu extends AbstractMenuView {
         List<Strategy> strategies = strategyManagerController.getAllActiveStrategies();
         for(Strategy strategy : strategies) {
             options.add(strategy.toString());
-            optionBehaviors.add(() -> new StrategyMenu(this, strategy));
+            optionBehaviors.add(() -> new StrategyMenu(this, strategy, strategyManagerController));
         }
 
         setOptions(options, optionBehaviors);
