@@ -12,7 +12,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Timestamp;
+import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -26,10 +28,12 @@ public class BacktesterDataFeedService implements IDataFeedService {
     private final CandlestickDAO candlestickDAO;
 
     private final Map<BacktesterDataFeedKey, List<HistoricalDataset>> datafeeds = new ConcurrentHashMap<>(); // Used for querying more data
-    private final Map<BacktesterDataFeedKey, Timestamp> lastSeenOffsets = new ConcurrentHashMap<>(); // Last seen timestamp offset for each datafeed
+    private final Map<BacktesterDataFeedKey, Timestamp> datasetTimestampCursors = new ConcurrentHashMap<>(); // Timestamp cursors for each data feed
     private final Map<BacktesterDataFeedKey, Integer> datafeedIntervalMap = new ConcurrentHashMap<>(); // Map of the interval duration being read by each data feed
     private final Map<BacktesterDataFeedKey, IntervalUnitEnum> dataFeedIntervalUnitMap = new ConcurrentHashMap<>(); // Map of the interval unit being read by each data feed
     private final Map<BacktesterDataFeedKey, Deque<Candlestick>> candlesticksPendingReturn = new ConcurrentHashMap<>(); // Map of candlesticks that have already been built for each data feed
+    private final Map<BacktesterDataFeedKey, Timestamp> lastCondensedCandlestickTimestamp = new ConcurrentHashMap<>(); // Timestamps of the last candlestick that was condensed for each data feed
+    private final Map<BacktesterDataFeedKey, Deque<Candlestick>> uncondensedCandlesticksPendingCondensation = new ConcurrentHashMap<>(); // Map of candlestick that have been returned from the DB but not yet condensed
     private final BacktesterSharedService backtesterSharedService;
 
     public BacktesterDataFeedService(BacktesterSharedService backtesterSharedService, SymbolDAO symbolDAO, CandlestickDAO candlestickDAO) {
@@ -55,7 +59,7 @@ public class BacktesterDataFeedService implements IDataFeedService {
         BacktesterDataFeedKey mapKey = new BacktesterDataFeedKey(persistedSymbol.getSymbolID(), threadID);
 
         datafeeds.put(mapKey, historicalDatasets);
-        lastSeenOffsets.put(mapKey, Timestamp.from(Instant.EPOCH));
+        datasetTimestampCursors.put(mapKey, Timestamp.from(Instant.EPOCH));
     }
 
     @Override
@@ -82,7 +86,7 @@ public class BacktesterDataFeedService implements IDataFeedService {
         }
 
         HistoricalDataset dataset = datafeeds.get(mapKey).getFirst();
-        Timestamp lastSeenTime = lastSeenOffsets.get(mapKey);
+        Timestamp cursor = datasetTimestampCursors.get(mapKey);
 
         if (dataset == null) {
             return List.of();
@@ -112,57 +116,30 @@ public class BacktesterDataFeedService implements IDataFeedService {
             dataFeedIntervalUnitMap.put(mapKey, intervalUnit);
         }
 
-        // Align the first Candlestick
-        Candlestick firstCandlestick = null;
-        while (true) {
-            List<Candlestick> candlesticks = candlestickDAO.getPaginatedCandlesticksFromHistoricalDataset(dataset, lastSeenTime, 1);
-            if (candlesticks.isEmpty()) {
-                break;
-            }
-            firstCandlestick = candlesticks.getFirst();
-            lastSeenTime = firstCandlestick.getTimestamp();
-            if (firstCandlestick.getTimestamp().toInstant().getEpochSecond() % ((long) intervalDuration * intervalUnit.secondsPer) == 0) {
-                break;
-            }
-        }
-
-        if (firstCandlestick == null) {
-            lastSeenOffsets.put(mapKey, lastSeenTime);
-            return dataFeedToReturn;
-        }
-
+        long candlestickDurationInSeconds = (long) dataset.getTimeInterval() * dataset.getIntervalUnit().secondsPer;
         // Determine how many Candlesticks will be condensed into a single Candlestick
-        int numCandlesToCondense = (intervalDuration * intervalUnit.secondsPer) / (dataset.getTimeInterval() * dataset.getIntervalUnit().secondsPer);
+        int numCandlesToCondense = (intervalDuration * intervalUnit.secondsPer) / (int) candlestickDurationInSeconds;
 
-        // Determine how many Candlesticks we will pull in this run.
-        int numCandlestickToQuery = MAX_CANDLESTICKS;
-        while (numCandlestickToQuery % numCandlesToCondense != 0 && numCandlestickToQuery > 0) {
-            numCandlestickToQuery--;
+        Deque<Candlestick> candlesticksToCondense = getCandlesticksForCondensation(mapKey, cursor, dataset, dataFeedToReturn.isEmpty(), (long) intervalDuration * intervalUnit.secondsPer);
+
+        // If there are no more candlesticks to condense return whatever if in the datafeed, whether empty or not. Otherwise,
+        // update the offset to whatever the last candlestick was.
+        if(candlesticksToCondense.isEmpty()) {
+            datasetTimestampCursors.put(mapKey, cursor);
+            return dataFeedToReturn;
+        } else {
+            datasetTimestampCursors.put(mapKey, candlesticksToCondense.getLast().getTimestamp());
         }
 
-        Deque<Candlestick> candlesticksToCondense = new ArrayDeque<>(candlestickDAO.getPaginatedCandlesticksFromHistoricalDataset(dataset, lastSeenTime, numCandlestickToQuery - 1));
-        candlesticksToCondense.addFirst(firstCandlestick);
-        lastSeenTime = candlesticksToCondense.getLast().getTimestamp();
+        buildCandlesticksOfDesiredSize(candlesticksToCondense, numCandlesToCondense, candlestickDurationInSeconds, mapKey, prebuiltCandlesticks);
 
-
-        // Build Candlesticks of desired size
-        while (candlesticksToCondense.size() >= numCandlesToCondense) {
-            List<Candlestick> singleCandlestickList = new ArrayList<>();
-            for (int i = 0; i < numCandlesToCondense; i++) {
-                singleCandlestickList.add(candlesticksToCondense.removeFirst());
-            }
-
-            Candlestick condensed = condenseCandlesticks(singleCandlestickList);
-
-            prebuiltCandlesticks.add(condensed);
+        if(!candlesticksToCondense.isEmpty()) {
+            uncondensedCandlesticksPendingCondensation.put(mapKey, candlesticksToCondense);
         }
 
         if (dataFeedToReturn.isEmpty() && !prebuiltCandlesticks.isEmpty()) {
             dataFeedToReturn.add(prebuiltCandlesticks.removeFirst());
         }
-
-        lastSeenOffsets.put(mapKey, lastSeenTime);
-
         if(!dataFeedToReturn.isEmpty()) {
             backtesterSharedService.updateDataFeed(mapKey, dataFeedToReturn.getFirst(), dataFeedToReturn.getFirst().getTimestamp());
         }
@@ -181,45 +158,17 @@ public class BacktesterDataFeedService implements IDataFeedService {
         BacktesterDataFeedKey mapKey = new BacktesterDataFeedKey(persistedSymbol.getSymbolID(), threadID);
 
         datafeeds.remove(mapKey);
-        lastSeenOffsets.remove(mapKey);
+        datasetTimestampCursors.remove(mapKey);
         datafeedIntervalMap.remove(mapKey);
         dataFeedIntervalUnitMap.remove(mapKey);
         candlesticksPendingReturn.remove(mapKey);
+        uncondensedCandlesticksPendingCondensation.remove(mapKey);
     }
 
     @Override
     public List<ContractDetails> getContractDetailsForSymbol(Symbol symbol) {
         LOGGER.error("getContractDetailsForSymbol is not supported by the backtester.");
         return List.of();
-    }
-
-    /**
-     * Takes a list of Candlesticks and combines them into one.
-     * @param candlesticks List of Candlesticks.
-     * @return Single Candlestick aggregating the list.
-     */
-    private Candlestick condenseCandlesticks(List<Candlestick> candlesticks) {
-        Float open = null;
-        float high = -Float.MAX_VALUE;
-        float low = Float.MAX_VALUE;
-        Float close = null;
-        float volume = 0;
-        Timestamp time = null;
-        for(int i = 0; i < candlesticks.size()  ; i++) {
-            Candlestick current = candlesticks.get(i);
-            if(i == 0) {
-                open = current.getOpen();
-                time = current.getTimestamp();
-            }
-            if(i == candlesticks.size() - 1) {
-                close = current.getClose();
-            }
-            volume += current.getVolume();
-            low = Math.min(low, current.getLow());
-            high = Math.max(high, current.getHigh());
-        }
-
-        return new Candlestick(open, high, low, close, volume, time);
     }
 
     /**
@@ -269,6 +218,132 @@ public class BacktesterDataFeedService implements IDataFeedService {
         }
 
         return bestFeed;
+    }
+
+    /**
+     * Helper function to take candlesticks from candlesticksToCondense and condense them, placing them into prebuilt candlesticks.
+     * @param candlesticksToCondense Uncondensed candlesticks.
+     * @param numCandlesToCondense Max number of candlesticks that should be aggregated.
+     * @param candlestickDurationInSeconds Duration that one uncondensed candlestick is expected to last.
+     * @param mapKey BacktesterDataFeedKey for lookups related to the data feed.
+     * @param prebuiltCandlesticks Candlesticks that have been condensed and are ready for use.
+     */
+    private void buildCandlesticksOfDesiredSize(Deque<Candlestick> candlesticksToCondense, int numCandlesToCondense, long candlestickDurationInSeconds, BacktesterDataFeedKey mapKey, Deque<Candlestick> prebuiltCandlesticks) {
+
+        Timestamp lastCondensedTime = lastCondensedCandlestickTimestamp.get(mapKey);
+
+        if(lastCondensedTime == null) {
+            lastCondensedTime = Timestamp.from(candlesticksToCondense.getFirst().getTimestamp().toInstant().minus(candlestickDurationInSeconds, ChronoUnit.SECONDS));
+        }
+
+        boolean endOfDataset = candlesticksToCondense.size() < numCandlesToCondense;
+
+        // Build Candlesticks of desired size
+        while ((candlesticksToCondense.size() >= numCandlesToCondense) || (endOfDataset && !candlesticksToCondense.isEmpty())) {
+            List<Candlestick> singleCandlestickList = new ArrayList<>();
+            int effectiveListSize = 0;
+            for (int i = 0; i < numCandlesToCondense; i++) {
+
+                Instant nextCandlestickTimeAsInstant = candlesticksToCondense.getFirst().getTimestamp().toInstant();
+                long expectedIntervalInSeconds = candlestickDurationInSeconds * (i - effectiveListSize + 1);
+
+                boolean directlyAfterPrevious = Duration.between(lastCondensedTime.toInstant().plus(effectiveListSize*expectedIntervalInSeconds, ChronoUnit.SECONDS), nextCandlestickTimeAsInstant).toSeconds() == expectedIntervalInSeconds;
+
+                // If this candle is directly after the previous candlestick in the list
+                if (directlyAfterPrevious) {
+                    singleCandlestickList.add(candlesticksToCondense.removeFirst());
+                    effectiveListSize = i+1;
+                }
+            }
+
+            // If there are candlesticks to condense in this window, then do so
+            if(!singleCandlestickList.isEmpty()) {
+                Candlestick condensed = condenseCandlesticks(singleCandlestickList, numCandlesToCondense);
+                prebuiltCandlesticks.add(condensed);
+            }
+
+            lastCondensedTime = Timestamp.from(lastCondensedTime.toInstant().plus(candlestickDurationInSeconds, ChronoUnit.SECONDS));
+            lastCondensedCandlestickTimestamp.put(mapKey, lastCondensedTime);
+        }
+    }
+
+    /**
+     * Takes a list of Candlesticks and combines them into one.
+     * @param candlesticks List of Candlesticks.
+     * @param expectedNumberOfCandlesticks The number of candlesticks we are expecting to condense.
+     * @return Single Candlestick aggregating the list.
+     */
+    private Candlestick condenseCandlesticks(List<Candlestick> candlesticks, int expectedNumberOfCandlesticks) {
+        Float open = null;
+        float high = -Float.MAX_VALUE;
+        float low = Float.MAX_VALUE;
+        Float close = null;
+        float volume = 0;
+        Timestamp time = null;
+        for(int i = 0; i < candlesticks.size()  ; i++) {
+            Candlestick current = candlesticks.get(i);
+            if(i == 0) {
+                open = current.getOpen();
+                time = current.getTimestamp();
+            }
+            if(i == candlesticks.size() - 1) {
+                close = current.getClose();
+            }
+            volume += current.getVolume();
+            low = Math.min(low, current.getLow());
+            high = Math.max(high, current.getHigh());
+        }
+
+        if(candlesticks.size() < expectedNumberOfCandlesticks) {
+            volume = (int)(volume / candlesticks.size()) * expectedNumberOfCandlesticks;
+        }
+
+        return new Candlestick(open, high, low, close, volume, time);
+    }
+
+    /**
+     * Helper for getting a selection of candlesticks to condense for reading.
+     * @param mapKey BacktesterDataFeedKey for looking up values for this dataset.
+     * @param lastSeenTime The time that
+     * @param dataset HistoricalDataset that is being read from.
+     * @param firstTimeReading Where or not this is the first time this dataset is being read from.
+     * @param condensedCandlestickSizeInSeconds Size of candlesticks that this is being condensed to.
+     * @return List of candlesticks that are ready to be condensed.
+     */
+    private Deque<Candlestick> getCandlesticksForCondensation(BacktesterDataFeedKey mapKey, Timestamp lastSeenTime, HistoricalDataset dataset, boolean firstTimeReading, long condensedCandlestickSizeInSeconds) {
+        Deque<Candlestick> candlesticksToCondense = new ArrayDeque<>();
+
+        Deque<Candlestick> uncondensedCandlesticks = uncondensedCandlesticksPendingCondensation.get(mapKey);
+
+        // If this is the first read from this datafeed then we will align this first candlestick.
+        if(firstTimeReading) {
+            // Align the first Candlestick
+            Candlestick firstCandlestick = null;
+            while (true) {
+                List<Candlestick> candlesticks = candlestickDAO.getPaginatedCandlesticksFromHistoricalDataset(dataset, lastSeenTime, 1);
+                if (candlesticks.isEmpty()) {
+                    break;
+                }
+                firstCandlestick = candlesticks.getFirst();
+                lastSeenTime = firstCandlestick.getTimestamp();
+                if (firstCandlestick.getTimestamp().toInstant().getEpochSecond() % condensedCandlestickSizeInSeconds == 0) {
+                    break;
+                }
+            }
+
+            if(firstCandlestick != null) {
+                candlesticksToCondense.addFirst(firstCandlestick);
+                lastSeenTime = candlesticksToCondense.getLast().getTimestamp();
+            }
+        } else if (uncondensedCandlesticks != null && !uncondensedCandlesticks.isEmpty()){
+            // If there are leftover uncondensed candlesticks from previous retrievals then add them to the returned list.
+            candlesticksToCondense.addAll(uncondensedCandlesticks);
+        }
+
+        // Query for more candlesticks
+        candlesticksToCondense.addAll(candlestickDAO.getPaginatedCandlesticksFromHistoricalDataset(dataset, lastSeenTime, MAX_CANDLESTICKS));
+
+        return candlesticksToCondense;
     }
 
 }
