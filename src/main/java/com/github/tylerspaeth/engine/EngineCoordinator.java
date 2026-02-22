@@ -9,6 +9,7 @@ import com.github.tylerspaeth.broker.service.IAccountService;
 import com.github.tylerspaeth.broker.service.IDataFeedService;
 import com.github.tylerspaeth.broker.service.IOrderService;
 import com.github.tylerspaeth.engine.request.AbstractEngineRequest;
+import com.github.tylerspaeth.engine.request.StrategyRunRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,6 +25,7 @@ public class EngineCoordinator {
     private static final int MAX_SHUTDOWN_TIME_SEC = 10;
 
     private final ExecutorService executorService;
+    private final BlockingQueue<StrategyRunRequest> strategyRequestQueue = new LinkedBlockingQueue<>(1000);
     private final BlockingQueue<AbstractEngineRequest<?>> requestQueue = new LinkedBlockingQueue<>(1000);
     private volatile boolean running = false;
 
@@ -74,6 +76,14 @@ public class EngineCoordinator {
 
         request.setServices(activeAccountService, activeDataFeedService, activeOrderService);
 
+        // Strategy run requests go onto their own queues since they will be run on their own threads and
+        // need to be checked before running.
+        // TODO look into whether this can be bypassed with live trading since it may be okay not to limit the requests since strategies should be far less memory intensive
+        if(request instanceof StrategyRunRequest) {
+            strategyRequestQueue.put((StrategyRunRequest) request);
+            return null;
+        }
+
         // When the backtester is enabled, requests are processed on the same thread.
         // Live trading allows requests to be distributed to other threads, but backtesting has synchronization concerns
         // that require this.
@@ -97,6 +107,17 @@ public class EngineCoordinator {
                 if(request != null) {
                     executorService.submit(request);
                 }
+
+                // Try to process all the strategy requests
+                for(int i = 0; i < strategyRequestQueue.size(); i++) {
+                    StrategyRunRequest strategyRunRequest = strategyRequestQueue.poll();
+                    if(strategyRunRequest.canStrategyBeRun()) {
+                        strategyRunRequest.run();
+                    } else {
+                        strategyRequestQueue.put(strategyRunRequest);
+                    }
+                }
+
             } catch(InterruptedException e) {
                 Thread.currentThread().interrupt();
             }

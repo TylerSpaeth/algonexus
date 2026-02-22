@@ -41,7 +41,6 @@ public abstract class AbstractStrategy {
     protected final StrategyParameterSet strategyParameterSet;
     private final AtomicReference<BacktestResult> backtestResult;
 
-    // Currently this can only be set true once. If a strategy should be run again then a new instance should be created.
     private final AtomicBoolean running = new AtomicBoolean(false);
     private volatile Thread runningThread;
 
@@ -103,6 +102,7 @@ public abstract class AbstractStrategy {
                         return backtestResultDAO.update(result);
                     });
                 }
+                running.set(false);
                 LOGGER.info("{} finished running with {} parameter set.", strategyParameterSet.getStrategy(), strategyParameterSet);
             }
         }, strategyParameterSet.toString() + "-Thread");
@@ -200,6 +200,13 @@ public abstract class AbstractStrategy {
         } else {
             return strategyClass.getConstructor(StrategyParameterSet.class, User.class);
         }
+    }
+
+    /**
+     * Checks if this strategy is actively running.
+     */
+    public boolean isRunning() {
+        return running.get();
     }
 
 }
