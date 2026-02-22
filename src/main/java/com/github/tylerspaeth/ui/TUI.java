@@ -42,13 +42,17 @@ public class TUI {
                 KeyStroke keyStroke = screen.pollInput();
 
                 if(keyStroke != null) {
-                    AbstractView nextView = currentView.handleInput(keyStroke);
-                    if(nextView != null) {
-                        currentView.onExit();
-                        currentView = nextView;
-                        currentView.onEnter(uiContext);
+                    try {
+                        AbstractView nextView = currentView.handleInput(keyStroke);
+                        if (nextView != null) {
+                            currentView.onExit();
+                            currentView = nextView;
+                            currentView.onEnter(uiContext);
+                        }
+                        dirty = true;
+                    } catch (Exception e) {
+                        LOGGER.error("An error occurred while handling input.", e);
                     }
-                    dirty = true;
                 }
 
                 // Trigger rerender when screen size changes in case the view has resizing logic
@@ -56,11 +60,15 @@ public class TUI {
                     dirty = true;
                 }
 
-                if(dirty) {
-                    screen.clear();
-                    currentView.render(screen);
-                    screen.refresh();
-                    dirty = false;
+                try {
+                    if (dirty) {
+                        screen.clear();
+                        currentView.render(screen);
+                        screen.refresh();
+                        dirty = false;
+                    }
+                } catch (Exception e) {
+                    LOGGER.error("An error occurred while rendering.", e);
                 }
 
                 Thread.sleep(16);
