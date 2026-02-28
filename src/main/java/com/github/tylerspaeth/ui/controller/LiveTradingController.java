@@ -5,6 +5,7 @@ import com.github.tylerspaeth.common.data.entity.Strategy;
 import com.github.tylerspaeth.common.data.entity.StrategyParameterSet;
 import com.github.tylerspaeth.common.data.entity.User;
 import com.github.tylerspaeth.engine.EngineCoordinator;
+import com.github.tylerspaeth.engine.request.StrategyRunRequest;
 import com.github.tylerspaeth.strategy.AbstractStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,7 +46,7 @@ public class LiveTradingController {
             Constructor<? extends AbstractStrategy> strategyClassConstructor = AbstractStrategy.getConstructorForClass(strategyID, false);
             AbstractStrategy strategy = strategyClassConstructor.newInstance(strategyParameterSet, user);
             strategy.setEngineCoordinator(engineCoordinator);
-            strategy.run();
+            engineCoordinator.submitRequest(new StrategyRunRequest(strategy));
         } catch (Exception e) {
             LOGGER.error("Failed to run strategy.", e);
         }
