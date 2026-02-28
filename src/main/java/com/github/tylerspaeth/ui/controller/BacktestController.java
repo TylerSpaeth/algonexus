@@ -132,11 +132,12 @@ public class BacktestController {
      * @param user User that initiated the request.
      * @param strategyParameterSet StrategyParameterSet to run a backtest on.
      */
-    public void runBacktest(EngineCoordinator engineCoordinator, User user, StrategyParameterSet strategyParameterSet) {
+    public void runBacktest(EngineCoordinator engineCoordinator, User user, StrategyParameterSet strategyParameterSet, Float startingBalance) {
         Integer strategyID = strategyParameterSet.getStrategy().getStrategyID();
         try {
             Constructor<? extends AbstractStrategy> strategyClassConstructor = AbstractStrategy.getConstructorForClass(strategyID, true);
             BacktestResult backtestResult = new BacktestResult();
+            backtestResult.setStartingBalance(startingBalance);
             backtestResult.setStrategyParameterSet(strategyParameterSet);
             AbstractStrategy strategy = strategyClassConstructor.newInstance(strategyParameterSet, user, backtestResult);
             strategy.setEngineCoordinator(engineCoordinator);

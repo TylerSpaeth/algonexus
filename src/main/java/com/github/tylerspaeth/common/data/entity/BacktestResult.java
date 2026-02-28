@@ -30,6 +30,9 @@ public class BacktestResult {
     @OneToMany(mappedBy = "backtestResult", fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private List<Order> orders;
 
+    @Column(name = "StartingBalance")
+    private Float startingBalance;
+
     public Integer getBacktestResultID() {
         return backtestResultID;
     }
@@ -62,6 +65,13 @@ public class BacktestResult {
     public List<Order> getOrders() {
         orders = backtestResultDAO.lazyLoad(this, e -> e.orders);
         return orders;
+    }
+    public Float getStartingBalance() {
+        return startingBalance;
+    }
+
+    public void setStartingBalance(Float startingBalance) {
+        this.startingBalance = startingBalance;
     }
 
     @Override

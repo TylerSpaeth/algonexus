@@ -65,6 +65,7 @@ CREATE TABLE IF NOT EXISTS `algonexus`.`backtestresults` (
   `StrategyParameterSetID` INT NOT NULL,
   `StartTime` TIMESTAMP(6) NOT NULL,
   `EndTime` TIMESTAMP(6) NULL DEFAULT NULL,
+  `StartingBalance` FLOAT NOT NULL,
   PRIMARY KEY (`BacktestResultID`),
   INDEX `StrategyParameterSetID_idx` (`StrategyParameterSetID` ASC) VISIBLE,
   CONSTRAINT `fk_backtestresults_strategyparametersets_StrategyParameterSetID`

@@ -21,6 +21,7 @@ public class AbstractFormView extends AbstractView {
 
     private String topText;
     private String bottomText;
+    private String submitButtonText = "Submit";
 
     public AbstractFormView(AbstractView parent) {
         super(parent);
@@ -65,11 +66,11 @@ public class AbstractFormView extends AbstractView {
         if(selected == formFields.size()) {
             textGraphics.setForegroundColor(TextColor.ANSI.BLACK)
                     .setBackgroundColor(TextColor.ANSI.WHITE)
-                    .putString(col, startRow++, "Submit");
+                    .putString(col, startRow++, submitButtonText);
         } else {
             textGraphics.setForegroundColor(TextColor.ANSI.WHITE)
                     .setBackgroundColor(TextColor.ANSI.DEFAULT)
-                    .putString(col, startRow++, "Submit");
+                    .putString(col, startRow++, submitButtonText);
         }
 
 
@@ -85,7 +86,7 @@ public class AbstractFormView extends AbstractView {
     }
 
     @Override
-    public AbstractView handleInput(KeyStroke keyStroke) throws Exception {
+    public AbstractView handleInput(KeyStroke keyStroke) {
         if(keyStroke.getKeyType() == KeyType.Escape) {
             return parent;
         } else if(keyStroke.getKeyType() == KeyType.Enter && selected == formFields.size()) {
@@ -149,5 +150,9 @@ public class AbstractFormView extends AbstractView {
      */
     public void setBottomText(String bottomText) {
         this.bottomText = bottomText;
+    }
+
+    public void setSubmitButtonText(String submitButtonText) {
+        this.submitButtonText = submitButtonText;
     }
 }

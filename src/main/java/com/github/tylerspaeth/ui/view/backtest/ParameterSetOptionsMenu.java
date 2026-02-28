@@ -44,7 +44,7 @@ public class ParameterSetOptionsMenu extends AbstractMenuView {
         });
 
         options.add("Run New Backtest");
-        optionBehaviors.add(() -> new ParameterSetRunMenu(parent, strategyParameterSet));
+        optionBehaviors.add(() -> new ParameterSetRunForm(parent, strategyParameterSet));
 
         setOptions(options, optionBehaviors);
         setOptionsPerPage(10);
