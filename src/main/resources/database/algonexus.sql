@@ -215,15 +215,20 @@ CREATE TABLE IF NOT EXISTS `algonexus`.`orders` (
   `ParentOrderID` INT NULL DEFAULT NULL,
   `Finalized` BIT(1) NOT NULL DEFAULT b'0',
   `Version` INT NOT NULL DEFAULT '0',
+  `HistoricalDatasetID` INT NULL DEFAULT NULL,
   PRIMARY KEY (`OrderID`),
   INDEX `fk_orders_symbols_SymbolID_idx` (`SymbolID` ASC) VISIBLE,
   INDEX `fk_orders_stratparamsets_StrategyParameterSetID_idx` (`StrategyParameterSetID` ASC) VISIBLE,
   INDEX `fk_orders_users_UserID_idx` (`UserID` ASC) VISIBLE,
   INDEX `fk_orders_orders_ParentUserID_idx` (`ParentOrderID` ASC) VISIBLE,
   INDEX `fk_orders_backtestresults_BacktestResultID_idx` (`BacktestResultID` ASC) VISIBLE,
+  INDEX `fk_orders_historicaldataset_HistoricalDatasetID_idx` (`HistoricalDatasetID` ASC) VISIBLE,
   CONSTRAINT `fk_orders_backtestresults_BacktestResultID`
     FOREIGN KEY (`BacktestResultID`)
     REFERENCES `algonexus`.`backtestresults` (`BacktestResultID`),
+  CONSTRAINT `fk_orders_historicaldataset_HistoricalDatasetID`
+    FOREIGN KEY (`HistoricalDatasetID`)
+    REFERENCES `algonexus`.`historicaldataset` (`HistoricalDatasetID`),
   CONSTRAINT `fk_orders_orders_ParentUserID`
     FOREIGN KEY (`ParentOrderID`)
     REFERENCES `algonexus`.`orders` (`OrderID`),

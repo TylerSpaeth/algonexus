@@ -50,13 +50,16 @@ public class BacktesterDataFeedService implements IDataFeedService {
             return;
         }
 
+        BacktesterDataFeedKey mapKey = new BacktesterDataFeedKey(persistedSymbol.getSymbolID(), threadID);
+
         List<HistoricalDataset> historicalDatasets = persistedSymbol.getHistoricalDatasets();
         if(historicalDatasets == null || historicalDatasets.isEmpty()) {
             LOGGER.error("No HistoricalDatasets found for Symbol {}", symbol);
             return;
+        } else if(historicalDatasets.size() == 1) {
+            // If we have found the optimal dataset send it to the shared service
+            backtesterSharedService.setHistoricalDatasetForMapKey(mapKey, historicalDatasets.getFirst());
         }
-
-        BacktesterDataFeedKey mapKey = new BacktesterDataFeedKey(persistedSymbol.getSymbolID(), threadID);
 
         datafeeds.put(mapKey, historicalDatasets);
         datasetTimestampCursors.put(mapKey, Timestamp.from(Instant.EPOCH));
@@ -81,8 +84,14 @@ public class BacktesterDataFeedService implements IDataFeedService {
             LOGGER.error("Symbol {} has no available data feeds.", symbol);
             return List.of();
         } else if (datasets.size() > 1) {
+
+            HistoricalDataset bestAvailable = findBestHistoricalDataset(datasets, intervalDuration, intervalUnit);
+
+            // Store the best available in the backtester shared service so it can be linked to orders
+            backtesterSharedService.setHistoricalDatasetForMapKey(mapKey, bestAvailable);
+
             // Find the best available dataset which will be used for this and any subsequent reads
-            datafeeds.put(mapKey, new ArrayList<>(Collections.singletonList(findBestHistoricalDataset(datasets, intervalDuration, intervalUnit))));
+            datafeeds.put(mapKey, new ArrayList<>(Collections.singletonList(bestAvailable)));
         }
 
         HistoricalDataset dataset = datafeeds.get(mapKey).getFirst();

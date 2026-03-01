@@ -32,6 +32,8 @@ public class BacktesterSharedService {
     private final TradeDAO tradeDAO;
     private final CommissionDAO commissionDAO;
 
+    // TODO add logic to clear this as needed
+    final Map<BacktesterDataFeedKey, HistoricalDataset> historicalDatasets = new ConcurrentHashMap<>();
     final Map<BacktesterDataFeedKey, Candlestick> lastSeenCandlesticks = new ConcurrentHashMap<>();
     final Map<BacktesterDataFeedKey, Timestamp> currentTimestamps = new ConcurrentHashMap<>();
     final Map<BacktesterDataFeedKey, Map<Integer, Order>> pendingOrders = new ConcurrentHashMap<>();
@@ -232,9 +234,16 @@ public class BacktesterSharedService {
         Candlestick lastSeenCandlestick = lastSeenCandlesticks.get(mapKey);
 
         if(currentTimestamp == null || lastSeenCandlestick == null) {
-            LOGGER.error("Unable to add order, mapKey does not exist.");
+            LOGGER.error("Unable to add order, mapKey does not exist. {}", mapKey);
             return;
         }
+
+        HistoricalDataset historicalDataset = historicalDatasets.get(mapKey);
+        if(historicalDataset == null) {
+            LOGGER.error("Unable to add order as no HistoricalDataset has been set for the mapKey. {}", mapKey);
+            return;
+        }
+        order.setHistoricalDataset(historicalDataset);
 
         order.setStatus(OrderStatusEnum.SUBMITTED);
         order.setTimePlaced(currentTimestamp);
@@ -539,6 +548,15 @@ public class BacktesterSharedService {
             order.setFinalized(true);
             orderDAO.update(order);
         }
+    }
+
+    /**
+     * Sets the HistoricalDataset that is being used for a BacktesterDataFeedKey to be linked on Orders.
+     * @param mapKey BacktesterDataFeedKey
+     * @param historicalDataset HistoricalDataset to link to orders.
+     */
+    public void setHistoricalDatasetForMapKey(BacktesterDataFeedKey mapKey, HistoricalDataset historicalDataset) {
+        historicalDatasets.put(mapKey, historicalDataset);
     }
 
 }

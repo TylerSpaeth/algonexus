@@ -23,6 +23,7 @@ public class BacktestResultsDetailView extends AbstractDetailView {
             P/L (Including fees): {2}
             Individual Trade Count: {3}
             Number of Positions Taken: {4}
+            Sharpe Ratio: {5}
             """;
 
     private final BacktestController backtestController;
@@ -41,7 +42,8 @@ public class BacktestResultsDetailView extends AbstractDetailView {
                                      backtestResult.getEndTime(),
                                      backtestController.calculatePnL(trades),
                                      trades.size(),
-                                     backtestController.calculatePositionsTaken(trades)));
+                                     backtestController.calculatePositionsTaken(trades),
+                                     backtestController.calculateSharpeRatio(backtestResult)));
     }
 
 }

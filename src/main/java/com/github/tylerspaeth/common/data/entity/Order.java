@@ -98,6 +98,10 @@ public class Order {
     @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private List<OrderEvent> orderEvents; // Backtester does not use order events
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "HistoricalDatasetID", referencedColumnName = "HistoricalDatasetID")
+    private HistoricalDataset historicalDataset;
+
     /**
      * Validates that the Order is in a placeable state.
      */
@@ -341,5 +345,14 @@ public class Order {
 
     public void setTrades(List<Trade> trades) {
         this.trades = trades;
+    }
+
+    public HistoricalDataset getHistoricalDataset() {
+        historicalDataset = orderDAO.lazyLoad(this, e -> e.historicalDataset);
+        return historicalDataset;
+    }
+
+    public void setHistoricalDataset(HistoricalDataset historicalDataset) {
+        this.historicalDataset = historicalDataset;
     }
 }

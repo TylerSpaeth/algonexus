@@ -95,6 +95,8 @@ public abstract class AbstractStrategy {
                 }
 
                 onRun();
+            } catch (Exception e) {
+                LOGGER.error("Failure occurred while running {} with parameter set {}.", strategyParameterSet.getStrategy(), strategyParameterSet, e);
             } finally {
                 if(backtestResult != null) {
                     backtestResult.updateAndGet(result -> {

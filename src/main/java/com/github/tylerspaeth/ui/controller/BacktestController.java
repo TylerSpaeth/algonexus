@@ -2,9 +2,9 @@ package com.github.tylerspaeth.ui.controller;
 
 import com.github.tylerspaeth.common.data.dao.StrategyDAO;
 import com.github.tylerspaeth.common.data.entity.*;
-import com.github.tylerspaeth.common.enums.SideEnum;
 import com.github.tylerspaeth.engine.EngineCoordinator;
 import com.github.tylerspaeth.engine.request.StrategyRunRequest;
+import com.github.tylerspaeth.statistics.StatisticsUtils;
 import com.github.tylerspaeth.strategy.AbstractStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,49 +39,7 @@ public class BacktestController {
      * @return PnL including fees
      */
     public float calculatePnL(List<Trade> trades) {
-        float currentPositionQuantity = 0;
-        float currentPositionAveragePrice = 0;
-        float realizedPnL = 0;
-        float totalFees = 0;
-
-        for(Trade trade : trades) {
-
-            float signedFillQuantity = signedQuantity(trade.getFillQuantity(), trade.getSide());
-            float fillPrice = trade.getFillPrice();
-
-            if(currentPositionQuantity == 0) {
-                // Currently no open position
-                currentPositionQuantity = signedFillQuantity;
-                currentPositionAveragePrice = fillPrice;
-            } else if(Math.signum(currentPositionQuantity) == Math.signum(signedFillQuantity)) {
-                // Currently an open position and this trade increases the size
-                currentPositionAveragePrice = (currentPositionAveragePrice * Math.abs(currentPositionQuantity) + trade.getFillQuantity() * trade.getFillPrice()) / (Math.abs(currentPositionQuantity) + trade.getFillQuantity());
-                currentPositionQuantity += signedFillQuantity;
-            } else {
-                // Currently an open position and this trade reduces it
-                float quantityBeforeClose = currentPositionQuantity;
-
-                float closeQuantity = Math.min(Math.abs(currentPositionQuantity), trade.getFillQuantity());
-                realizedPnL +=  closeQuantity * (trade.getFillPrice() - currentPositionAveragePrice) * Math.signum(currentPositionQuantity);
-
-                currentPositionQuantity += signedFillQuantity;
-
-                if(Math.signum(currentPositionQuantity) != Math.signum(quantityBeforeClose) && currentPositionQuantity != 0) {
-                    currentPositionAveragePrice = fillPrice;
-                }
-            }
-
-            totalFees += trade.getFees();
-        }
-
-        // Apply the tick value if appropriate
-        try {
-            Symbol symbol = trades.getFirst().getOrder().getSymbol();
-            realizedPnL = realizedPnL / symbol.getTickSize() * symbol.getTickValue();
-            LOGGER.info("PnL calculated using tick size and value.");
-        } catch (NullPointerException _) {}
-
-        return realizedPnL - totalFees;
+        return StatisticsUtils.calculatePnL(trades);
     }
 
     /**
@@ -91,39 +49,16 @@ public class BacktestController {
      * @return Number of positions that were taken.
      */
     public int calculatePositionsTaken(List<Trade> trades) {
-
-        int positionCount = 0;
-        float currentPositionSize = 0;
-
-        for(Trade trade : trades) {
-            float signedQuantity = signedQuantity(trade.getFillQuantity(), trade.getSide());
-
-            if(currentPositionSize == 0) {
-                currentPositionSize = signedQuantity;
-            } else if (Math.signum(currentPositionSize) == Math.signum(signedQuantity) || Math.abs(currentPositionSize) > Math.abs(signedQuantity)) {
-                currentPositionSize += signedQuantity;
-            } else {
-                currentPositionSize += signedQuantity;
-                positionCount++;
-            }
-        }
-
-        // Any open position when the backtest ends will not be considered since we don't know what the outcome will be.
-
-        return positionCount;
+        return StatisticsUtils.calculatePositionsTaken(trades);
     }
 
     /**
-     * Makes a quantity signed depending on the side of the trade (+Buy, -Sell)
-     * @param quantity quantity of the trade.
-     * @param side side of the trade.
-     * @return Signed quantity.
+     * Calculate the Sharpe Ratio for a BacktestResult based on a risk-free rate of 0%.
+     * @param backtestResult Completed BacktestResult to calculate Sharpe Ratio on.
+     * @return Sharpe Ratio
      */
-    private float signedQuantity(float quantity, SideEnum side) {
-        if(side == com.github.tylerspaeth.common.enums.SideEnum.SELL) {
-            return -quantity;
-        }
-        return quantity;
+    public float calculateSharpeRatio(BacktestResult backtestResult) {
+        return StatisticsUtils.calculateSharpeRatio(backtestResult, 0);
     }
 
     /**

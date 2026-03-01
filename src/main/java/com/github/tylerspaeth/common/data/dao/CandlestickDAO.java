@@ -36,4 +36,26 @@ public class CandlestickDAO extends AbstractDAO<Candlestick> {
         }
     }
 
+    /**
+     * Gets the last candlestick in a dataset before a given timestamp.
+     * @param historicalDataset Dataset to consider.
+     * @param beforeThisDate Date that the candlestick must be before.
+     * @return The last candlestick with a timestamp before the provided timestamp.
+     */
+    public Candlestick getLastCandlestickBeforeTimestamp(HistoricalDataset historicalDataset, Timestamp beforeThisDate) {
+        try (EntityManager entityManager = DatasourceConfig.entityManagerFactory.createEntityManager()) {
+            CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+            CriteriaQuery<Candlestick> cq = cb.createQuery(Candlestick.class);
+            Root<Candlestick> root = cq.from(Candlestick.class);
+
+            Predicate predicate = cb.equal(root.get(Candlestick_.historicalDataset), historicalDataset);
+            predicate = cb.and(predicate, cb.lessThan(root.get(Candlestick_.timestamp), beforeThisDate));
+
+            cq.select(root).where(predicate).orderBy(cb.desc(root.get(Candlestick_.timestamp)));
+            List<Candlestick> candlestick = entityManager.createQuery(cq).setMaxResults(1).getResultList();
+
+            return candlestick.isEmpty() ? null : candlestick.getFirst();
+        }
+    }
+
 }

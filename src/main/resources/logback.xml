@@ -9,6 +9,7 @@
     <logger name="org.hibernate" level="INFO" />
     <logger name="org.hibernate.SQL" level="INFO" />
     <logger name="org.hibernate.type.descriptor.sql" level="INFO" />
+    <logger name="org.hibernate.collection.spi.AbstractPersistentCollection" level="ERROR"/>
 
     <root level="DEBUG">
         <appender-ref ref="STDOUT" />
