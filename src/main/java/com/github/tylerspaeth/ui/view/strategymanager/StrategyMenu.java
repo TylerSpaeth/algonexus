@@ -21,8 +21,7 @@ public class StrategyMenu extends AbstractMenuView {
 
     private final StrategyManagerController strategyManagerController;
 
-    public StrategyMenu(AbstractView parent, Strategy strategy, StrategyManagerController strategyManagerController) {
-        super(parent);
+    public StrategyMenu(Strategy strategy, StrategyManagerController strategyManagerController) {
         this.strategy = strategy;
         this.strategyManagerController = strategyManagerController;
     }
@@ -43,9 +42,11 @@ public class StrategyMenu extends AbstractMenuView {
         for(StrategyParameterSet parameterSet : strategy.getStrategyParameterSets()) {
             options.add(parameterSet.toString());
             optionBehaviors.add(() -> {
-                HorizontalMultiView horizontalMultiView = new HorizontalMultiView(this);
-                ParameterSetMenu parameterSetMenu = new ParameterSetMenu(horizontalMultiView, parameterSet);
-                ParameterUpdateView parameterUpdateView = new ParameterUpdateView(horizontalMultiView, parameterSet);
+                HorizontalMultiView horizontalMultiView = new HorizontalMultiView();
+                ParameterSetMenu parameterSetMenu = new ParameterSetMenu(parameterSet);
+                ParameterUpdateView parameterUpdateView = new ParameterUpdateView(parameterSet);
+                parameterSetMenu.setParameterUpdateView(parameterUpdateView);
+                parameterUpdateView.setParameterSetMenu(parameterSetMenu);
                 horizontalMultiView.setViews(List.of(parameterSetMenu, parameterUpdateView));
                 return horizontalMultiView;
             });
@@ -54,7 +55,7 @@ public class StrategyMenu extends AbstractMenuView {
         // Option to open the form to create a new parameter set
         options.add("--CREATE NEW PARAMETER SET--");
         optionBehaviors.add(() -> {
-           NewParameterSetForm newParameterSetForm = new NewParameterSetForm(this);
+           NewParameterSetForm newParameterSetForm = new NewParameterSetForm();
            newParameterSetForm.setStrategy(strategy);
            return newParameterSetForm;
         });

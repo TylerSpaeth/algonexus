@@ -24,14 +24,11 @@ public abstract class AbstractMenuView extends AbstractView {
 
     private int selected = 0;
 
-    public AbstractMenuView(AbstractView parent) {
-        super(parent);
-    }
+    public AbstractMenuView() {}
 
-    public AbstractMenuView(AbstractView parent, int leftPadding, int topPadding)  {
-        super(parent, leftPadding, topPadding);
+    public AbstractMenuView(int leftPadding, int topPadding)  {
+        super(leftPadding, topPadding);
     }
-
 
     public void setTopText(String topText) {
         this.topText = topText;
@@ -112,15 +109,21 @@ public abstract class AbstractMenuView extends AbstractView {
     }
 
     @Override
-    public AbstractView handleInput(KeyStroke keyStroke) throws Exception {
+    public ViewAction handleInput(KeyStroke keyStroke) throws Exception {
         return switch (keyStroke.getKeyType()) {
-            case ArrowUp -> { selected = (selected - 1 + Math.min(optionsPerPage, options.size())) % Math.min(optionsPerPage, options.size()); yield null; }
-            case ArrowDown -> { selected = (selected + 1) % Math.min(optionsPerPage, options.size()); yield null; }
-            case ArrowLeft -> { currentPage = Math.max(currentPage-1, 0); selected = 0; yield null; }
-            case ArrowRight -> { currentPage = Math.min(currentPage+1, (int)Math.ceil((double)options.size() / optionsPerPage) - 1); selected = 0; yield null;}
-            case Enter -> optionBehaviors.get(selected + (optionsPerPage * currentPage)).get();
-            case Escape -> parent;
-            default -> null;
+            case ArrowUp -> { selected = (selected - 1 + Math.min(optionsPerPage, options.size())) % Math.min(optionsPerPage, options.size()); yield ViewAction.none(); }
+            case ArrowDown -> { selected = (selected + 1) % Math.min(optionsPerPage, options.size()); yield ViewAction.none(); }
+            case ArrowLeft -> { currentPage = Math.max(currentPage-1, 0); selected = 0; yield ViewAction.none(); }
+            case ArrowRight -> { currentPage = Math.min(currentPage+1, (int)Math.ceil((double)options.size() / optionsPerPage) - 1); selected = 0; yield ViewAction.none();}
+            case Enter -> {
+                AbstractView newView = optionBehaviors.get(selected + (optionsPerPage * currentPage)).get();
+                if(newView == null) {
+                    yield ViewAction.none();
+                }
+                yield ViewAction.push(newView);
+            }
+            case Escape -> ViewAction.pop();
+            default -> ViewAction.none();
         };
     }
 

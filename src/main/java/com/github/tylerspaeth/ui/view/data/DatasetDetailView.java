@@ -2,7 +2,6 @@ package com.github.tylerspaeth.ui.view.data;
 
 import com.github.tylerspaeth.common.data.entity.HistoricalDataset;
 import com.github.tylerspaeth.ui.view.common.AbstractDetailView;
-import com.github.tylerspaeth.ui.view.common.AbstractView;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,10 +24,6 @@ public class DatasetDetailView extends AbstractDetailView {
             End Time: {6}
             Number of Candlesticks: {7}
             """;
-
-    public DatasetDetailView(AbstractView parent) {
-        super(parent);
-    }
 
     /**
      * Set the HistoricalDataset, updating the displayed text.

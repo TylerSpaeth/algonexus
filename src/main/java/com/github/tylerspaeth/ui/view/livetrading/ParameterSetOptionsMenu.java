@@ -23,8 +23,7 @@ public class ParameterSetOptionsMenu extends AbstractMenuView {
 
     private StrategyParameterSet strategyParameterSet;
 
-    public ParameterSetOptionsMenu(AbstractView parent) {
-        super(parent);
+    public ParameterSetOptionsMenu() {
         liveTradingController = new LiveTradingController();
     }
 

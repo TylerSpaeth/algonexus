@@ -4,7 +4,7 @@ import com.github.tylerspaeth.common.data.entity.Strategy;
 import com.github.tylerspaeth.ui.UIContext;
 import com.github.tylerspaeth.ui.controller.ParameterSetController;
 import com.github.tylerspaeth.ui.view.common.AbstractFormView;
-import com.github.tylerspaeth.ui.view.common.AbstractView;
+import com.github.tylerspaeth.ui.view.common.ViewAction;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,8 +18,7 @@ public class NewParameterSetForm extends AbstractFormView {
 
     private Strategy strategy;
 
-    public NewParameterSetForm(AbstractView parent) {
-        super(parent);
+    public NewParameterSetForm() {
         parameterSetController = new ParameterSetController();
     }
 
@@ -43,19 +42,19 @@ public class NewParameterSetForm extends AbstractFormView {
      * @param formFields The filled out fields of the form.
      * @return AbstractView that should be displayed next.
      */
-    public AbstractView submitForm(List<String> formFields) {
+    public ViewAction submitForm(List<String> formFields) {
 
         if(formFields.getFirst() == null || formFields.getFirst().isBlank() || strategy == null) {
-            return null;
+            return ViewAction.none();
         }
 
         var result = parameterSetController.createNewParameterSetForStrategy(strategy, formFields.getFirst(), formFields.getLast());
 
         if(!result) {
-            return null;
+            return ViewAction.none();
         }
 
-        return parent;
+        return ViewAction.pop();
     }
 
     public void setStrategy(Strategy strategy) {

@@ -5,6 +5,8 @@ import com.googlecode.lanterna.TerminalSize;
 import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.input.KeyType;
 import com.googlecode.lanterna.screen.Screen;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,12 +16,11 @@ import java.util.List;
  */
 public class VerticalMultiView extends AbstractView {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(VerticalMultiView.class);
+
     private int selectedViewIndex = 0;
     private List<AbstractView> views;
-
-    public VerticalMultiView(AbstractView parent) {
-        super(parent);
-    }
+    private List<Boolean> childViewChangeTakesWholeScreen;
 
     @Override
     public void onEnter(UIContext uiContext) {
@@ -65,34 +66,48 @@ public class VerticalMultiView extends AbstractView {
     }
 
     @Override
-    public AbstractView handleInput(KeyStroke keyStroke) throws Exception {
+    public ViewAction handleInput(KeyStroke keyStroke) throws Exception {
+
+        if(views == null || views.isEmpty()) {
+            return ViewAction.none();
+        }
 
         // Move between views with CTRL+UP and CTRL+DOWN
         if(keyStroke.isCtrlDown()) {
             if(keyStroke.getKeyType() == KeyType.ArrowDown) {
                 selectedViewIndex = ++selectedViewIndex % views.size();
-                return null;
+                return ViewAction.none();
             } else if(keyStroke.getKeyType() == KeyType.ArrowUp) {
                 selectedViewIndex = --selectedViewIndex % views.size();
-                return null;
+                return ViewAction.none();
             }
         }
 
-        // Passthrough handleInput to the selected view if one is selected
-        if(views.size() > selectedViewIndex) {
-            AbstractView newView = views.get(selectedViewIndex).handleInput(keyStroke);
-            if(newView == this) {
-                return parent;
-            }
-            else if(newView != null) {
-                views.get(selectedViewIndex).onExit();
-                views.set(selectedViewIndex, newView);
-                views.get(selectedViewIndex).onEnter(uiContext);
-            }
-        } else if(selectedViewIndex != 0) {
+        // Prevent the view index from pointing to an invalid view
+        if(selectedViewIndex >= views.size()) {
             selectedViewIndex = 0;
         }
-        return null;
+
+        AbstractView selectedView = views.get(selectedViewIndex);
+
+        ViewAction action = selectedView.handleInput(keyStroke);
+
+        if(action == null || action.type == ViewAction.Type.NONE) {
+            return ViewAction.none();
+        }
+
+        // Allow container-local replacement
+        if(action.type == ViewAction.Type.REPLACE) {
+            if(childViewChangeTakesWholeScreen == null || !childViewChangeTakesWholeScreen.get(selectedViewIndex)) {
+                selectedView.onExit();
+                views.set(selectedViewIndex, action.view);
+                action.view.onEnter(uiContext);
+                return ViewAction.none();
+            }
+        }
+
+        // If not handled, propagate
+        return action;
     }
 
     /**
@@ -101,5 +116,22 @@ public class VerticalMultiView extends AbstractView {
      */
     public void setViews(List<AbstractView> views) {
         this.views = new ArrayList<>(views);
+    }
+
+    /**
+     * Sets the list of views that are displayed.
+     * @param views List of AbstractView
+     */
+    public void setViews(List<AbstractView> views, List<Boolean> childViewChangeTakesWholeScreen) {
+        if(views == null || childViewChangeTakesWholeScreen == null) {
+            LOGGER.error("views and childViewChangeTakesWholeScreen must be set.");
+            return;
+        }
+        if(views.size() != childViewChangeTakesWholeScreen.size()) {
+            LOGGER.error("views and childViewChangeTakesWholeScreen must be the same size.");
+            return;
+        }
+        this.views = new ArrayList<>(views);
+        this.childViewChangeTakesWholeScreen = childViewChangeTakesWholeScreen;
     }
 }

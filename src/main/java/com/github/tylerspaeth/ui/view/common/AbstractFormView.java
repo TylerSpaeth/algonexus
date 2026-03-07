@@ -14,7 +14,7 @@ import java.util.function.Function;
  */
 public class AbstractFormView extends AbstractView {
 
-    private Function<List<String>, AbstractView> submissionCallback;
+    private Function<List<String>, ViewAction> submissionCallback;
     private List<String> formFieldLabels;
     private List<String> formFields;
     private int selected = 0;
@@ -23,12 +23,10 @@ public class AbstractFormView extends AbstractView {
     private String bottomText;
     private String submitButtonText = "Submit";
 
-    public AbstractFormView(AbstractView parent) {
-        super(parent);
-    }
+    public AbstractFormView() {}
 
-    public AbstractFormView(AbstractView parent, int leftPadding, int topPadding) {
-        super(parent, leftPadding, topPadding);
+    public AbstractFormView(int leftPadding, int topPadding) {
+        super(leftPadding, topPadding);
     }
 
     @Override
@@ -86,12 +84,12 @@ public class AbstractFormView extends AbstractView {
     }
 
     @Override
-    public AbstractView handleInput(KeyStroke keyStroke) {
+    public ViewAction handleInput(KeyStroke keyStroke) {
         if(keyStroke.getKeyType() == KeyType.Escape) {
-            return parent;
+            return ViewAction.pop();
         } else if(keyStroke.getKeyType() == KeyType.Enter && selected == formFields.size()) {
             if(submissionCallback == null) {
-                return null;
+                return ViewAction.none();
             }
             return submissionCallback.apply(formFields);
         } else if(keyStroke.getKeyType() == KeyType.ArrowUp) {
@@ -108,7 +106,7 @@ public class AbstractFormView extends AbstractView {
                 formFields.set(selected, selectedString + keyStroke.getCharacter());
             }
         }
-        return null;
+        return ViewAction.none();
     }
 
     /**
@@ -116,7 +114,7 @@ public class AbstractFormView extends AbstractView {
      * @param submissionCallback Function that takes the list of formFields and returns the AbstractView that should
      *                           be loaded after the form is submitted.
      */
-    public void setSubmissionCallback(Function<List<String>, AbstractView> submissionCallback) {
+    public void setSubmissionCallback(Function<List<String>, ViewAction> submissionCallback) {
         this.submissionCallback = submissionCallback;
     }
 

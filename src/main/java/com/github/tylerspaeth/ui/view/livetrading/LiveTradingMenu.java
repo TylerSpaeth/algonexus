@@ -18,8 +18,7 @@ public class LiveTradingMenu extends AbstractMenuView {
 
     private final LiveTradingController liveTradingController;
 
-    public LiveTradingMenu(AbstractView parent) {
-        super(parent);
+    public LiveTradingMenu() {
         this.liveTradingController = new LiveTradingController();
     }
 
@@ -35,9 +34,9 @@ public class LiveTradingMenu extends AbstractMenuView {
         for(Strategy strategy : strategies) {
             options.add(strategy.toString());
             optionBehaviors.add(() -> {
-                HorizontalMultiView horizontalMultiView = new HorizontalMultiView(this);
-                StrategyMenu strategyMenu = new StrategyMenu(horizontalMultiView, strategy);
-                ParameterSetOptionsMenu parameterSetOptionsMenu = new ParameterSetOptionsMenu(horizontalMultiView);
+                HorizontalMultiView horizontalMultiView = new HorizontalMultiView();
+                ParameterSetOptionsMenu parameterSetOptionsMenu = new ParameterSetOptionsMenu();
+                StrategyMenu strategyMenu = new StrategyMenu(strategy, parameterSetOptionsMenu);
                 horizontalMultiView.setViews(List.of(strategyMenu, parameterSetOptionsMenu), List.of(false, true));
                 return horizontalMultiView;
             });

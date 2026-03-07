@@ -4,7 +4,7 @@ import com.github.tylerspaeth.common.enums.IntervalUnitEnum;
 import com.github.tylerspaeth.ui.UIContext;
 import com.github.tylerspaeth.ui.controller.DataManagerController;
 import com.github.tylerspaeth.ui.view.common.AbstractFormView;
-import com.github.tylerspaeth.ui.view.common.AbstractView;
+import com.github.tylerspaeth.ui.view.common.ViewAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,8 +21,7 @@ public class NewDatasetForm extends AbstractFormView {
 
     private final DataManagerController dataManagerController;
 
-    public NewDatasetForm(AbstractView parent) {
-        super(parent);
+    public NewDatasetForm() {
         dataManagerController = new DataManagerController();
     }
 
@@ -53,14 +52,14 @@ public class NewDatasetForm extends AbstractFormView {
      * @param formFields The filled out fields of the form.
      * @return AbstractView that should be displayed next.
      */
-    public AbstractView submitForm(List<String> formFields) {
+    public ViewAction submitForm(List<String> formFields) {
 
         // Validate required fields
         for(int i = 0; i < formFields.size(); i++) {
             if(i == 1) continue;
             if(formFields.get(i) == null || formFields.get(i).isBlank()) {
                 LOGGER.warn("Field at index {} is missing.", i);
-                return null;
+                return ViewAction.none();
             }
         }
 
@@ -70,13 +69,13 @@ public class NewDatasetForm extends AbstractFormView {
                     Integer.parseInt(formFields.get(6)), formFields.get(7), formFields.get(8));
 
             if(!success) {
-                return null;
+                return ViewAction.none();
             }
         } catch (IllegalArgumentException e) {
             LOGGER.warn("Unable to create dataset as invalid fields was provided.", e);
         }
 
-        return parent;
+        return ViewAction.pop();
     }
 
 }

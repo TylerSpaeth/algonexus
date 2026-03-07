@@ -14,10 +14,6 @@ import java.util.function.Supplier;
  */
 public class DataManagerMenu extends AbstractMenuView {
 
-    public DataManagerMenu(AbstractView parent) {
-        super(parent);
-    }
-
     @Override
     public void onEnter(UIContext uiContext) {
         super.onEnter(uiContext);
@@ -28,13 +24,13 @@ public class DataManagerMenu extends AbstractMenuView {
         List<Supplier<AbstractView>> optionBehaviors = new ArrayList<>();
 
         options.add("Create New Dataset");
-        optionBehaviors.add(() -> new NewDatasetForm(this));
+        optionBehaviors.add(NewDatasetForm::new);
 
         options.add("View Existing Datasets");
         optionBehaviors.add(() -> {
-            HorizontalMultiView horizontalMultiView = new HorizontalMultiView(this);
-            DatasetsMenu datasetsMenu = new DatasetsMenu(horizontalMultiView);
-            DatasetDetailView datasetDetailView = new DatasetDetailView(horizontalMultiView);
+            HorizontalMultiView horizontalMultiView = new HorizontalMultiView();
+            DatasetDetailView datasetDetailView = new DatasetDetailView();
+            DatasetsMenu datasetsMenu = new DatasetsMenu(datasetDetailView);
             horizontalMultiView.setViews(List.of(datasetsMenu, datasetDetailView));
             return horizontalMultiView;
         });

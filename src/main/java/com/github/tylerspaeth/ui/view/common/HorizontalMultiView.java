@@ -22,10 +22,6 @@ public class HorizontalMultiView extends AbstractView {
     private List<AbstractView> views;
     private List<Boolean> childViewChangeTakesWholeScreen;
 
-    public HorizontalMultiView(AbstractView parent) {
-        super(parent);
-    }
-
     @Override
     public void onEnter(UIContext uiContext) {
         super.onEnter(uiContext);
@@ -70,38 +66,48 @@ public class HorizontalMultiView extends AbstractView {
     }
 
     @Override
-    public AbstractView handleInput(KeyStroke keyStroke) throws Exception {
+    public ViewAction handleInput(KeyStroke keyStroke) throws Exception {
+
+        if(views == null || views.isEmpty()) {
+            return ViewAction.none();
+        }
 
         // Move between views with CTRL+RIGHT and CTRL+LEFT
         if(keyStroke.isCtrlDown()) {
             if(keyStroke.getKeyType() == KeyType.ArrowRight) {
                 selectedViewIndex = ++selectedViewIndex % views.size();
-                return null;
+                return ViewAction.none();
             } else if(keyStroke.getKeyType() == KeyType.ArrowLeft) {
                 selectedViewIndex = --selectedViewIndex % views.size();
-                return null;
+                return ViewAction.none();
             }
         }
 
-        // Passthrough handleInput to the selected view if one is selected
-        if(views.size() > selectedViewIndex) {
-            AbstractView newView = views.get(selectedViewIndex).handleInput(keyStroke);
-            if(newView == this) {
-                return parent;
-            }
-            else if(newView != null) {
-                // If the new view the child provides should take the whole screen
-                if(childViewChangeTakesWholeScreen != null && childViewChangeTakesWholeScreen.get(selectedViewIndex) == true) {
-                    return newView;
-                }
-                views.get(selectedViewIndex).onExit();
-                views.set(selectedViewIndex, newView);
-                views.get(selectedViewIndex).onEnter(uiContext);
-            }
-        } else if(selectedViewIndex != 0) {
+        // Prevent the view index from pointing to an invalid view
+        if(selectedViewIndex >= views.size()) {
             selectedViewIndex = 0;
         }
-        return null;
+
+        AbstractView selectedView = views.get(selectedViewIndex);
+
+        ViewAction action = selectedView.handleInput(keyStroke);
+
+        if(action == null || action.type == ViewAction.Type.NONE) {
+            return ViewAction.none();
+        }
+
+        // Allow container-local replacement
+        if(action.type == ViewAction.Type.REPLACE) {
+            if(childViewChangeTakesWholeScreen == null || !childViewChangeTakesWholeScreen.get(selectedViewIndex)) {
+                selectedView.onExit();
+                views.set(selectedViewIndex, action.view);
+                action.view.onEnter(uiContext);
+                return ViewAction.none();
+            }
+        }
+
+        // If not handled, propagate
+        return action;
     }
 
     /**

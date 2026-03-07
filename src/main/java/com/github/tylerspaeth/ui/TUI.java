@@ -1,11 +1,15 @@
 package com.github.tylerspaeth.ui;
 
 import com.github.tylerspaeth.ui.view.common.AbstractView;
+import com.github.tylerspaeth.ui.view.common.ViewAction;
 import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.screen.Screen;
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayDeque;
+import java.util.Deque;
 
 /**
  * Terminal User Interface
@@ -15,6 +19,11 @@ public class TUI {
     private static final Logger LOGGER = LoggerFactory.getLogger(TUI.class);
 
     private final UIContext uiContext;
+
+    private boolean dirty = true;
+    private boolean running = false;
+
+    private Deque<AbstractView> viewStack = new ArrayDeque<>();
 
     public TUI(UIContext uiContext) {
         this.uiContext = uiContext;
@@ -31,11 +40,10 @@ public class TUI {
             screen.startScreen();
             screen.setCursorPosition(null);
 
-            AbstractView currentView = initialView;
-            currentView.onEnter(uiContext);
+            viewStack.push(initialView);
+            initialView.onEnter(uiContext);
 
-            boolean running = true;
-            boolean dirty = true;
+            running = true;
 
             while (running) {
 
@@ -43,13 +51,12 @@ public class TUI {
 
                 if(keyStroke != null) {
                     try {
-                        AbstractView nextView = currentView.handleInput(keyStroke);
-                        if (nextView != null) {
-                            currentView.onExit();
-                            currentView = nextView;
-                            currentView.onEnter(uiContext);
-                        }
-                        dirty = true;
+
+                        AbstractView currentView = viewStack.peek();
+
+                        ViewAction action = currentView.handleInput(keyStroke);
+                        handleViewAction(action, currentView);
+
                     } catch (Exception e) {
                         LOGGER.error("An error occurred while handling input.", e);
                     }
@@ -60,21 +67,62 @@ public class TUI {
                     dirty = true;
                 }
 
-                try {
-                    if (dirty) {
+                // Render
+                if (dirty) {
+                    try {
                         screen.clear();
-                        currentView.render(screen);
+                        viewStack.peek().render(screen);
                         screen.refresh();
                         dirty = false;
+
+                    } catch (Exception e) {
+                        LOGGER.error("An error occurred while rendering.", e);
                     }
-                } catch (Exception e) {
-                    LOGGER.error("An error occurred while rendering.", e);
                 }
 
                 Thread.sleep(16);
             }
         } catch (Exception e) {
             LOGGER.error("TUI crashed", e);
+        }
+    }
+
+    /**
+     * Handle the provided ViewAction.
+     * @param action View action to handle.
+     * @param currentView Currently active view.
+     */
+    private void handleViewAction(ViewAction action, AbstractView currentView) {
+        if(action == null) {
+            LOGGER.warn("Using ViewAction of type NONE instead of null is recommended.");
+        } else {
+            switch (action.type) {
+
+                case PUSH -> {
+                    if(action.view != null) {
+                        action.view.onEnter(uiContext);
+                        viewStack.push(action.view);
+                    }
+                }
+
+                case POP -> {
+                    currentView.onExit();
+                    viewStack.pop();
+                    if(viewStack.isEmpty()) {
+                        running = false;
+                    }
+                }
+
+                case REPLACE -> {
+                    viewStack.pop().onExit();
+
+                    action.view.onEnter(uiContext);
+                    viewStack.push(action.view);
+                }
+
+                case NONE -> {}
+            }
+            dirty = true;
         }
     }
 

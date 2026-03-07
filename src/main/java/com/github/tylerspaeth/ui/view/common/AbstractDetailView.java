@@ -12,12 +12,10 @@ public class AbstractDetailView extends AbstractView {
 
     private String text;
 
-    public AbstractDetailView(AbstractView parent) {
-        super(parent);
-    }
+    public AbstractDetailView() {}
 
-    public AbstractDetailView(AbstractView parent, int leftPadding, int topPadding) {
-        super(parent, leftPadding, topPadding);
+    public AbstractDetailView(int leftPadding, int topPadding) {
+        super(leftPadding, topPadding);
     }
 
     @Override
@@ -39,11 +37,11 @@ public class AbstractDetailView extends AbstractView {
     }
 
     @Override
-    public AbstractView handleInput(KeyStroke keyStroke) {
+    public ViewAction handleInput(KeyStroke keyStroke) {
         if(keyStroke.getKeyType() == KeyType.Escape) {
-            return parent;
+            return ViewAction.pop();
         }
-        return null;
+        return ViewAction.none();
     }
 
     /**

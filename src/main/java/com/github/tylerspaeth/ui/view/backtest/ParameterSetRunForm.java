@@ -4,7 +4,7 @@ import com.github.tylerspaeth.common.data.entity.StrategyParameterSet;
 import com.github.tylerspaeth.ui.UIContext;
 import com.github.tylerspaeth.ui.controller.BacktestController;
 import com.github.tylerspaeth.ui.view.common.AbstractFormView;
-import com.github.tylerspaeth.ui.view.common.AbstractView;
+import com.github.tylerspaeth.ui.view.common.ViewAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,8 +22,7 @@ public class ParameterSetRunForm extends AbstractFormView {
 
     private final StrategyParameterSet strategyParameterSet;
 
-    public ParameterSetRunForm(AbstractView parent, StrategyParameterSet strategyParameterSet) {
-        super(parent);
+    public ParameterSetRunForm(StrategyParameterSet strategyParameterSet) {
         this.strategyParameterSet = strategyParameterSet;
         this.backtestController = new BacktestController();
     }
@@ -48,15 +47,15 @@ public class ParameterSetRunForm extends AbstractFormView {
      * @param formFields Fields the contain the starting account balance.
      * @return View to display upon submission.
      */
-    private AbstractView runBacktest(List<String> formFields) {
+    private ViewAction runBacktest(List<String> formFields) {
         try {
             LOGGER.info("Running backtest for StrategyParameterSet {}", strategyParameterSet.getStrategyParameterSetID());
             backtestController.runBacktest(uiContext.engineCoordinator, uiContext.activeUser, strategyParameterSet, Float.parseFloat(formFields.getFirst()));
         } catch (Exception e) {
             LOGGER.error("Failed to run backtest for StrategyParameterSet {}", strategyParameterSet, e);
-            return null;
+            return ViewAction.none();
         }
-        return parent;
+        return ViewAction.pop();
     }
 
 }

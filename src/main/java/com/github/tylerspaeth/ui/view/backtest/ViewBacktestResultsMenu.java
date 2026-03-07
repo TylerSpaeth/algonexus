@@ -5,7 +5,6 @@ import com.github.tylerspaeth.common.data.entity.StrategyParameterSet;
 import com.github.tylerspaeth.ui.UIContext;
 import com.github.tylerspaeth.ui.view.common.AbstractMenuView;
 import com.github.tylerspaeth.ui.view.common.AbstractView;
-import com.github.tylerspaeth.ui.view.common.HorizontalMultiView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,16 +20,14 @@ public class ViewBacktestResultsMenu extends AbstractMenuView {
 
     private BacktestResultsDetailView backtestResultsDetailView;
 
-    public ViewBacktestResultsMenu(AbstractView parent, StrategyParameterSet strategyParameterSet) {
-        super(parent);
+    public ViewBacktestResultsMenu(StrategyParameterSet strategyParameterSet, BacktestResultsDetailView backtestResultsDetailView) {
         this.strategyParameterSet = strategyParameterSet;
+        this.backtestResultsDetailView = backtestResultsDetailView;
     }
 
     @Override
     public void onEnter(UIContext uiContext) {
         super.onEnter(uiContext);
-
-        backtestResultsDetailView = (BacktestResultsDetailView) ((HorizontalMultiView)parent).getViews().getLast();
 
         setTopText("Select a backtest result to view:\n ");
 

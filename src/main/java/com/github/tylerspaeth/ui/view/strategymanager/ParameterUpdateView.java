@@ -5,7 +5,7 @@ import com.github.tylerspaeth.common.data.entity.StrategyParameterSet;
 import com.github.tylerspaeth.ui.UIContext;
 import com.github.tylerspaeth.ui.controller.ParameterSetController;
 import com.github.tylerspaeth.ui.view.common.AbstractView;
-import com.github.tylerspaeth.ui.view.common.HorizontalMultiView;
+import com.github.tylerspaeth.ui.view.common.ViewAction;
 import com.googlecode.lanterna.TextColor;
 import com.googlecode.lanterna.graphics.TextGraphics;
 import com.googlecode.lanterna.input.KeyStroke;
@@ -25,8 +25,9 @@ public class ParameterUpdateView extends AbstractView {
     private StrategyParameterSet parameterSet;
     private StrategyParameter selectedParameter;
 
-    public ParameterUpdateView(AbstractView parent, StrategyParameterSet parameterSet) {
-        super(parent);
+    private ParameterSetMenu parameterSetMenu;
+
+    public ParameterUpdateView(StrategyParameterSet parameterSet) {
         this.parameterSet = parameterSet;
     }
 
@@ -63,13 +64,13 @@ public class ParameterUpdateView extends AbstractView {
     }
 
     @Override
-    public AbstractView handleInput(KeyStroke keyStroke) {
+    public ViewAction handleInput(KeyStroke keyStroke) {
         switch (keyStroke.getKeyType()) {
             case Enter -> {
                 if(selectedParameter != null) {
                     parameterSetController.updateStrategyParameter(selectedParameter);
                     // Call on enter to update the menu
-                    ((HorizontalMultiView)parent).getViews().getFirst().onEnter(uiContext);
+                    parameterSetMenu.onEnter(uiContext);
                 }
             }
             case Backspace -> {
@@ -81,7 +82,7 @@ public class ParameterUpdateView extends AbstractView {
                 selectedParameter.setValue(selectedParameter.getValue() + keyStroke.getCharacter());
             }
         }
-        return null;
+        return ViewAction.none();
     }
 
     public void setSelectedParameter(StrategyParameter selectedParameter) {
@@ -90,5 +91,9 @@ public class ParameterUpdateView extends AbstractView {
         } else {
             LOGGER.error("Failed to setSelectedParameter as it is not part of the current parameter set.");
         }
+    }
+
+    public void setParameterSetMenu(ParameterSetMenu parameterSetMenu) {
+        this.parameterSetMenu = parameterSetMenu;
     }
 }

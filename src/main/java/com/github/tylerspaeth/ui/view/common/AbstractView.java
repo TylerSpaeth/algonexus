@@ -6,8 +6,6 @@ import com.googlecode.lanterna.screen.Screen;
 
 public abstract class AbstractView {
 
-    protected final AbstractView parent;
-
     protected UIContext uiContext;
 
     // Number of columns to leave blank on top and left. These are for use in concrete Views.
@@ -18,16 +16,14 @@ public abstract class AbstractView {
     protected final int finalLeftPadding;
     protected final int finalTopPadding;
 
-    public AbstractView(AbstractView parent) {
-        this.parent = parent;
+    public AbstractView() {
         this.mutableLeftPadding = 0;
         this.mutableTopPadding = 0;
         this.finalLeftPadding = 0;
         this.finalTopPadding = 0;
     }
 
-    public AbstractView(AbstractView parent, int leftPadding, int topPadding) {
-        this.parent = parent;
+    public AbstractView(int leftPadding, int topPadding) {
         this.mutableLeftPadding = leftPadding;
         this.mutableTopPadding = topPadding;
         this.finalLeftPadding = leftPadding;
@@ -57,8 +53,8 @@ public abstract class AbstractView {
     /**
      * Handles user input.
      * @param keyStroke Key that was pressed.
-     * @return View that needs to be changed to, null if no change is needed.
+     * @return ViewAction that resulted from the provided input.
      * @throws Exception Exception
      */
-    public abstract AbstractView handleInput(KeyStroke keyStroke) throws Exception;
+    public abstract ViewAction handleInput(KeyStroke keyStroke) throws Exception;
 }

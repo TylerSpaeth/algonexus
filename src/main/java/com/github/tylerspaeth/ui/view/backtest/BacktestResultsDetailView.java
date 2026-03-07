@@ -4,7 +4,6 @@ import com.github.tylerspaeth.common.data.entity.BacktestResult;
 import com.github.tylerspaeth.common.data.entity.Trade;
 import com.github.tylerspaeth.ui.controller.BacktestController;
 import com.github.tylerspaeth.ui.view.common.AbstractDetailView;
-import com.github.tylerspaeth.ui.view.common.AbstractView;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -28,8 +27,7 @@ public class BacktestResultsDetailView extends AbstractDetailView {
 
     private final BacktestController backtestController;
 
-    public BacktestResultsDetailView(AbstractView parent) {
-        super(parent);
+    public BacktestResultsDetailView() {
         backtestController = new BacktestController();
     }
 

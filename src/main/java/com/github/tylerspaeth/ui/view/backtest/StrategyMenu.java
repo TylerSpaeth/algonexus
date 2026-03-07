@@ -5,7 +5,6 @@ import com.github.tylerspaeth.common.data.entity.StrategyParameterSet;
 import com.github.tylerspaeth.ui.UIContext;
 import com.github.tylerspaeth.ui.view.common.AbstractMenuView;
 import com.github.tylerspaeth.ui.view.common.AbstractView;
-import com.github.tylerspaeth.ui.view.common.HorizontalMultiView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,16 +19,14 @@ public class StrategyMenu extends AbstractMenuView {
 
     private ParameterSetOptionsMenu parameterSetOptionsMenu;
 
-    public StrategyMenu(AbstractView parent, Strategy strategy) {
-        super(parent);
+    public StrategyMenu(Strategy strategy, ParameterSetOptionsMenu parameterSetOptionsMenu) {
         this.strategy = strategy;
+        this.parameterSetOptionsMenu = parameterSetOptionsMenu;
     }
 
     @Override
     public void onEnter(UIContext uiContext) {
         super.onEnter(uiContext);
-
-        parameterSetOptionsMenu = (ParameterSetOptionsMenu) ((HorizontalMultiView)parent).getViews().getLast();
 
         setTopText(strategy.toString() + "\n\nDescription: " + strategy.getDescription() + "\n\nParameter Sets:");
 

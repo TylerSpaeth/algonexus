@@ -17,10 +17,6 @@ public class ParameterSetOptionsMenu extends AbstractMenuView {
 
     private StrategyParameterSet strategyParameterSet;
 
-    public ParameterSetOptionsMenu(AbstractView parent) {
-        super(parent);
-    }
-
     @Override
     public void onEnter(UIContext uiContext) {
         super.onEnter(uiContext);
@@ -36,15 +32,15 @@ public class ParameterSetOptionsMenu extends AbstractMenuView {
 
         options.add("View Backtest Results");
         optionBehaviors.add(() -> {
-            HorizontalMultiView horizontalMultiView = new HorizontalMultiView(parent);
-            ViewBacktestResultsMenu viewBacktestResultsMenu = new ViewBacktestResultsMenu(horizontalMultiView, strategyParameterSet);
-            BacktestResultsDetailView backtestResultsDetailView = new BacktestResultsDetailView(horizontalMultiView);
+            HorizontalMultiView horizontalMultiView = new HorizontalMultiView();
+            BacktestResultsDetailView backtestResultsDetailView = new BacktestResultsDetailView();
+            ViewBacktestResultsMenu viewBacktestResultsMenu = new ViewBacktestResultsMenu(strategyParameterSet, backtestResultsDetailView);
             horizontalMultiView.setViews(List.of(viewBacktestResultsMenu, backtestResultsDetailView));
             return horizontalMultiView;
         });
 
         options.add("Run New Backtest");
-        optionBehaviors.add(() -> new ParameterSetRunForm(parent, strategyParameterSet));
+        optionBehaviors.add(() -> new ParameterSetRunForm(strategyParameterSet));
 
         setOptions(options, optionBehaviors);
         setOptionsPerPage(10);

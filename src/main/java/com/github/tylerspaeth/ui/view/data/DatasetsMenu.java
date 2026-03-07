@@ -5,7 +5,6 @@ import com.github.tylerspaeth.ui.UIContext;
 import com.github.tylerspaeth.ui.controller.DataManagerController;
 import com.github.tylerspaeth.ui.view.common.AbstractMenuView;
 import com.github.tylerspaeth.ui.view.common.AbstractView;
-import com.github.tylerspaeth.ui.view.common.HorizontalMultiView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,16 +19,13 @@ public class DatasetsMenu extends AbstractMenuView {
 
     private DatasetDetailView datasetDetailView;
 
-    public DatasetsMenu(AbstractView parent) {
-        super(parent);
+    public DatasetsMenu(DatasetDetailView datasetDetailView) {
         dataManagerController = new DataManagerController();
+        this.datasetDetailView = datasetDetailView;
     }
 
     @Override
     public void onEnter(UIContext uiContext) {
-        super.onEnter(uiContext);
-
-        datasetDetailView = (DatasetDetailView) ((HorizontalMultiView)parent).getViews().getLast();
 
         setTopText("Select a dataset:\n ");
 
