@@ -33,6 +33,10 @@ public class BacktestResult {
     @Column(name = "StartingBalance")
     private Float startingBalance;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ParameterOptimizationID", referencedColumnName = "ParameterOptimizationID")
+    private ParameterOptimization parameterOptimization;
+
     public Integer getBacktestResultID() {
         return backtestResultID;
     }
@@ -72,6 +76,15 @@ public class BacktestResult {
 
     public void setStartingBalance(Float startingBalance) {
         this.startingBalance = startingBalance;
+    }
+
+    public ParameterOptimization getParameterOptimization() {
+        parameterOptimization = backtestResultDAO.lazyLoad(this, e -> e.parameterOptimization);
+        return parameterOptimization;
+    }
+
+    public void setParameterOptimization(ParameterOptimization parameterOptimization) {
+        this.parameterOptimization = parameterOptimization;
     }
 
     @Override

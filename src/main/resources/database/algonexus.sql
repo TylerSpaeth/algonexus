@@ -18,6 +18,19 @@ CREATE SCHEMA IF NOT EXISTS `algonexus` DEFAULT CHARACTER SET utf8mb4 COLLATE ut
 USE `algonexus` ;
 
 -- -----------------------------------------------------
+-- Table `algonexus`.`parameteroptimization`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `algonexus`.`parameteroptimization` (
+  `ParameterOptimizationID` INT NOT NULL,
+  `StartTime` TIMESTAMP(6) NULL DEFAULT NULL,
+  `EndTime` TIMESTAMP(6) NULL DEFAULT NULL,
+  PRIMARY KEY (`ParameterOptimizationID`))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_0900_ai_ci;
+
+
+-- -----------------------------------------------------
 -- Table `algonexus`.`strategies`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `algonexus`.`strategies` (
@@ -66,8 +79,13 @@ CREATE TABLE IF NOT EXISTS `algonexus`.`backtestresults` (
   `StartTime` TIMESTAMP(6) NOT NULL,
   `EndTime` TIMESTAMP(6) NULL DEFAULT NULL,
   `StartingBalance` FLOAT NOT NULL,
+  `ParameterOptimizationID` INT NULL DEFAULT NULL,
   PRIMARY KEY (`BacktestResultID`),
   INDEX `StrategyParameterSetID_idx` (`StrategyParameterSetID` ASC) VISIBLE,
+  INDEX `fk_backtestresults_parameteroptimization_ParameterOptimizat_idx` (`ParameterOptimizationID` ASC) VISIBLE,
+  CONSTRAINT `fk_backtestresults_parameteroptimization_ParameterOptimizationID`
+    FOREIGN KEY (`ParameterOptimizationID`)
+    REFERENCES `algonexus`.`parameteroptimization` (`ParameterOptimizationID`),
   CONSTRAINT `fk_backtestresults_strategyparametersets_StrategyParameterSetID`
     FOREIGN KEY (`StrategyParameterSetID`)
     REFERENCES `algonexus`.`strategyparametersets` (`StrategyParameterSetID`))
