@@ -32,12 +32,7 @@ public class ParameterUpdateView extends AbstractView {
     }
 
     @Override
-    public void onEnter(UIContext uiContext) {
-        super.onEnter(uiContext);
-    }
-
-    @Override
-    public void render(Screen screen) {
+    public void render(UIContext uiContext, Screen screen) {
         TextGraphics textGraphics = screen.newTextGraphics();
 
         if(selectedParameter != null) {
@@ -64,7 +59,7 @@ public class ParameterUpdateView extends AbstractView {
     }
 
     @Override
-    public ViewAction handleInput(KeyStroke keyStroke) {
+    public ViewAction handleInput(UIContext uiContext, KeyStroke keyStroke) {
         switch (keyStroke.getKeyType()) {
             case Enter -> {
                 if(selectedParameter != null) {

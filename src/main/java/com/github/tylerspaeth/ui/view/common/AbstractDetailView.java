@@ -1,5 +1,6 @@
 package com.github.tylerspaeth.ui.view.common;
 
+import com.github.tylerspaeth.ui.UIContext;
 import com.googlecode.lanterna.TextColor;
 import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.input.KeyType;
@@ -19,7 +20,7 @@ public class AbstractDetailView extends AbstractView {
     }
 
     @Override
-    public void render(Screen screen) {
+    public void render(UIContext uiContext, Screen screen) {
         if(text == null) {
             return;
         }
@@ -37,7 +38,7 @@ public class AbstractDetailView extends AbstractView {
     }
 
     @Override
-    public ViewAction handleInput(KeyStroke keyStroke) {
+    public ViewAction handleInput(UIContext uiContext, KeyStroke keyStroke) {
         if(keyStroke.getKeyType() == KeyType.Escape) {
             return ViewAction.pop();
         }

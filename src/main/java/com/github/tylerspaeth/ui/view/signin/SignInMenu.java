@@ -5,6 +5,7 @@ import com.github.tylerspaeth.common.data.entity.User;
 import com.github.tylerspaeth.common.enums.AccountTypeEnum;
 import com.github.tylerspaeth.engine.request.IBConnectionRequest;
 import com.github.tylerspaeth.engine.request.account.AccountSummaryRequest;
+import com.github.tylerspaeth.ui.UIContext;
 import com.github.tylerspaeth.ui.view.common.AbstractMenuView;
 import com.github.tylerspaeth.ui.view.common.AbstractView;
 import com.github.tylerspaeth.ui.view.MainMenuView;
@@ -19,9 +20,14 @@ public class SignInMenu extends AbstractMenuView {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SignInMenu.class);
 
-    public SignInMenu() {
+    private final UserDAO userDAO;
 
-        UserDAO userDAO = new UserDAO();
+    public SignInMenu() {
+        userDAO = new UserDAO();
+    }
+
+    @Override
+    public void onEnter(UIContext uiContext) {
         List<User> users = userDAO.findUsersByAccountType(AccountTypeEnum.INTERNAL);
 
         List<String> accountOptions = new ArrayList<>();

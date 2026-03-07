@@ -29,8 +29,6 @@ public class ParameterSetOptionsMenu extends AbstractMenuView {
 
     @Override
     public void onEnter(UIContext uiContext) {
-        super.onEnter(uiContext);
-
         if(strategyParameterSet == null) {
             return;
         }

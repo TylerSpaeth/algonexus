@@ -24,7 +24,6 @@ public class BacktestMenu extends AbstractMenuView {
 
     @Override
     public void onEnter(UIContext uiContext) {
-        super.onEnter(uiContext);
         setTopText("Backtest Menu\n\nStrategies:");
 
         List<String> options = new ArrayList<>();

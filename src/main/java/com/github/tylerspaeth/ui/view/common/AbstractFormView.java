@@ -1,5 +1,6 @@
 package com.github.tylerspaeth.ui.view.common;
 
+import com.github.tylerspaeth.ui.UIContext;
 import com.googlecode.lanterna.TextColor;
 import com.googlecode.lanterna.graphics.TextGraphics;
 import com.googlecode.lanterna.input.KeyStroke;
@@ -30,7 +31,7 @@ public class AbstractFormView extends AbstractView {
     }
 
     @Override
-    public void render(Screen screen) {
+    public void render(UIContext uiContext, Screen screen) {
         int startRow = mutableTopPadding;
         int col = mutableLeftPadding;
 
@@ -84,7 +85,7 @@ public class AbstractFormView extends AbstractView {
     }
 
     @Override
-    public ViewAction handleInput(KeyStroke keyStroke) {
+    public ViewAction handleInput(UIContext uiContext, KeyStroke keyStroke) {
         if(keyStroke.getKeyType() == KeyType.Escape) {
             return ViewAction.pop();
         } else if(keyStroke.getKeyType() == KeyType.Enter && selected == formFields.size()) {

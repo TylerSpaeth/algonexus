@@ -22,6 +22,8 @@ public class ParameterSetRunForm extends AbstractFormView {
 
     private final StrategyParameterSet strategyParameterSet;
 
+    private UIContext uiContext;
+
     public ParameterSetRunForm(StrategyParameterSet strategyParameterSet) {
         this.strategyParameterSet = strategyParameterSet;
         this.backtestController = new BacktestController();
@@ -29,7 +31,7 @@ public class ParameterSetRunForm extends AbstractFormView {
 
     @Override
     public void onEnter(UIContext uiContext) {
-        super.onEnter(uiContext);
+        this.uiContext = uiContext;
 
         if(strategyParameterSet == null) {
             return;

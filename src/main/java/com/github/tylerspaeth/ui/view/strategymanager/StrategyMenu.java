@@ -28,8 +28,6 @@ public class StrategyMenu extends AbstractMenuView {
 
     @Override
     public void onEnter(UIContext uiContext) {
-        super.onEnter(uiContext);
-
         // Update the strategy when entering this page since the child views have the ability
         // to update the strategy and that would not persist
         strategy = strategyManagerController.getUpdatedStrategy(strategy);

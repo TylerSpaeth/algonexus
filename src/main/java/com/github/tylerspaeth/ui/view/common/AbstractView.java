@@ -6,8 +6,6 @@ import com.googlecode.lanterna.screen.Screen;
 
 public abstract class AbstractView {
 
-    protected UIContext uiContext;
-
     // Number of columns to leave blank on top and left. These are for use in concrete Views.
     // The final paddings are the relative paddings for this view.
     // The mutable paddings represent the actual position in the terminal. They should be treated as read only by concrete classes.
@@ -34,27 +32,34 @@ public abstract class AbstractView {
      * Called when the View becomes active.
      * @param uiContext UIContext with all app context that is available to the UI.
      */
-    public void onEnter(UIContext uiContext) {
-        this.uiContext = uiContext;
-    }
+    public void onEnter(UIContext uiContext) {}
+
+    /**
+     * Called when the View becomes active again after temporarily becoming inactive.
+     * @param uiContext UIContext with all app context that is available to the UI.
+     */
+    public void onResume(UIContext uiContext) {}
 
     /**
      * Called when the View becomes inactive.
+     * @param uiContext UIContext with all app context that is available to the UI.
      */
-    public void onExit() {}
+    public void onExit(UIContext uiContext) {}
 
     /**
      * Renders new changes to the inactive buffer.
+     * @param uiContext UIContext for use when rendering.
      * @param screen Screen that will be rendered to.
      * @throws Exception Exception
      */
-    public abstract void render(Screen screen) throws Exception;
+    public abstract void render(UIContext uiContext, Screen screen) throws Exception;
 
     /**
      * Handles user input.
+     * @param uiContext UIContext for use when handling input.
      * @param keyStroke Key that was pressed.
      * @return ViewAction that resulted from the provided input.
      * @throws Exception Exception
      */
-    public abstract ViewAction handleInput(KeyStroke keyStroke) throws Exception;
+    public abstract ViewAction handleInput(UIContext uiContext, KeyStroke keyStroke) throws Exception;
 }

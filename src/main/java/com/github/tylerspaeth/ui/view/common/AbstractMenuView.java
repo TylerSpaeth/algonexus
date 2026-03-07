@@ -1,5 +1,6 @@
 package com.github.tylerspaeth.ui.view.common;
 
+import com.github.tylerspaeth.ui.UIContext;
 import com.googlecode.lanterna.TextColor;
 import com.googlecode.lanterna.graphics.TextGraphics;
 import com.googlecode.lanterna.input.KeyStroke;
@@ -60,7 +61,7 @@ public abstract class AbstractMenuView extends AbstractView {
     }
 
     @Override
-    public void render(Screen screen) {
+    public void render(UIContext uiContext, Screen screen) {
         int startRow = mutableTopPadding;
         int col = mutableLeftPadding;
 
@@ -109,7 +110,7 @@ public abstract class AbstractMenuView extends AbstractView {
     }
 
     @Override
-    public ViewAction handleInput(KeyStroke keyStroke) throws Exception {
+    public ViewAction handleInput(UIContext uiContext, KeyStroke keyStroke) throws Exception {
         return switch (keyStroke.getKeyType()) {
             case ArrowUp -> { selected = (selected - 1 + Math.min(optionsPerPage, options.size())) % Math.min(optionsPerPage, options.size()); yield ViewAction.none(); }
             case ArrowDown -> { selected = (selected + 1) % Math.min(optionsPerPage, options.size()); yield ViewAction.none(); }

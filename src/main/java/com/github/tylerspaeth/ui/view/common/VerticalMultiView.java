@@ -24,22 +24,21 @@ public class VerticalMultiView extends AbstractView {
 
     @Override
     public void onEnter(UIContext uiContext) {
-        super.onEnter(uiContext);
-        for(AbstractView view : views) {
-            view.onEnter(uiContext);
-        }
+        views.forEach(view -> view.onEnter(uiContext));
     }
 
     @Override
-    public void onExit() {
-        super.onExit();
-        for(AbstractView view : views) {
-            view.onExit();
-        }
+    public void onResume(UIContext uiContext) {
+        views.forEach(view -> view.onResume(uiContext));
     }
 
     @Override
-    public void render(Screen screen) throws Exception {
+    public void onExit(UIContext uiContext) {
+        views.forEach(view -> view.onExit(uiContext));
+    }
+
+    @Override
+    public void render(UIContext uiContext, Screen screen) throws Exception {
 
         if(views == null) {
             return;
@@ -61,12 +60,12 @@ public class VerticalMultiView extends AbstractView {
                 textGraphics.drawLine(0, row, size.getColumns()-1, row, '-');
             }
 
-            view.render(screen);
+            view.render(uiContext, screen);
         }
     }
 
     @Override
-    public ViewAction handleInput(KeyStroke keyStroke) throws Exception {
+    public ViewAction handleInput(UIContext uiContext, KeyStroke keyStroke) throws Exception {
 
         if(views == null || views.isEmpty()) {
             return ViewAction.none();
@@ -90,7 +89,7 @@ public class VerticalMultiView extends AbstractView {
 
         AbstractView selectedView = views.get(selectedViewIndex);
 
-        ViewAction action = selectedView.handleInput(keyStroke);
+        ViewAction action = selectedView.handleInput(uiContext, keyStroke);
 
         if(action == null || action.type == ViewAction.Type.NONE) {
             return ViewAction.none();
@@ -99,7 +98,7 @@ public class VerticalMultiView extends AbstractView {
         // Allow container-local replacement
         if(action.type == ViewAction.Type.REPLACE) {
             if(childViewChangeTakesWholeScreen == null || !childViewChangeTakesWholeScreen.get(selectedViewIndex)) {
-                selectedView.onExit();
+                selectedView.onExit(uiContext);
                 views.set(selectedViewIndex, action.view);
                 action.view.onEnter(uiContext);
                 return ViewAction.none();

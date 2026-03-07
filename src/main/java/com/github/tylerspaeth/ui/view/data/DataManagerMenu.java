@@ -16,8 +16,6 @@ public class DataManagerMenu extends AbstractMenuView {
 
     @Override
     public void onEnter(UIContext uiContext) {
-        super.onEnter(uiContext);
-
         setTopText("Data Manager\n ");
 
         List<String> options = new ArrayList<>();

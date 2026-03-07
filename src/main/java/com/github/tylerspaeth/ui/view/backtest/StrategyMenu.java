@@ -17,7 +17,7 @@ public class StrategyMenu extends AbstractMenuView {
 
     private final Strategy strategy;
 
-    private ParameterSetOptionsMenu parameterSetOptionsMenu;
+    private final ParameterSetOptionsMenu parameterSetOptionsMenu;
 
     public StrategyMenu(Strategy strategy, ParameterSetOptionsMenu parameterSetOptionsMenu) {
         this.strategy = strategy;
@@ -26,8 +26,6 @@ public class StrategyMenu extends AbstractMenuView {
 
     @Override
     public void onEnter(UIContext uiContext) {
-        super.onEnter(uiContext);
-
         setTopText(strategy.toString() + "\n\nDescription: " + strategy.getDescription() + "\n\nParameter Sets:");
 
         List<String> options = new ArrayList<>();

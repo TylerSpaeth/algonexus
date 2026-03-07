@@ -27,8 +27,6 @@ public class NewDatasetForm extends AbstractFormView {
 
     @Override
     public void onEnter(UIContext uiContext) {
-        super.onEnter(uiContext);
-
         setTopText("Create new Dataset");
 
         List<String> labels = new ArrayList<>();

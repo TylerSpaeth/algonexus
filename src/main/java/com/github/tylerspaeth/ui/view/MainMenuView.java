@@ -23,8 +23,6 @@ public class MainMenuView extends AbstractMenuView {
 
     @Override
     public void onEnter(UIContext uiContext) {
-        super.onEnter(uiContext);
-
         setTopText("Main Menu:");
 
         List<String> options = new ArrayList<>();

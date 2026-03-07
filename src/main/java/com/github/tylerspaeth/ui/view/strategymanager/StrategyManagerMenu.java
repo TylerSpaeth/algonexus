@@ -23,7 +23,6 @@ public class StrategyManagerMenu extends AbstractMenuView {
 
     @Override
     public void onEnter(UIContext uiContext)  {
-        super.onEnter(uiContext);
         setTopText("Strategy Manager Menu");
 
         List<String> options = new ArrayList<>();

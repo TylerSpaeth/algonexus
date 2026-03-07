@@ -17,7 +17,7 @@ public class DatasetsMenu extends AbstractMenuView {
 
     private final DataManagerController dataManagerController;
 
-    private DatasetDetailView datasetDetailView;
+    private final DatasetDetailView datasetDetailView;
 
     public DatasetsMenu(DatasetDetailView datasetDetailView) {
         dataManagerController = new DataManagerController();

@@ -18,7 +18,7 @@ public class ViewBacktestResultsMenu extends AbstractMenuView {
 
     private final StrategyParameterSet strategyParameterSet;
 
-    private BacktestResultsDetailView backtestResultsDetailView;
+    private final BacktestResultsDetailView backtestResultsDetailView;
 
     public ViewBacktestResultsMenu(StrategyParameterSet strategyParameterSet, BacktestResultsDetailView backtestResultsDetailView) {
         this.strategyParameterSet = strategyParameterSet;
@@ -27,8 +27,6 @@ public class ViewBacktestResultsMenu extends AbstractMenuView {
 
     @Override
     public void onEnter(UIContext uiContext) {
-        super.onEnter(uiContext);
-
         setTopText("Select a backtest result to view:\n ");
 
         List<String> options = new ArrayList<>();

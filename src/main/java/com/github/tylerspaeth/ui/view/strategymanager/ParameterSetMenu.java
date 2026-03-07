@@ -28,8 +28,6 @@ public class ParameterSetMenu extends AbstractMenuView {
 
     @Override
     public void onEnter(UIContext uiContext) {
-        super.onEnter(uiContext);
-
         setTopText(parameterSet.toString() + "\n\nDescription: " + parameterSet.getDescription() + "\n\nParameters:");
 
         List<String> options = new ArrayList<>();
@@ -45,7 +43,7 @@ public class ParameterSetMenu extends AbstractMenuView {
     }
 
     @Override
-    public ViewAction handleInput(KeyStroke keyStroke) throws Exception {
+    public ViewAction handleInput(UIContext uiContext, KeyStroke keyStroke) throws Exception {
 
         // Override the standard menu enter logic to set the selected parameter on the update view.
         if(keyStroke.getKeyType() == KeyType.Enter) {
@@ -53,7 +51,7 @@ public class ParameterSetMenu extends AbstractMenuView {
             return ViewAction.none();
         }
 
-        return super.handleInput(keyStroke);
+        return super.handleInput(uiContext, keyStroke);
     }
 
     public void setParameterUpdateView(ParameterUpdateView parameterUpdateView) {

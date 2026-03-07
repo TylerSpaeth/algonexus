@@ -23,7 +23,7 @@ public class TUI {
     private boolean dirty = true;
     private boolean running = false;
 
-    private Deque<AbstractView> viewStack = new ArrayDeque<>();
+    private final Deque<AbstractView> viewStack = new ArrayDeque<>();
 
     public TUI(UIContext uiContext) {
         this.uiContext = uiContext;
@@ -54,7 +54,7 @@ public class TUI {
 
                         AbstractView currentView = viewStack.peek();
 
-                        ViewAction action = currentView.handleInput(keyStroke);
+                        ViewAction action = currentView.handleInput(uiContext, keyStroke);
                         handleViewAction(action, currentView);
 
                     } catch (Exception e) {
@@ -68,10 +68,10 @@ public class TUI {
                 }
 
                 // Render
-                if (dirty) {
+                if (dirty && running) {
                     try {
                         screen.clear();
-                        viewStack.peek().render(screen);
+                        viewStack.peek().render(uiContext, screen);
                         screen.refresh();
                         dirty = false;
 
@@ -106,15 +106,17 @@ public class TUI {
                 }
 
                 case POP -> {
-                    currentView.onExit();
+                    currentView.onExit(uiContext);
                     viewStack.pop();
                     if(viewStack.isEmpty()) {
                         running = false;
+                    } else {
+                        viewStack.peek().onResume(uiContext);
                     }
                 }
 
                 case REPLACE -> {
-                    viewStack.pop().onExit();
+                    viewStack.pop().onExit(uiContext);
 
                     action.view.onEnter(uiContext);
                     viewStack.push(action.view);

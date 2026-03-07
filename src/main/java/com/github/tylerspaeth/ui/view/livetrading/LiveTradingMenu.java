@@ -24,7 +24,6 @@ public class LiveTradingMenu extends AbstractMenuView {
 
     @Override
     public void onEnter(UIContext uiContext)  {
-        super.onEnter(uiContext);
         setTopText("Live Trading Menu\n\nStrategies:");
 
         List<String> options = new ArrayList<>();
