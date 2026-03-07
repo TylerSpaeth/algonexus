@@ -1,5 +1,6 @@
 package com.github.tylerspaeth.ui.controller;
 
+import com.github.tylerspaeth.common.data.dao.BacktestResultDAO;
 import com.github.tylerspaeth.common.data.dao.StrategyDAO;
 import com.github.tylerspaeth.common.data.entity.*;
 import com.github.tylerspaeth.engine.EngineCoordinator;
@@ -20,9 +21,11 @@ public class BacktestController {
     private static final Logger LOGGER = LoggerFactory.getLogger(BacktestController.class);
 
     private final StrategyDAO strategyDAO;
+    private final BacktestResultDAO backtestResultDAO;
 
     public BacktestController() {
         strategyDAO = new StrategyDAO();
+        backtestResultDAO = new BacktestResultDAO();
     }
 
     /**
@@ -80,5 +83,14 @@ public class BacktestController {
         } catch (Exception e) {
             LOGGER.error("Failed to run backtest.", e);
         }
+    }
+
+    /**
+     * Get the BacktestResults that match the provided StrategyParameterSet ID.
+     * @param strategyParameterSetID ID of a StrategyParameterSet
+     * @return List of BacktestResults
+     */
+    public List<BacktestResult> getBacktestResultsForStrategyParameterSetID(Integer strategyParameterSetID) {
+        return backtestResultDAO.getBacktestResultsByStrategyParameterSetID(strategyParameterSetID);
     }
 }

@@ -47,6 +47,13 @@ public abstract class AbstractView {
     public void onExit(UIContext uiContext) {}
 
     /**
+     * Called when the View should be refreshed either automatically or adhoc. This can be used to refresh stale data
+     * or anything else that would be too expensive to refresh on every render call.
+     * @param uiContext UIContext with all app context that is available to the UI.
+     */
+    public void onRefresh(UIContext uiContext) {}
+
+    /**
      * Renders new changes to the inactive buffer.
      * @param uiContext UIContext for use when rendering.
      * @param screen Screen that will be rendered to.

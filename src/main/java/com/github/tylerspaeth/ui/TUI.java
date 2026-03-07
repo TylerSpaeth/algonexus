@@ -3,11 +3,14 @@ package com.github.tylerspaeth.ui;
 import com.github.tylerspaeth.ui.view.common.AbstractView;
 import com.github.tylerspaeth.ui.view.common.ViewAction;
 import com.googlecode.lanterna.input.KeyStroke;
+import com.googlecode.lanterna.input.KeyType;
 import com.googlecode.lanterna.screen.Screen;
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
@@ -17,6 +20,8 @@ import java.util.Deque;
 public class TUI {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TUI.class);
+
+    private static final Integer SECONDS_BETWEEN_REFRESHES = 60;
 
     private final UIContext uiContext;
 
@@ -44,18 +49,33 @@ public class TUI {
             initialView.onEnter(uiContext);
 
             running = true;
+            Instant lastRefreshedTime = Instant.now();
 
             while (running) {
-
                 KeyStroke keyStroke = screen.pollInput();
+                AbstractView currentView = viewStack.peek();
+
+                Instant currentTime = Instant.now();
+                if(Duration.between(lastRefreshedTime, currentTime).toSeconds() >= SECONDS_BETWEEN_REFRESHES) {
+                    LOGGER.debug("Refreshing current view.");
+                    lastRefreshedTime = currentTime;
+                    currentView.onRefresh(uiContext);
+                    dirty = true;
+                }
 
                 if(keyStroke != null) {
                     try {
 
-                        AbstractView currentView = viewStack.peek();
-
-                        ViewAction action = currentView.handleInput(uiContext, keyStroke);
-                        handleViewAction(action, currentView);
+                        // F1 is bound to refreshing the current view
+                        if(keyStroke.getKeyType() == KeyType.F1) {
+                            LOGGER.info("Refresh of current view manually triggered.");
+                            lastRefreshedTime = currentTime;
+                            currentView.onRefresh(uiContext);
+                            dirty = true;
+                        } else {
+                            ViewAction action = currentView.handleInput(uiContext, keyStroke);
+                            handleViewAction(action, currentView);
+                        }
 
                     } catch (Exception e) {
                         LOGGER.error("An error occurred while handling input.", e);
