@@ -55,9 +55,16 @@ public class HorizontalMultiView extends AbstractView {
             AbstractView view = views.get(i);
             view.mutableLeftPadding = view.finalLeftPadding + i * viewSize;
 
+            char c = '|';
+            if(i == selectedViewIndex) {
+                c = '>';
+            } else if(i-1 == selectedViewIndex) {
+                c =  '<';
+            }
+
             if(i != 0) {
                 int column = i*viewSize-1;
-                textGraphics.drawLine(column, 0, column, size.getRows()-1, '|');
+                textGraphics.drawLine(column, 0, column, size.getRows()-1, c);
             }
 
             view.render(uiContext, screen);

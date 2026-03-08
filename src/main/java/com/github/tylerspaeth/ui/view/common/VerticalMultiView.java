@@ -55,9 +55,16 @@ public class VerticalMultiView extends AbstractView {
             AbstractView view = views.get(i);
             view.mutableTopPadding = view.finalTopPadding + i * viewSize;
 
+            char c = '-';
+            if(i == selectedViewIndex) {
+                c = 'v';
+            } else if(i-1 == selectedViewIndex) {
+                c =  '^';
+            }
+
             if(i != 0) {
                 int row = i*viewSize-1;
-                textGraphics.drawLine(0, row, size.getColumns()-1, row, '-');
+                textGraphics.drawLine(0, row, size.getColumns()-1, row, c);
             }
 
             view.render(uiContext, screen);
