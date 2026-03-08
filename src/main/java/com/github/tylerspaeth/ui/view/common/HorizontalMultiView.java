@@ -8,34 +8,12 @@ import com.googlecode.lanterna.screen.Screen;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Container for displaying multiple AbstractViews side by side.
  */
-public class HorizontalMultiView extends AbstractView {
+public class HorizontalMultiView extends AbstractMultiView {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HorizontalMultiView.class);
-
-    private int selectedViewIndex = 0;
-    private List<AbstractView> views;
-    private List<Boolean> childViewChangeTakesWholeScreen;
-
-    @Override
-    public void onEnter(UIContext uiContext) {
-        views.forEach(view -> view.onEnter(uiContext));
-    }
-
-    @Override
-    public void onResume(UIContext uiContext) {
-        views.forEach(view -> view.onResume(uiContext));
-    }
-
-    @Override
-    public void onExit(UIContext uiContext) {
-        views.forEach(view -> view.onExit(uiContext));
-    }
 
     @Override
     public void render(UIContext uiContext, Screen screen) throws Exception {
@@ -114,30 +92,5 @@ public class HorizontalMultiView extends AbstractView {
 
         // If not handled, propagate
         return action;
-    }
-
-    /**
-     * Sets the list of views that are displayed.
-     * @param views List of AbstractView
-     */
-    public void setViews(List<AbstractView> views) {
-        this.views = new ArrayList<>(views);
-    }
-
-    /**
-     * Sets the list of views that are displayed.
-     * @param views List of AbstractView
-     */
-    public void setViews(List<AbstractView> views, List<Boolean> childViewChangeTakesWholeScreen) {
-        if(views == null || childViewChangeTakesWholeScreen == null) {
-            LOGGER.error("views and childViewChangeTakesWholeScreen must be set.");
-            return;
-        }
-        if(views.size() != childViewChangeTakesWholeScreen.size()) {
-            LOGGER.error("views and childViewChangeTakesWholeScreen must be the same size.");
-            return;
-        }
-        this.views = new ArrayList<>(views);
-        this.childViewChangeTakesWholeScreen = childViewChangeTakesWholeScreen;
     }
 }
