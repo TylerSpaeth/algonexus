@@ -62,7 +62,7 @@ public class VerticalMultiView extends AbstractMultiView {
                 selectedViewIndex = ++selectedViewIndex % views.size();
                 return ViewAction.none();
             } else if(keyStroke.getKeyType() == KeyType.ArrowUp) {
-                selectedViewIndex = --selectedViewIndex % views.size();
+                selectedViewIndex = (selectedViewIndex - 1 + views.size()) % views.size();
                 return ViewAction.none();
             }
         }
